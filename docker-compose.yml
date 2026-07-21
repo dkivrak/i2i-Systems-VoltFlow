@@ -1,0 +1,196 @@
+name: voltwise
+
+services:
+  postgres:
+    image: postgres:16.9-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-voltwise}
+      POSTGRES_USER: ${POSTGRES_USER:-voltwise}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-for-non-local-use}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [voltwise-network]
+    restart: unless-stopped
+
+  kafka:
+    image: apache/kafka:3.9.1
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:${KAFKA_HOST_PORT:-9092}
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_NUM_PARTITIONS: 3
+    ports:
+      - "${KAFKA_HOST_PORT:-9092}:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 15s
+    networks: [voltwise-network]
+    restart: unless-stopped
+
+  kafka-init:
+    image: apache/kafka:3.9.1
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - /bin/bash
+      - -ec
+      - |
+        /opt/kafka/bin/kafka-topics.sh \
+          --bootstrap-server kafka:29092 \
+          --create --if-not-exists \
+          --topic voltwise.asset-registration \
+          --partitions 3 \
+          --replication-factor 1 \
+          --config cleanup.policy=compact
+        for topic in \
+          voltwise.asset-registration.dlt \
+          voltwise.telemetry \
+          voltwise.telemetry.dlt; do
+          /opt/kafka/bin/kafka-topics.sh \
+            --bootstrap-server kafka:29092 \
+            --create --if-not-exists \
+            --topic "$${topic}" \
+            --partitions 3 \
+            --replication-factor 1
+        done
+    networks: [voltwise-network]
+    restart: "no"
+
+  ignite:
+    image: apacheignite/ignite:2.17.0
+    platform: linux/amd64
+    environment:
+      JVM_OPTS: -Xms512m -Xmx512m -Djava.net.preferIPv4Stack=true
+    ports:
+      - "${IGNITE_HOST_PORT:-10800}:10800"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/10800'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    networks: [voltwise-network]
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.27.8
+    ports:
+      - "${MAILPIT_SMTP_HOST_PORT:-1025}:1025"
+      - "${MAILPIT_UI_HOST_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [voltwise-network]
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/voltwise}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-voltwise}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-change-me-for-non-local-use}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:29092}
+      IGNITE_ADDRESSES: ${IGNITE_ADDRESSES:-ignite:10800}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+      GEMINI_CONNECT_TIMEOUT_MS: ${GEMINI_CONNECT_TIMEOUT_MS:-3000}
+      GEMINI_READ_TIMEOUT_MS: ${GEMINI_READ_TIMEOUT_MS:-7000}
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-voltwise@example.local}
+      MAIL_CONNECT_TIMEOUT_MS: ${MAIL_CONNECT_TIMEOUT_MS:-3000}
+      MAIL_READ_TIMEOUT_MS: ${MAIL_READ_TIMEOUT_MS:-5000}
+      MAIL_WRITE_TIMEOUT_MS: ${MAIL_WRITE_TIMEOUT_MS:-5000}
+      SNAPSHOT_INTERVAL_MS: ${SNAPSHOT_INTERVAL_MS:-60000}
+      DEFAULT_MONTHLY_BUDGET: ${DEFAULT_MONTHLY_BUDGET:-1000.00}
+      NORMAL_TARIFF_PER_KWH: ${NORMAL_TARIFF_PER_KWH:-2.50}
+      PENALTY_TARIFF_MULTIPLIER: ${PENALTY_TARIFF_MULTIPLIER:-1.50}
+    ports:
+      - "${BACKEND_HOST_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      ignite:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks: [voltwise-network]
+    restart: unless-stopped
+
+  telemetry-simulator:
+    build:
+      context: ./telemetry-simulator
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:29092}
+      TELEMETRY_INTERVAL_MS: ${TELEMETRY_INTERVAL_MS:-1000}
+      SIMULATION_RANDOM_SEED: ${SIMULATION_RANDOM_SEED:-20260721}
+      SIMULATION_ANOMALY_PROBABILITY: ${SIMULATION_ANOMALY_PROBABILITY:-0.02}
+      SIMULATION_ANOMALY_DEMO_ENABLED: ${SIMULATION_ANOMALY_DEMO_ENABLED:-false}
+      SIMULATION_ANOMALY_DEMO_APPLIANCE_IDS: ${SIMULATION_ANOMALY_DEMO_APPLIANCE_IDS:-}
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      backend:
+        condition: service_healthy
+    networks: [voltwise-network]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+    ports:
+      - "${FRONTEND_HOST_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost/ >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks: [voltwise-network]
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+
+networks:
+  voltwise-network:
+    driver: bridge
