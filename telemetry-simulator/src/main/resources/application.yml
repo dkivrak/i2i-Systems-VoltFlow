@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: voltwise-telemetry-simulator
+  main:
+    web-application-type: none
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+    serialization:
+      write-dates-as-timestamps: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      # A unique default group replays the registration log after an in-memory restart.
+      # Deploy only one simulator instance unless an explicit shared group is supplied.
+      group-id: ${KAFKA_SIMULATOR_CONSUMER_GROUP:${spring.application.name}-${random.uuid}}
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+    listener:
+      ack-mode: record
+
+simulation:
+  enabled: ${SIMULATION_ENABLED:true}
+  interval-ms: ${TELEMETRY_INTERVAL_MS:1000}
+  random-seed: ${SIMULATION_RANDOM_SEED:42}
+  processed-event-cache-size: ${SIMULATION_PROCESSED_EVENT_CACHE_SIZE:10000}
+  anomaly:
+    probability: ${SIMULATION_ANOMALY_PROBABILITY:0.02}
+    burst-cycles: ${SIMULATION_ANOMALY_BURST_CYCLES:3}
+    cooldown-cycles: ${SIMULATION_ANOMALY_COOLDOWN_CYCLES:20}
+    min-power-multiplier: ${SIMULATION_ANOMALY_MIN_MULTIPLIER:1.05}
+    max-power-multiplier: ${SIMULATION_ANOMALY_MAX_MULTIPLIER:1.25}
+    demo-enabled: ${SIMULATION_ANOMALY_DEMO_ENABLED:false}
+    demo-start-cycle: ${SIMULATION_ANOMALY_DEMO_START_CYCLE:5}
+    demo-repeat-every-cycles: ${SIMULATION_ANOMALY_DEMO_REPEAT_CYCLES:0}
+    demo-appliance-ids: ${SIMULATION_ANOMALY_DEMO_APPLIANCE_IDS:}
+
+voltwise:
+  kafka:
+    asset-registration-topic: ${KAFKA_ASSET_REGISTRATION_TOPIC:voltwise.asset-registration}
+    telemetry-topic: ${KAFKA_TELEMETRY_TOPIC:voltwise.telemetry}
+    registration-dlt-topic: ${KAFKA_ASSET_REGISTRATION_DLT_TOPIC:voltwise.asset-registration.dlt}
+    partitions: ${KAFKA_TOPIC_PARTITIONS:3}
+    replicas: ${KAFKA_TOPIC_REPLICAS:1}
+    retry-interval-ms: ${KAFKA_RETRY_INTERVAL_MS:1000}
+    retry-attempts: ${KAFKA_RETRY_ATTEMPTS:2}
+
+logging:
+  level:
+    com.voltwise.simulator: INFO
