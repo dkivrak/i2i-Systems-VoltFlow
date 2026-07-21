@@ -61,8 +61,10 @@ The canonical Kafka topics are:
 | `voltwise.telemetry` | telemetry simulator | Core |
 
 Corresponding `.dlt` topics receive records that exhaust the configured retry
-policy. An asset registration event is sent only after its database transaction
-commits. The simulator communicates with the Core only through Kafka.
+policy. Asset registrations are captured in the same PostgreSQL transaction as
+their master data, dispatched from the durable outbox only after commit, and
+marked published only after Kafka acknowledgement. The simulator communicates
+with the Core only through Kafka.
 
 Every Kafka event must carry `eventId`, `eventVersion`, `eventType`, and an
 ISO-8601 UTC `occurredAt`. Contract changes begin in `contracts/`, remain
@@ -87,4 +89,3 @@ or local runtime volumes. Do not add direct database access to the simulator or
 make Ignite the system of record. Never force-push or rewrite another
 contributor's work. Before pushing, run all three test suites, validate Compose,
 inspect `git diff --check`, and scan tracked files for likely secrets.
-
