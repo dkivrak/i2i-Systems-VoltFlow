@@ -1,0 +1,106 @@
+spring:
+  application:
+    name: voltwise-core
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/voltwise}
+    username: ${POSTGRES_USER:voltwise}
+    password: ${POSTGRES_PASSWORD:voltwise}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 5000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 10
+      properties:
+        spring.json.add.type.headers: false
+        enable.idempotence: true
+        delivery.timeout.ms: 30000
+        request.timeout.ms: 10000
+        max.block.ms: 5000
+    consumer:
+      group-id: voltwise-core-telemetry-v1
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: com.voltwise.core.event
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.voltwise.core.event.TelemetryEvent
+    listener:
+      ack-mode: record
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties.mail.smtp:
+      auth: ${MAIL_SMTP_AUTH:false}
+      starttls.enable: ${MAIL_STARTTLS:false}
+      connectiontimeout: ${MAIL_CONNECT_TIMEOUT_MS:3000}
+      timeout: ${MAIL_READ_TIMEOUT_MS:5000}
+      writetimeout: ${MAIL_WRITE_TIMEOUT_MS:5000}
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-stacktrace: never
+    include-message: never
+
+management:
+  endpoints.web.exposure.include: health,info,metrics
+  endpoint.health.probes.enabled: true
+  health.mail.enabled: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+voltwise:
+  kafka:
+    enabled: ${KAFKA_ENABLED:true}
+    asset-registration-topic: voltwise.asset-registration
+    telemetry-topic: voltwise.telemetry
+    telemetry-dlt-topic: voltwise.telemetry.dlt
+  registration-outbox:
+    retry-interval-ms: ${REGISTRATION_OUTBOX_RETRY_INTERVAL_MS:5000}
+    startup-delay-ms: ${REGISTRATION_OUTBOX_STARTUP_DELAY_MS:1000}
+    batch-size: ${REGISTRATION_OUTBOX_BATCH_SIZE:50}
+    acknowledgement-timeout-ms: ${REGISTRATION_OUTBOX_ACK_TIMEOUT_MS:35000}
+    initial-backoff-ms: ${REGISTRATION_OUTBOX_INITIAL_BACKOFF_MS:2000}
+    maximum-backoff-ms: ${REGISTRATION_OUTBOX_MAX_BACKOFF_MS:60000}
+  ignite:
+    enabled: ${IGNITE_ENABLED:true}
+    addresses: ${IGNITE_ADDRESSES:127.0.0.1:10800}
+    cache-name: voltwise-live-state
+  billing:
+    default-monthly-budget: ${DEFAULT_MONTHLY_BUDGET:1000.00}
+    normal-tariff-per-kwh: ${NORMAL_TARIFF_PER_KWH:2.50}
+    penalty-tariff-multiplier: ${PENALTY_TARIFF_MULTIPLIER:1.50}
+    maximum-telemetry-gap-seconds: ${MAX_TELEMETRY_GAP_SECONDS:300}
+  snapshots:
+    interval-ms: ${SNAPSHOT_INTERVAL_MS:60000}
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-2.0-flash}
+    connect-timeout-ms: ${GEMINI_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${GEMINI_READ_TIMEOUT_MS:8000}
+  mail:
+    enabled: ${MAIL_ENABLED:true}
+    from: ${MAIL_FROM:noreply@voltwise.local}
