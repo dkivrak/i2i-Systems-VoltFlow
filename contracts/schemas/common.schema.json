@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voltwise.local/contracts/common.schema.json",
+  "title": "VoltWise shared contract definitions",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "utcInstant": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "nullableUtcInstant": {
+      "oneOf": [
+        { "$ref": "#/$defs/utcInstant" },
+        { "type": "null" }
+      ]
+    },
+    "positiveId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "nonNegativeDecimal": {
+      "type": "number",
+      "minimum": 0
+    },
+    "positiveDecimal": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "eventMetadata": {
+      "type": "object",
+      "required": ["eventId", "eventVersion", "eventType", "occurredAt"],
+      "properties": {
+        "eventId": { "$ref": "#/$defs/uuid" },
+        "eventVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "eventType": { "$ref": "#/$defs/eventType" },
+        "occurredAt": { "$ref": "#/$defs/utcInstant" }
+      }
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "HOME_REGISTERED",
+        "APPLIANCE_TELEMETRY_RECORDED",
+        "QUOTA_THRESHOLD_REACHED",
+        "APPLIANCE_ANOMALY_DETECTED",
+        "APPLIANCE_ANOMALY_RESOLVED"
+      ]
+    },
+    "applianceType": {
+      "type": "string",
+      "enum": [
+        "REFRIGERATOR",
+        "KETTLE",
+        "OVEN",
+        "TELEVISION",
+        "WASHING_MACHINE",
+        "AIR_CONDITIONER",
+        "MICROWAVE",
+        "LAMP",
+        "COMPUTER"
+      ]
+    },
+    "operatingState": {
+      "type": "string",
+      "enum": ["OFF", "STANDBY", "ON", "HIGH_LOAD"]
+    },
+    "applianceHealthStatus": {
+      "type": "string",
+      "enum": ["NORMAL", "ANOMALOUS"]
+    },
+    "tariffState": {
+      "type": "string",
+      "enum": ["NORMAL", "PENALTY"]
+    },
+    "notificationStatus": {
+      "type": "string",
+      "enum": ["PENDING", "SENT", "FAILED"]
+    },
+    "quotaThreshold": {
+      "type": "string",
+      "enum": ["EIGHTY_PERCENT", "ONE_HUNDRED_PERCENT"]
+    },
+    "registeredAppliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["applianceId", "name", "type", "safePowerLimitWatts"],
+      "properties": {
+        "applianceId": { "$ref": "#/$defs/positiveId" },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "type": { "$ref": "#/$defs/applianceType" },
+        "safePowerLimitWatts": { "$ref": "#/$defs/positiveDecimal" }
+      }
+    }
+  }
+}

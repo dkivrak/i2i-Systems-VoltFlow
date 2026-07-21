@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voltwise.local/contracts/quota-event.schema.json",
+  "title": "Quota threshold event",
+  "allOf": [
+    { "$ref": "common.schema.json#/$defs/eventMetadata" },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "eventVersion",
+        "eventType",
+        "occurredAt",
+        "homeId",
+        "threshold",
+        "usagePercent",
+        "currentCost",
+        "monthlyBudget",
+        "tariffState"
+      ],
+      "properties": {
+        "eventId": { "$ref": "common.schema.json#/$defs/uuid" },
+        "eventVersion": { "const": 1 },
+        "eventType": { "const": "QUOTA_THRESHOLD_REACHED" },
+        "occurredAt": { "$ref": "common.schema.json#/$defs/utcInstant" },
+        "homeId": { "$ref": "common.schema.json#/$defs/positiveId" },
+        "threshold": { "$ref": "common.schema.json#/$defs/quotaThreshold" },
+        "usagePercent": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+        "currentCost": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+        "monthlyBudget": { "$ref": "common.schema.json#/$defs/positiveDecimal" },
+        "tariffState": { "$ref": "common.schema.json#/$defs/tariffState" }
+      }
+    }
+  ]
+}

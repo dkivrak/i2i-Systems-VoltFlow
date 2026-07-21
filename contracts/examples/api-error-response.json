@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-07-21T12:00:00Z",
+  "status": 400,
+  "error": "Validation Failed",
+  "message": "Request validation failed",
+  "path": "/api/v1/homes",
+  "fieldErrors": {
+    "monthlyBudget": "must be greater than zero"
+  }
+}

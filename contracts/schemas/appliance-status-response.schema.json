@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voltwise.local/contracts/appliance-status-response.schema.json",
+  "title": "Appliance live status response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "applianceId",
+    "name",
+    "type",
+    "currentPowerWatts",
+    "accumulatedEnergyKwh",
+    "accumulatedCost",
+    "operatingState",
+    "safePowerLimitWatts",
+    "consecutiveBreachCount",
+    "healthStatus",
+    "lastUpdatedAt"
+  ],
+  "properties": {
+    "applianceId": { "$ref": "common.schema.json#/$defs/positiveId" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "type": { "$ref": "common.schema.json#/$defs/applianceType" },
+    "currentPowerWatts": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "accumulatedEnergyKwh": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "accumulatedCost": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "operatingState": { "$ref": "common.schema.json#/$defs/operatingState" },
+    "safePowerLimitWatts": { "$ref": "common.schema.json#/$defs/positiveDecimal" },
+    "consecutiveBreachCount": { "type": "integer", "minimum": 0 },
+    "healthStatus": { "$ref": "common.schema.json#/$defs/applianceHealthStatus" },
+    "lastUpdatedAt": { "$ref": "common.schema.json#/$defs/nullableUtcInstant" }
+  }
+}

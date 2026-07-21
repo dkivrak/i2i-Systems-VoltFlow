@@ -1,0 +1,22 @@
+{
+  "eventId": "8be85a84-3a2c-4bcb-b4b5-d91e64c67520",
+  "eventVersion": 1,
+  "eventType": "HOME_REGISTERED",
+  "occurredAt": "2026-07-21T12:00:00Z",
+  "homeId": 1,
+  "homeName": "Kadikoy Home",
+  "appliances": [
+    {
+      "applianceId": 10,
+      "name": "Kitchen Kettle",
+      "type": "KETTLE",
+      "safePowerLimitWatts": 2200
+    },
+    {
+      "applianceId": 11,
+      "name": "Living Room Lamp",
+      "type": "LAMP",
+      "safePowerLimitWatts": 80
+    }
+  ]
+}

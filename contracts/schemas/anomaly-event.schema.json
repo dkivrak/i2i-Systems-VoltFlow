@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voltwise.local/contracts/anomaly-event.schema.json",
+  "title": "Appliance anomaly lifecycle event",
+  "allOf": [
+    { "$ref": "common.schema.json#/$defs/eventMetadata" },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "eventVersion",
+        "eventType",
+        "occurredAt",
+        "homeId",
+        "applianceId",
+        "measuredPowerWatts",
+        "safePowerLimitWatts",
+        "consecutiveBreachCount",
+        "healthStatus",
+        "detectedAt"
+      ],
+      "properties": {
+        "eventId": { "$ref": "common.schema.json#/$defs/uuid" },
+        "eventVersion": { "const": 1 },
+        "eventType": {
+          "enum": ["APPLIANCE_ANOMALY_DETECTED", "APPLIANCE_ANOMALY_RESOLVED"]
+        },
+        "occurredAt": { "$ref": "common.schema.json#/$defs/utcInstant" },
+        "homeId": { "$ref": "common.schema.json#/$defs/positiveId" },
+        "applianceId": { "$ref": "common.schema.json#/$defs/positiveId" },
+        "measuredPowerWatts": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+        "safePowerLimitWatts": { "$ref": "common.schema.json#/$defs/positiveDecimal" },
+        "consecutiveBreachCount": { "type": "integer", "minimum": 0 },
+        "healthStatus": { "$ref": "common.schema.json#/$defs/applianceHealthStatus" },
+        "detectedAt": { "$ref": "common.schema.json#/$defs/utcInstant" },
+        "resolvedAt": {
+          "oneOf": [
+            { "$ref": "common.schema.json#/$defs/utcInstant" },
+            { "type": "null" }
+          ]
+        }
+      }
+    }
+  ]
+}
