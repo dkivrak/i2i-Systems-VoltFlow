@@ -32,6 +32,13 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Map;
 import java.util.UUID;
 
+import com.voltwise.core.live.ApplianceLiveState;
+import com.voltwise.core.live.HomeLiveState;
+import com.voltwise.core.live.LiveStateStore;
+import com.voltwise.core.persistence.repository.ApplianceRepository;
+
+import java.util.HashMap;
+
 @Service
 public class HomeService {
     private static final Logger log = LoggerFactory.getLogger(HomeService.class);
@@ -49,21 +56,26 @@ public class HomeService {
     );
 
     private final HomeRepository homes;
+    private final ApplianceRepository appliances;
     private final BillingLedgerRepository ledgers;
     private final RegistrationOutboxPersistenceService registrationOutbox;
     private final RegistrationOutboxDispatcher outboxDispatcher;
     private final LiveStateInitializer liveStateInitializer;
+    private final LiveStateStore liveStateStore;
     private final VoltWiseProperties properties;
 
-    public HomeService(HomeRepository homes, BillingLedgerRepository ledgers,
+    public HomeService(HomeRepository homes, ApplianceRepository appliances, BillingLedgerRepository ledgers,
                        RegistrationOutboxPersistenceService registrationOutbox,
                        RegistrationOutboxDispatcher outboxDispatcher,
-                       LiveStateInitializer liveStateInitializer, VoltWiseProperties properties) {
+                       LiveStateInitializer liveStateInitializer, LiveStateStore liveStateStore,
+                       VoltWiseProperties properties) {
         this.homes = homes;
+        this.appliances = appliances;
         this.ledgers = ledgers;
         this.registrationOutbox = registrationOutbox;
         this.outboxDispatcher = outboxDispatcher;
         this.liveStateInitializer = liveStateInitializer;
+        this.liveStateStore = liveStateStore;
         this.properties = properties;
     }
 
@@ -76,7 +88,6 @@ public class HomeService {
         home.setCity(request.city() != null && !request.city().isBlank() ? request.city().trim() : "İstanbul");
         home.setContactEmail(request.contactEmail().trim().toLowerCase(java.util.Locale.ROOT));
 
-        // Enforce system billing parameters (ignoring user overrides for mathematical consistency)
         home.setMonthlyBudget(valueOrDefault(request.monthlyBudget(), properties.getBilling().getDefaultMonthlyBudget()));
         home.setNormalTariffPerKwh(valueOrDefault(request.normalTariffPerKwh(), properties.getBilling().getNormalTariffPerKwh()));
         home.setPenaltyMultiplier(valueOrDefault(request.penaltyMultiplier(), properties.getBilling().getPenaltyTariffMultiplier()));
@@ -135,6 +146,49 @@ public class HomeService {
     @Transactional(readOnly = true)
     public HomeEntity requireDetailed(Long id) {
         return homes.findDetailedById(id).orElseThrow(() -> new ResourceNotFoundException("Home not found: " + id));
+    }
+
+    @Transactional
+    public void deleteHome(Long homeId) {
+        HomeEntity home = homes.findById(homeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Home not found: " + homeId));
+        homes.delete(home);
+        liveStateStore.remove(homeId);
+        log.info("Home deleted successfully homeId={}", homeId);
+    }
+
+    @Transactional
+    public void deleteAppliance(Long homeId, Long applianceId) {
+        HomeEntity home = homes.findById(homeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Home not found: " + homeId));
+        ApplianceEntity appliance = appliances.findById(applianceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appliance not found: " + applianceId));
+
+        if (!appliance.getHome().getId().equals(homeId)) {
+            throw new IllegalArgumentException("Appliance " + applianceId + " does not belong to home " + homeId);
+        }
+
+        home.getAppliances().remove(appliance);
+        appliances.delete(appliance);
+
+        liveStateStore.get(homeId).ifPresent(state -> {
+            try {
+                liveStateStore.update(homeId, current -> {
+                    Map<Long, ApplianceLiveState> updated = new HashMap<>(current.appliances());
+                    updated.remove(applianceId);
+                    return new HomeLiveState(
+                            current.homeId(), current.homeName(), current.currentPowerWatts(),
+                            current.accumulatedEnergyKwh(), current.currentCost(), current.monthlyBudget(),
+                            current.budgetUsagePercent(), current.tariffState(), current.lastUpdatedAt(),
+                            updated, current.snapshotWindow()
+                    );
+                });
+            } catch (Exception ex) {
+                log.warn("Could not update live state after appliance deletion homeId={} applianceId={}", homeId, applianceId, ex);
+            }
+        });
+
+        log.info("Appliance deleted successfully homeId={} applianceId={}", homeId, applianceId);
     }
 
     private void validateAppliancePowerLimits(CreateHomeRequest request) {

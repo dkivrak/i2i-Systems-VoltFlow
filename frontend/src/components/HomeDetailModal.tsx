@@ -11,6 +11,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Sparkles,
+  Trash2,
   Zap,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -34,6 +35,7 @@ import { ErrorState, InlineSpinner } from './PageStates';
 interface HomeDetailModalProps {
   summary: HomeStatus;
   onClose: () => void;
+  onDeleted?: () => void;
 }
 
 interface AnalyticsState {
@@ -51,7 +53,7 @@ const eventIcons = {
   UNKNOWN: BellRing,
 } as const;
 
-export function HomeDetailModal({ summary, onClose }: HomeDetailModalProps) {
+export function HomeDetailModal({ summary, onClose, onDeleted }: HomeDetailModalProps) {
   const homeId = summary.homeId;
   const detailRequest = useCallback((signal: AbortSignal) => api.getHomeStatus(homeId, signal), [homeId]);
   const live = usePollingResource(detailRequest, getPollingInterval(), true, summary);
@@ -91,6 +93,36 @@ export function HomeDetailModal({ summary, onClose }: HomeDetailModalProps) {
     return () => controller.abort();
   }, [analyticsVersion, homeId]);
 
+  const [deletingHome, setDeletingHome] = useState(false);
+  const [deletingApplianceId, setDeletingApplianceId] = useState<number | null>(null);
+
+  const handleDeleteHome = async () => {
+    if (!window.confirm(`"${home.homeName}" evini ve tüm verilerini silmek istediğinize emin misiniz?`)) return;
+    try {
+      setDeletingHome(true);
+      await api.deleteHome(homeId);
+      onDeleted?.();
+      onClose();
+    } catch (err) {
+      alert(getUserFacingError(err));
+    } finally {
+      setDeletingHome(false);
+    }
+  };
+
+  const handleDeleteAppliance = async (applianceId: number, applianceName: string) => {
+    if (!window.confirm(`"${applianceName}" cihazını silmek istediğinize emin misiniz?`)) return;
+    try {
+      setDeletingApplianceId(applianceId);
+      await api.deleteAppliance(homeId, applianceId);
+      live.retry();
+    } catch (err) {
+      alert(getUserFacingError(err));
+    } finally {
+      setDeletingApplianceId(null);
+    }
+  };
+
   const quotaProgress = Math.min(Math.max(home.budgetUsagePercent, 0), 100);
   const isQuotaWarning = home.budgetUsagePercent >= 80;
   const isQuotaCritical = home.budgetUsagePercent >= 100 || home.tariffState === 'PENALTY';
@@ -104,6 +136,30 @@ export function HomeDetailModal({ summary, onClose }: HomeDetailModalProps) {
       wide
     >
       <div className="detail-content">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          <button
+            type="button"
+            onClick={handleDeleteHome}
+            disabled={deletingHome}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '8px',
+              color: '#fca5a5',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            <Trash2 size={14} />
+            <span>{deletingHome ? 'Siliniyor...' : 'Evi Sil'}</span>
+          </button>
+        </div>
+
         {Boolean(live.error) && (
           <ErrorState message={getUserFacingError(live.error)} onRetry={live.retry} compact />
         )}
@@ -187,11 +243,13 @@ export function HomeDetailModal({ summary, onClose }: HomeDetailModalProps) {
                     <th scope="col">Enerji</th>
                     <th scope="col">Maliyet</th>
                     <th scope="col">Sağlık</th>
+                    <th scope="col" style={{ textAlign: 'right' }}>İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
                   {home.appliances.map((appliance) => {
                     const anomalous = appliance.healthStatus === 'ANOMALOUS';
+                    const isDeleting = deletingApplianceId === appliance.applianceId;
                     return (
                       <tr className={anomalous ? 'appliance-row--anomalous' : ''} key={appliance.applianceId}>
                         <td data-label="Cihaz">
@@ -225,6 +283,25 @@ export function HomeDetailModal({ summary, onClose }: HomeDetailModalProps) {
                             {anomalous ? <AlertTriangle aria-hidden="true" size={13} /> : <CheckCircle2 aria-hidden="true" size={13} />}
                             {anomalous ? 'Anomali' : 'Normal'}
                           </span>
+                        </td>
+                        <td data-label="İşlem" style={{ textAlign: 'right' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAppliance(appliance.applianceId, appliance.name)}
+                            disabled={isDeleting}
+                            style={{
+                              background: 'none',
+                              border: 0,
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              padding: '4px 6px',
+                              borderRadius: '6px',
+                              opacity: isDeleting ? 0.5 : 1,
+                            }}
+                            title="Cihazı sil"
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </td>
                       </tr>
                     );

@@ -465,6 +465,14 @@ export const api = {
     );
     return response ? normalizeHomeStatus(response) : null;
   },
+
+  async deleteHome(homeId: number, signal?: AbortSignal): Promise<void> {
+    await request<void>(`/homes/${homeId}`, { method: 'DELETE' }, signal);
+  },
+
+  async deleteAppliance(homeId: number, applianceId: number, signal?: AbortSignal): Promise<void> {
+    await request<void>(`/homes/${homeId}/appliances/${applianceId}`, { method: 'DELETE' }, signal);
+  },
 };
 
 export function getUserFacingError(error: unknown): string {

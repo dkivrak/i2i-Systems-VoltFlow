@@ -226,7 +226,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           }
         >
-          <HomeDetailModal summary={selectedHome} onClose={() => setSelectedHome(null)} />
+          <HomeDetailModal summary={selectedHome} onClose={() => setSelectedHome(null)} onDeleted={homesQuery.retry} />
         </Suspense>
       )}
       {registrationOpen && (
