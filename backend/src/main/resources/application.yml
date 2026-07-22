@@ -106,4 +106,4 @@ voltwise:
     read-timeout-ms: ${GEMINI_READ_TIMEOUT_MS:8000}
   mail:
     enabled: ${MAIL_ENABLED:true}
-    from: ${MAIL_FROM:no-reply@voltflow.space}
+    from: ${MAIL_FROM:noreply@voltflow.space}

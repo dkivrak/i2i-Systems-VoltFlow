@@ -188,6 +188,17 @@ select:focus-visible,
   gap: 10px;
 }
 
+.header-logout-button {
+  border-color: rgb(255 125 114 / 28%);
+  color: #ffc1bb;
+  background: rgb(255 125 114 / 7%);
+}
+
+.header-logout-button:hover:not(:disabled) {
+  border-color: rgb(255 125 114 / 46%);
+  background: rgb(255 125 114 / 12%);
+}
+
 .live-indicator {
   gap: 8px;
   margin-right: 8px;
@@ -1926,6 +1937,8 @@ select:focus-visible,
   .live-indicator { display: none; }
   .header-add-button { width: 40px; min-height: 40px; padding: 0; }
   .header-add-button span { display: none; }
+  .header-logout-button { width: 40px; min-height: 40px; padding: 0; }
+  .header-logout-button span { display: none; }
   .main-content { width: calc(100% - 32px); padding: 39px 0 58px; }
   .dashboard-intro { margin-bottom: 29px; }
   .dashboard-intro h1 { font-size: 2.15rem; }

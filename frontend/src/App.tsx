@@ -1,4 +1,4 @@
-import { AlertTriangle, ChevronDown, Filter, Radio, Search, Waves, LogOut, Sun, Moon, Sparkles } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Filter, Radio, Search, Waves } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { api, getStoredToken, setStoredToken, getUserFacingError } from './api/client';
 import { EmptyState, ErrorState, DashboardSkeleton, InlineSpinner } from './components/PageStates';
@@ -7,7 +7,7 @@ import { HomeCard } from './components/HomeCard';
 import { OverviewStats } from './components/OverviewStats';
 import { RegistrationModal } from './components/RegistrationModal';
 import { LoginPage } from './components/LoginPage';
-import { ToastProvider, useToast } from './components/ToastProvider';
+import { ToastProvider } from './components/ToastProvider';
 import { getPollingInterval, usePollingResource } from './hooks/usePollingResource';
 import type { HomeStatus } from './types';
 
@@ -25,10 +25,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [lang, setLang] = useState<'TR' | 'EN'>('TR');
-  const { showToast } = useToast();
-
   const visibleHomes = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLocaleLowerCase('tr-TR');
     return homes.filter((home) => {
@@ -43,93 +39,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     });
   }, [homes, searchQuery, statusFilter]);
 
-  const handleDemoPreset = async () => {
-    try {
-      await api.registerHome({
-        name: 'Demo Akıllı Daire',
-        city: 'İstanbul',
-        contactEmail: 'demo@voltflow.com',
-        monthlyBudget: 2000,
-        normalTariffPerKwh: 2.5,
-        penaltyMultiplier: 1.5,
-        appliances: [
-          { name: 'Mutfak Buzdolabı', type: 'REFRIGERATOR', safePowerLimitWatts: 300 },
-          { name: 'Çay Kettle', type: 'KETTLE', safePowerLimitWatts: 2300 },
-          { name: 'Salon Kliması', type: 'AIR_CONDITIONER', safePowerLimitWatts: 2200 },
-          { name: 'Oyun Bilgisayarı', type: 'COMPUTER', safePowerLimitWatts: 600 },
-        ],
-      });
-      showToast({
-        tone: 'success',
-        title: 'Demo Preset Yüklendi',
-        message: 'Demo Akıllı Daire 4 cihazı ile birlikte başarıyla oluşturuldu.',
-      });
-      homesQuery.retry();
-    } catch (err) {
-      showToast({
-        tone: 'error',
-        title: 'Preset Yüklenemedi',
-        message: getUserFacingError(err),
-      });
-    }
-  };
-
   return (
-    <div className={`app-shell ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+    <div className="app-shell">
       <div className="ambient ambient--one" aria-hidden="true" />
       <div className="ambient ambient--two" aria-hidden="true" />
 
-      {/* Top Navigation & Status Header */}
-      <header className="px-6 py-3 bg-slate-900/60 border-b border-slate-800/80 backdrop-blur-md flex items-center justify-between z-20">
-        <div className="flex items-center gap-3">
-          <Header
-            isRefreshing={homesQuery.isRefreshing}
-            homeCount={homes.length}
-            onRegister={() => setRegistrationOpen(true)}
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Quick Demo Preset Button */}
-          <button
-            type="button"
-            onClick={handleDemoPreset}
-            className="px-3 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Demo Daire Ekle</span>
-          </button>
-
-          {/* TR / EN Toggle */}
-          <button
-            type="button"
-            onClick={() => setLang(lang === 'TR' ? 'EN' : 'TR')}
-            className="px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 rounded-xl text-slate-300 text-xs font-semibold transition-all"
-          >
-            {lang}
-          </button>
-
-          {/* Theme Toggle */}
-          <button
-            type="button"
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 rounded-xl text-slate-300 transition-all"
-            title="Tema Değiştir"
-          >
-            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-300" />}
-          </button>
-
-          {/* Logout Button */}
-          <button
-            type="button"
-            onClick={onLogout}
-            className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/50 border border-red-800/50 rounded-xl text-red-300 text-xs font-medium flex items-center gap-1.5 transition-all"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Çıkış</span>
-          </button>
-        </div>
-      </header>
+      <Header
+        isRefreshing={homesQuery.isRefreshing}
+        homeCount={homes.length}
+        onRegister={() => setRegistrationOpen(true)}
+        onLogout={onLogout}
+      />
 
       <main id="main-content" className="main-content">
         <section className="dashboard-intro" aria-labelledby="dashboard-title">

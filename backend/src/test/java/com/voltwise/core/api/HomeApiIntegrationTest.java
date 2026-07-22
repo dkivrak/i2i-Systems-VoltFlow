@@ -52,6 +52,17 @@ class HomeApiIntegrationTest {
     }
 
     @Test
+    void exposesAuthenticationEndpointAndValidatesItsRequest() throws Exception {
+        mvc.perform(post("/api/v1/auth/send-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation Failed"))
+                .andExpect(jsonPath("$.fieldErrors.email").exists())
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/send-otp"));
+    }
+
+    @Test
     void lazilyInitializesEmptyLiveStateAndListsIt() throws Exception {
         String response = mvc.perform(post("/api/v1/homes").contentType(MediaType.APPLICATION_JSON).content(validRequest()))
                 .andReturn().getResponse().getContentAsString();

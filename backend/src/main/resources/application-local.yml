@@ -20,7 +20,7 @@ spring:
     host: smtp.sendgrid.net
     port: 587
     username: apikey
-    password: ${SENDGRID_API_KEY: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}
+    password: ${SENDGRID_API_KEY:}
     properties.mail.smtp:
       auth: true
       starttls.enable: true
@@ -39,4 +39,4 @@ voltwise:
     penalty-tariff-multiplier: 1.50
   mail:
     enabled: true
-    from: sendgrid@voltflow.com
+    from: ${MAIL_FROM:noreply@voltflow.space}

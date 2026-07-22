@@ -28,7 +28,7 @@ public class AuthService {
     private final String mailFrom;
 
     public AuthService(JavaMailSender mailSender, JwtTokenProvider jwtTokenProvider,
-                       @Value("${voltwise.mail.from:no-reply@voltflow.space}") String mailFrom) {
+                       @Value("${voltwise.mail.from:noreply@voltflow.space}") String mailFrom) {
         this.mailSender = mailSender;
         this.jwtTokenProvider = jwtTokenProvider;
         this.mailFrom = mailFrom;
@@ -88,4 +88,3 @@ public class AuthService {
 
     private record OtpEntry(String code, Instant expiresAt) {}
 }
-

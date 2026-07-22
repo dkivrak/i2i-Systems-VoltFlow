@@ -111,6 +111,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     setError(null);
   };
 
+  const handleTemporaryLogin = () => {
+    setError(null);
+    setSuccessMsg(null);
+    onLoginSuccess('temporary@voltflow.local');
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -512,6 +518,41 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     </>
                   )}
                 </button>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }} aria-hidden="true">
+                  <span style={{ height: '1px', flex: 1, backgroundColor: '#20372f' }} />
+                  <span style={{ color: '#70847d', fontSize: '0.7rem', fontWeight: 600 }}>veya</span>
+                  <span style={{ height: '1px', flex: 1, backgroundColor: '#20372f' }} />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleTemporaryLogin}
+                  disabled={loading}
+                  style={{
+                    height: '44px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(85, 198, 236, 0.45)',
+                    backgroundColor: 'rgba(85, 198, 236, 0.08)',
+                    color: '#8edcf4',
+                    fontSize: '0.84rem',
+                    fontWeight: 800,
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    opacity: loading ? 0.6 : 1,
+                    transition: 'all 160ms ease'
+                  }}
+                >
+                  <Zap size={17} />
+                  <span>Geçici Giriş</span>
+                </button>
+
+                <p style={{ color: '#70847d', fontSize: '0.68rem', lineHeight: 1.45, margin: '-10px 0 0', textAlign: 'center' }}>
+                  E-posta göndermeden bu tarayıcı oturumu boyunca devam eder.
+                </p>
 
                 {/* Quick Presets */}
                 <div style={{ borderTop: '1px solid #20372f', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>

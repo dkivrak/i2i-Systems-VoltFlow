@@ -133,7 +133,7 @@ public class VoltWiseProperties {
 
     public static class Mail {
         private boolean enabled = true;
-        @NotBlank private String from = "noreply@voltwise.local";
+        @NotBlank private String from = "noreply@voltflow.space";
 
         public boolean isEnabled() { return enabled; }
         public void setEnabled(boolean enabled) { this.enabled = enabled; }

@@ -6,7 +6,7 @@ import { ApiError, api } from './api/client';
 import { HomeCard } from './components/HomeCard';
 import { anomalousHome, normalHome, warningHome } from './test/fixtures';
 
-import { setStoredToken } from './api/client';
+import { getStoredToken, setStoredToken } from './api/client';
 import { beforeEach } from 'vitest';
 
 describe('VoltWise dashboard', () => {
@@ -104,6 +104,26 @@ describe('VoltWise dashboard', () => {
 
     expect(await screen.findByRole('heading', { name: 'Kadıköy Evi' })).toBeInTheDocument();
     expect(statuses).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps only functional controls in the main header', async () => {
+    vi.spyOn(api, 'getHomeStatuses').mockResolvedValue([normalHome]);
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await screen.findByRole('heading', { name: 'Kadıköy Evi' });
+    expect(screen.queryByRole('button', { name: 'Demo Daire Ekle' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tema Değiştir' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'TR' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Yeni ev ekle' }));
+    expect(await screen.findByRole('dialog', { name: 'Yeni ev kaydı' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Vazgeç' }));
+
+    await user.click(screen.getByRole('button', { name: 'Çıkış' }));
+    expect(await screen.findByRole('heading', { name: 'Hesabınıza Giriş Yapın' })).toBeInTheDocument();
+    expect(getStoredToken()).toBeNull();
   });
 });
 

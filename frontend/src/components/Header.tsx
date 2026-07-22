@@ -1,12 +1,13 @@
-import { Plus, Zap } from 'lucide-react';
+import { LogOut, Plus, Zap } from 'lucide-react';
 
 interface HeaderProps {
   isRefreshing: boolean;
   homeCount: number;
   onRegister: () => void;
+  onLogout: () => void;
 }
 
-export function Header({ isRefreshing, homeCount, onRegister }: HeaderProps) {
+export function Header({ isRefreshing, homeCount, onRegister, onLogout }: HeaderProps) {
   return (
     <header className="app-header">
       <a className="brand" href="#main-content" aria-label="VoltWise ana içeriğe git">
@@ -26,6 +27,10 @@ export function Header({ isRefreshing, homeCount, onRegister }: HeaderProps) {
         <button className="button button--primary header-add-button" type="button" onClick={onRegister}>
           <Plus aria-hidden="true" size={18} />
           <span>Yeni ev ekle</span>
+        </button>
+        <button className="button button--secondary header-logout-button" type="button" onClick={onLogout}>
+          <LogOut aria-hidden="true" size={17} />
+          <span>Çıkış</span>
         </button>
       </div>
     </header>
