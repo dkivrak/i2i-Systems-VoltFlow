@@ -29,4 +29,7 @@ public class InMemoryLiveStateStore implements LiveStateStore {
     @Override public boolean compareAndSet(Long homeId, HomeLiveState expected, HomeLiveState replacement) {
         return states.replace(homeId, expected, replacement);
     }
+    @Override public boolean remove(Long homeId) {
+        return states.remove(homeId) != null;
+    }
 }
