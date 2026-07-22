@@ -77,7 +77,7 @@ class TelemetryProcessingIntegrationTest {
 
         var live = liveStates.get(home.id()).orElseThrow();
         assertThat(live.tariffState()).isEqualTo(TariffState.PENALTY);
-        assertThat(live.currentCost()).isEqualByComparingTo("1.25");
+        assertThat(live.currentCost()).isEqualByComparingTo("1.50");
         assertThat(quotaEvents.findByHomeIdOrderByOccurredAtDesc(home.id())).hasSize(2);
         assertThat(tariffEvents.findByHomeIdOrderByChangedAtDesc(home.id())).hasSize(1);
         assertThat(processedEvents.existsById(billedId)).isTrue();

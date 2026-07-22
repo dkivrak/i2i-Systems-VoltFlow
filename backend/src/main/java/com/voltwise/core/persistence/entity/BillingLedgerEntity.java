@@ -50,4 +50,25 @@ public class BillingLedgerEntity extends AuditedEntity {
 
     @Version
     private long version;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public HomeEntity getHome() { return home; }
+    public void setHome(HomeEntity home) { this.home = home; }
+
+    public LocalDate getBillingPeriod() { return billingPeriod; }
+    public void setBillingPeriod(LocalDate billingPeriod) { this.billingPeriod = billingPeriod; }
+
+    public BigDecimal getAccumulatedEnergyKwh() { return accumulatedEnergyKwh; }
+    public void setAccumulatedEnergyKwh(BigDecimal accumulatedEnergyKwh) { this.accumulatedEnergyKwh = accumulatedEnergyKwh; }
+
+    public BigDecimal getAccumulatedCost() { return accumulatedCost; }
+    public void setAccumulatedCost(BigDecimal accumulatedCost) { this.accumulatedCost = accumulatedCost; }
+
+    public TariffState getTariffState() { return tariffState; }
+    public void setTariffState(TariffState tariffState) { this.tariffState = tariffState; }
+
+    public long getVersion() { return version; }
+    public void setVersion(long version) { this.version = version; }
 }

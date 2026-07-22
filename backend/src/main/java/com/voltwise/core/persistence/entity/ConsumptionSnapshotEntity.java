@@ -42,4 +42,34 @@ public class ConsumptionSnapshotEntity {
     private BigDecimal cost;
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public HomeEntity getHome() { return home; }
+    public void setHome(HomeEntity home) { this.home = home; }
+
+    public ApplianceEntity getAppliance() { return appliance; }
+    public void setAppliance(ApplianceEntity appliance) { this.appliance = appliance; }
+
+    public Instant getPeriodStart() { return periodStart; }
+    public void setPeriodStart(Instant periodStart) { this.periodStart = periodStart; }
+
+    public Instant getPeriodEnd() { return periodEnd; }
+    public void setPeriodEnd(Instant periodEnd) { this.periodEnd = periodEnd; }
+
+    public BigDecimal getEnergyKwh() { return energyKwh; }
+    public void setEnergyKwh(BigDecimal energyKwh) { this.energyKwh = energyKwh; }
+
+    public BigDecimal getAveragePowerWatts() { return averagePowerWatts; }
+    public void setAveragePowerWatts(BigDecimal averagePowerWatts) { this.averagePowerWatts = averagePowerWatts; }
+
+    public BigDecimal getMaximumPowerWatts() { return maximumPowerWatts; }
+    public void setMaximumPowerWatts(BigDecimal maximumPowerWatts) { this.maximumPowerWatts = maximumPowerWatts; }
+
+    public BigDecimal getCost() { return cost; }
+    public void setCost(BigDecimal cost) { this.cost = cost; }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

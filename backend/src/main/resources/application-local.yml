@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: voltwise-core
+  datasource:
+    url: jdbc:h2:mem:voltwise;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    open-in-view: false
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+  flyway:
+    enabled: false
+  kafka:
+    listener:
+      auto-startup: false
+  mail:
+    host: smtp.sendgrid.net
+    port: 587
+    username: apikey
+    password: ${SENDGRID_API_KEY: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}
+    properties.mail.smtp:
+      auth: true
+      starttls.enable: true
+      connectiontimeout: 5000
+      timeout: 5000
+      writetimeout: 5000
+
+voltwise:
+  kafka:
+    enabled: false
+  ignite:
+    enabled: false
+  billing:
+    default-monthly-budget: 1000.00
+    normal-tariff-per-kwh: 2.50
+    penalty-tariff-multiplier: 1.50
+  mail:
+    enabled: true
+    from: sendgrid@voltflow.com

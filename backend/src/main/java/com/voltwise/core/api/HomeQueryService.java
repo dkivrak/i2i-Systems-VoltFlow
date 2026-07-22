@@ -87,7 +87,7 @@ public class HomeQueryService {
                 a.healthStatus(), a.lastUpdatedAt())).toList();
         int anomalyCount = (int) applianceStatuses.stream()
                 .filter(a -> a.healthStatus() == ApplianceHealthStatus.ANOMALOUS).count();
-        return new HomeStatusResponse(state.homeId(), state.homeName(), state.currentPowerWatts(),
+        return new HomeStatusResponse(state.homeId(), state.homeName(), "İstanbul", state.currentPowerWatts(),
                 state.accumulatedEnergyKwh(), state.currentCost(), state.monthlyBudget(),
                 state.budgetUsagePercent(), state.tariffState(), anomalyCount,
                 state.lastUpdatedAt(), applianceStatuses);

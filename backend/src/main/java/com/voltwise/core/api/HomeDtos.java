@@ -8,6 +8,7 @@ import com.voltwise.core.domain.TariffState;
 import com.voltwise.core.domain.TriggerType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -23,28 +24,49 @@ public final class HomeDtos {
     private HomeDtos() {}
 
     public record CreateHomeRequest(
-            @Schema(description = "Display name of the home", example = "Kadikoy Home")
-            @NotBlank @Size(max = 160) String name,
+            @Schema(description = "Display name of the home", example = "Kadıköy Evim")
+            @NotBlank @Size(min = 2, max = 160, message = "Ev adı 2-160 karakter olmalıdır") String name,
+
+            @Schema(description = "City location of the home", example = "İstanbul")
+            @Size(max = 100) String city,
+
             @Schema(description = "Recipient for quota and anomaly notifications", example = "owner@example.com")
-            @NotBlank @Email @Size(max = 320) String contactEmail,
-            @Schema(description = "Optional monthly budget; DEFAULT_MONTHLY_BUDGET is used when omitted", example = "1500.00")
-            @DecimalMin(value = "0.01") BigDecimal monthlyBudget,
-            @Schema(description = "Optional normal TL/kWh tariff; NORMAL_TARIFF_PER_KWH is used when omitted", example = "2.50")
-            @DecimalMin(value = "0.000001") BigDecimal normalTariffPerKwh,
-            @Schema(description = "Optional post-budget multiplier; PENALTY_TARIFF_MULTIPLIER is used when omitted", example = "1.50")
-            @DecimalMin(value = "1.0") BigDecimal penaltyMultiplier,
-            @Schema(description = "One or more appliances; duplicate appliance types are supported")
-            @NotEmpty @Size(max = 100) List<@Valid ApplianceRequest> appliances
-    ) {}
+            @NotBlank @Email(message = "Geçerli bir e-posta adresi giriniz") @Size(max = 320) String contactEmail,
+
+            @Schema(description = "Monthly budget in TL (1 to 1,000,000 TL)", example = "1500.00")
+            @DecimalMin(value = "1.00", message = "Aylık bütçe en az 1 ₺ olmalıdır")
+            @DecimalMax(value = "1000000.00", message = "Aylık bütçe en fazla 1.000.000 ₺ olabilir") BigDecimal monthlyBudget,
+
+            @Schema(description = "Normal TL/kWh tariff (0.01 to 100 TL)", example = "2.50")
+            @DecimalMin(value = "0.01", message = "Normal tarife en az 0,01 ₺/kWh olmalıdır")
+            @DecimalMax(value = "100.00", message = "Normal tarife en fazla 100 ₺/kWh olabilir") BigDecimal normalTariffPerKwh,
+
+            @Schema(description = "Post-budget penalty multiplier (1.01 to 10.0)", example = "1.50")
+            @DecimalMin(value = "1.01", message = "Ek tarife çarpanı 1,01'den büyük olmalıdır")
+            @DecimalMax(value = "10.00", message = "Ek tarife çarpanı en fazla 10,0 olabilir") BigDecimal penaltyMultiplier,
+
+            @Schema(description = "One to 20 appliances")
+            @NotEmpty(message = "En az bir cihaz eklenmelidir")
+            @Size(min = 1, max = 20, message = "Cihaz adedi 1 ile 20 arasında olmalıdır")
+            List<@Valid ApplianceRequest> appliances
+    ) {
+        public CreateHomeRequest(String name, String contactEmail, BigDecimal monthlyBudget,
+                                 BigDecimal normalTariffPerKwh, BigDecimal penaltyMultiplier,
+                                 List<ApplianceRequest> appliances) {
+            this(name, "İstanbul", contactEmail, monthlyBudget, normalTariffPerKwh, penaltyMultiplier, appliances);
+        }
+    }
 
     public record ApplianceRequest(
-            @Schema(example = "Kitchen Kettle") @NotBlank @Size(max = 160) String name,
-            @Schema(example = "KETTLE") @NotNull ApplianceType type,
-            @Schema(example = "2200") @NotNull @DecimalMin(value = "0.1") BigDecimal safePowerLimitWatts
+            @Schema(example = "Mutfak Kettle") @NotBlank @Size(max = 160) String name,
+            @Schema(example = "KETTLE") @NotNull(message = "Cihaz türü zorunludur") ApplianceType type,
+            @Schema(example = "2300") @NotNull(message = "Güvenli Watt sınırı zorunludur")
+            @DecimalMin(value = "1.0", message = "Güvenli Watt sınırı en az 1 W olmalıdır")
+            @DecimalMax(value = "50000.0", message = "Güvenli Watt sınırı en fazla 50.000 W olabilir") BigDecimal safePowerLimitWatts
     ) {}
 
     public record HomeResponse(
-            Long id, String name, String contactEmail, BigDecimal monthlyBudget,
+            Long id, String name, String city, String contactEmail, BigDecimal monthlyBudget,
             BigDecimal normalTariffPerKwh, BigDecimal penaltyMultiplier,
             Instant createdAt, List<ApplianceResponse> appliances
     ) {}
@@ -54,7 +76,7 @@ public final class HomeDtos {
     ) {}
 
     public record HomeStatusResponse(
-            Long homeId, String homeName, BigDecimal currentPowerWatts,
+            Long homeId, String homeName, String city, BigDecimal currentPowerWatts,
             BigDecimal accumulatedEnergyKwh, BigDecimal currentCost, BigDecimal monthlyBudget,
             BigDecimal budgetUsagePercent, TariffState tariffState, int anomalyCount,
             Instant lastUpdatedAt, List<ApplianceStatusResponse> appliances

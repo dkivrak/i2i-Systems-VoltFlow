@@ -44,4 +44,31 @@ public class TariffChangeEventEntity {
     private BigDecimal triggerUsagePercent;
     @Column(name = "changed_at", nullable = false)
     private Instant changedAt;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public HomeEntity getHome() { return home; }
+    public void setHome(HomeEntity home) { this.home = home; }
+
+    public LocalDate getBillingPeriod() { return billingPeriod; }
+    public void setBillingPeriod(LocalDate billingPeriod) { this.billingPeriod = billingPeriod; }
+
+    public TariffState getPreviousTariff() { return previousTariff; }
+    public void setPreviousTariff(TariffState previousTariff) { this.previousTariff = previousTariff; }
+
+    public TariffState getNewTariff() { return newTariff; }
+    public void setNewTariff(TariffState newTariff) { this.newTariff = newTariff; }
+
+    public BigDecimal getPreviousRate() { return previousRate; }
+    public void setPreviousRate(BigDecimal previousRate) { this.previousRate = previousRate; }
+
+    public BigDecimal getNewRate() { return newRate; }
+    public void setNewRate(BigDecimal newRate) { this.newRate = newRate; }
+
+    public BigDecimal getTriggerUsagePercent() { return triggerUsagePercent; }
+    public void setTriggerUsagePercent(BigDecimal triggerUsagePercent) { this.triggerUsagePercent = triggerUsagePercent; }
+
+    public Instant getChangedAt() { return changedAt; }
+    public void setChangedAt(Instant changedAt) { this.changedAt = changedAt; }
 }

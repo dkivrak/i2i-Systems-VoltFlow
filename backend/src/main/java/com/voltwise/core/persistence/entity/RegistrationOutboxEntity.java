@@ -76,4 +76,49 @@ public class RegistrationOutboxEntity extends AuditedEntity {
     @Version
     @Column(name = "row_version", nullable = false)
     private long rowVersion;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public UUID getEventId() { return eventId; }
+    public void setEventId(UUID eventId) { this.eventId = eventId; }
+
+    public HomeEntity getHome() { return home; }
+    public void setHome(HomeEntity home) { this.home = home; }
+
+    public int getEventVersion() { return eventVersion; }
+    public void setEventVersion(int eventVersion) { this.eventVersion = eventVersion; }
+
+    public String getEventType() { return eventType; }
+    public void setEventType(String eventType) { this.eventType = eventType; }
+
+    public Instant getOccurredAt() { return occurredAt; }
+    public void setOccurredAt(Instant occurredAt) { this.occurredAt = occurredAt; }
+
+    public String getTopic() { return topic; }
+    public void setTopic(String topic) { this.topic = topic; }
+
+    public String getEventPayload() { return eventPayload; }
+    public void setEventPayload(String eventPayload) { this.eventPayload = eventPayload; }
+
+    public RegistrationOutboxStatus getStatus() { return status; }
+    public void setStatus(RegistrationOutboxStatus status) { this.status = status; }
+
+    public int getAttemptCount() { return attemptCount; }
+    public void setAttemptCount(int attemptCount) { this.attemptCount = attemptCount; }
+
+    public Instant getNextAttemptAt() { return nextAttemptAt; }
+    public void setNextAttemptAt(Instant nextAttemptAt) { this.nextAttemptAt = nextAttemptAt; }
+
+    public Instant getLastAttemptAt() { return lastAttemptAt; }
+    public void setLastAttemptAt(Instant lastAttemptAt) { this.lastAttemptAt = lastAttemptAt; }
+
+    public Instant getPublishedAt() { return publishedAt; }
+    public void setPublishedAt(Instant publishedAt) { this.publishedAt = publishedAt; }
+
+    public String getLastFailure() { return lastFailure; }
+    public void setLastFailure(String lastFailure) { this.lastFailure = lastFailure; }
+
+    public long getRowVersion() { return rowVersion; }
+    public void setRowVersion(long rowVersion) { this.rowVersion = rowVersion; }
 }
