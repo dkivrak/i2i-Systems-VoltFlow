@@ -43,4 +43,31 @@ public class AnomalyEventEntity {
     private Instant detectedAt;
     @Column(name = "resolved_at")
     private Instant resolvedAt;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public HomeEntity getHome() { return home; }
+    public void setHome(HomeEntity home) { this.home = home; }
+
+    public ApplianceEntity getAppliance() { return appliance; }
+    public void setAppliance(ApplianceEntity appliance) { this.appliance = appliance; }
+
+    public BigDecimal getMeasuredPowerWatts() { return measuredPowerWatts; }
+    public void setMeasuredPowerWatts(BigDecimal measuredPowerWatts) { this.measuredPowerWatts = measuredPowerWatts; }
+
+    public BigDecimal getSafePowerLimitWatts() { return safePowerLimitWatts; }
+    public void setSafePowerLimitWatts(BigDecimal safePowerLimitWatts) { this.safePowerLimitWatts = safePowerLimitWatts; }
+
+    public int getConsecutiveBreachCount() { return consecutiveBreachCount; }
+    public void setConsecutiveBreachCount(int consecutiveBreachCount) { this.consecutiveBreachCount = consecutiveBreachCount; }
+
+    public AnomalyStatus getStatus() { return status; }
+    public void setStatus(AnomalyStatus status) { this.status = status; }
+
+    public Instant getDetectedAt() { return detectedAt; }
+    public void setDetectedAt(Instant detectedAt) { this.detectedAt = detectedAt; }
+
+    public Instant getResolvedAt() { return resolvedAt; }
+    public void setResolvedAt(Instant resolvedAt) { this.resolvedAt = resolvedAt; }
 }

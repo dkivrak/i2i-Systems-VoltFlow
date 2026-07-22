@@ -33,6 +33,9 @@ public class HomeEntity extends AuditedEntity {
     @Column(name = "contact_email", nullable = false, length = 320)
     private String contactEmail;
 
+    @Column(nullable = false, length = 100)
+    private String city = "İstanbul";
+
     @Column(name = "monthly_budget", nullable = false, precision = 19, scale = 4)
     private BigDecimal monthlyBudget;
 
@@ -44,6 +47,30 @@ public class HomeEntity extends AuditedEntity {
 
     @OneToMany(mappedBy = "home", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ApplianceEntity> appliances = new ArrayList<>();
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getContactEmail() { return contactEmail; }
+    public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
+
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+
+    public BigDecimal getMonthlyBudget() { return monthlyBudget; }
+    public void setMonthlyBudget(BigDecimal monthlyBudget) { this.monthlyBudget = monthlyBudget; }
+
+    public BigDecimal getNormalTariffPerKwh() { return normalTariffPerKwh; }
+    public void setNormalTariffPerKwh(BigDecimal normalTariffPerKwh) { this.normalTariffPerKwh = normalTariffPerKwh; }
+
+    public BigDecimal getPenaltyMultiplier() { return penaltyMultiplier; }
+    public void setPenaltyMultiplier(BigDecimal penaltyMultiplier) { this.penaltyMultiplier = penaltyMultiplier; }
+
+    public List<ApplianceEntity> getAppliances() { return appliances; }
+    public void setAppliances(List<ApplianceEntity> appliances) { this.appliances = appliances; }
 
     public void addAppliance(ApplianceEntity appliance) {
         appliance.setHome(this);

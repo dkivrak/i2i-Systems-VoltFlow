@@ -45,4 +45,34 @@ public class NotificationEntity {
     private Instant createdAt;
     @Column(name = "sent_at")
     private Instant sentAt;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public HomeEntity getHome() { return home; }
+    public void setHome(HomeEntity home) { this.home = home; }
+
+    public RecommendationEntity getRecommendation() { return recommendation; }
+    public void setRecommendation(RecommendationEntity recommendation) { this.recommendation = recommendation; }
+
+    public NotificationChannel getChannel() { return channel; }
+    public void setChannel(NotificationChannel channel) { this.channel = channel; }
+
+    public String getRecipient() { return recipient; }
+    public void setRecipient(String recipient) { this.recipient = recipient; }
+
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) { this.subject = subject; }
+
+    public NotificationStatus getStatus() { return status; }
+    public void setStatus(NotificationStatus status) { this.status = status; }
+
+    public String getFailureReason() { return failureReason; }
+    public void setFailureReason(String failureReason) { this.failureReason = failureReason; }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Instant getSentAt() { return sentAt; }
+    public void setSentAt(Instant sentAt) { this.sentAt = sentAt; }
 }

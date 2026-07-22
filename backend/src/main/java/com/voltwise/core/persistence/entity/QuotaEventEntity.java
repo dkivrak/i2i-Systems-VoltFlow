@@ -43,4 +43,28 @@ public class QuotaEventEntity {
     private BigDecimal monthlyBudget;
     @Column(name = "occurred_at", nullable = false)
     private Instant occurredAt;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public HomeEntity getHome() { return home; }
+    public void setHome(HomeEntity home) { this.home = home; }
+
+    public LocalDate getBillingPeriod() { return billingPeriod; }
+    public void setBillingPeriod(LocalDate billingPeriod) { this.billingPeriod = billingPeriod; }
+
+    public QuotaThreshold getThreshold() { return threshold; }
+    public void setThreshold(QuotaThreshold threshold) { this.threshold = threshold; }
+
+    public BigDecimal getUsagePercent() { return usagePercent; }
+    public void setUsagePercent(BigDecimal usagePercent) { this.usagePercent = usagePercent; }
+
+    public BigDecimal getCurrentCost() { return currentCost; }
+    public void setCurrentCost(BigDecimal currentCost) { this.currentCost = currentCost; }
+
+    public BigDecimal getMonthlyBudget() { return monthlyBudget; }
+    public void setMonthlyBudget(BigDecimal monthlyBudget) { this.monthlyBudget = monthlyBudget; }
+
+    public Instant getOccurredAt() { return occurredAt; }
+    public void setOccurredAt(Instant occurredAt) { this.occurredAt = occurredAt; }
 }

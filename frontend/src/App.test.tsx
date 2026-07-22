@@ -6,7 +6,14 @@ import { ApiError, api } from './api/client';
 import { HomeCard } from './components/HomeCard';
 import { anomalousHome, normalHome, warningHome } from './test/fixtures';
 
+import { setStoredToken } from './api/client';
+import { beforeEach } from 'vitest';
+
 describe('VoltWise dashboard', () => {
+  beforeEach(() => {
+    setStoredToken('mock-jwt-token-for-test');
+  });
+
   afterEach(() => vi.restoreAllMocks());
 
   it('renders live home cards and overview values', async () => {

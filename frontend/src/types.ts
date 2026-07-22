@@ -32,6 +32,7 @@ export interface ApplianceStatus {
 export interface HomeStatus {
   homeId: number;
   homeName: string;
+  city?: string;
   currentPowerWatts: number;
   accumulatedEnergyKwh: number;
   currentCost: number;
@@ -84,6 +85,7 @@ export interface RegistrationApplianceRow {
 
 export interface HomeRegistrationRequest {
   name: string;
+  city?: string;
   contactEmail: string;
   monthlyBudget: number;
   normalTariffPerKwh: number;
