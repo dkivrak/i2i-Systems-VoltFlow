@@ -1,18 +1,26 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef, Suspense } from 'react';
 import {
   Zap, Home, LayoutGrid, TrendingUp, HelpCircle, LogOut, AlertTriangle, X,
   Sparkles, RefreshCw, PlusCircle, CheckCircle2, Filter, Heart, Trash2,
   Activity, Bell, Clock, ShieldAlert, Flame, Leaf, ZoomIn, ZoomOut,
   Radio, Cpu, Gauge, Download, FileJson, FileText, ChevronRight,
-  ArrowRight, Settings, Layers, Eye, Map as MapIcon, Database, Server, Navigation
+  ArrowRight, Settings, Layers, Eye, Map as MapIcon, Database, Server, Navigation,
+  ChevronDown, Search, Waves
 } from 'lucide-react';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
   CartesianGrid, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
-import { api, getUserFacingError } from './api/client';
+import { api, getUserFacingError, getStoredToken, setStoredToken } from './api/client';
 import { usePollingResource, getPollingInterval } from './hooks/usePollingResource';
 import type { HomeStatus, HistoryPoint, HomeEvent } from './types';
+import { EmptyState, ErrorState, DashboardSkeleton, InlineSpinner } from './components/PageStates';
+import { Header } from './components/Header';
+import { HomeCard } from './components/HomeCard';
+import { OverviewStats } from './components/OverviewStats';
+import { RegistrationModal } from './components/RegistrationModal';
+import { LoginPage } from './components/LoginPage';
+import { ToastProvider } from './components/ToastProvider';
 
 // ─── Color Maps ────────────────────────────────────────────────────────────────
 const DEVICE_DATA = [

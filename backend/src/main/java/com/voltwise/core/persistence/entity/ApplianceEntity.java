@@ -41,4 +41,19 @@ public class ApplianceEntity extends AuditedEntity {
 
     @Column(name = "safe_power_limit_watts", nullable = false, precision = 19, scale = 3)
     private BigDecimal safePowerLimitWatts;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public HomeEntity getHome() { return home; }
+    public void setHome(HomeEntity home) { this.home = home; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public ApplianceType getType() { return type; }
+    public void setType(ApplianceType type) { this.type = type; }
+
+    public BigDecimal getSafePowerLimitWatts() { return safePowerLimitWatts; }
+    public void setSafePowerLimitWatts(BigDecimal safePowerLimitWatts) { this.safePowerLimitWatts = safePowerLimitWatts; }
 }

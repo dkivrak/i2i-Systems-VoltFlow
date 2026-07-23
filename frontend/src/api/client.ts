@@ -25,6 +25,20 @@ const healthStates = new Set<ApplianceHealthStatus>(['NORMAL', 'ANOMALOUS']);
 const tariffStates = new Set<TariffState>(['NORMAL', 'PENALTY']);
 const applianceTypes = new Set<string>(APPLIANCE_TYPES);
 
+const TOKEN_KEY = 'voltflow_jwt_token';
+
+export function getStoredToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setStoredToken(token: string | null): void {
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
 type UnknownRecord = Record<string, unknown>;
 
 export class ApiError extends Error {
@@ -146,6 +160,10 @@ async function request<T>(
 ): Promise<T> {
   const linkedSignal = sharedSignal ?? createLinkedSignal(externalSignal);
   const { signal, timedOut } = linkedSignal;
+  const token = getStoredToken();
+
+  const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
@@ -153,10 +171,17 @@ async function request<T>(
       headers: {
         Accept: 'application/json',
         ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...authHeaders,
         ...options.headers,
       },
     });
     const payload = await readPayload(response);
+
+    if (response.status === 401) {
+      setStoredToken(null);
+      window.dispatchEvent(new Event('voltflow_unauthorized'));
+      throw new ApiError('Oturum süreniz doldu, lütfen tekrar giriş yapın.', 401);
+    }
 
     if (!response.ok) {
       const errorBody = nestedRecord(payload);
@@ -341,6 +366,24 @@ function normalizeRecommendation(value: unknown, index: number): Recommendation 
 }
 
 export const api = {
+  async sendOtp(email: string): Promise<{ message: string; expiresSeconds: number }> {
+    return request<{ message: string; expiresSeconds: number }>('/auth/send-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  async verifyOtp(email: string, code: string): Promise<{ token: string; email: string; message: string }> {
+    const res = await request<{ token: string; email: string; message: string }>('/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    });
+    if (res.token) {
+      setStoredToken(res.token);
+    }
+    return res;
+  },
+
   async getHomeStatuses(signal?: AbortSignal): Promise<HomeStatus[]> {
     const homes: HomeStatus[] = [];
     const seenPages = new Set<string>();
@@ -421,6 +464,14 @@ export const api = {
       signal,
     );
     return response ? normalizeHomeStatus(response) : null;
+  },
+
+  async deleteHome(homeId: number, signal?: AbortSignal): Promise<void> {
+    await request<void>(`/homes/${homeId}`, { method: 'DELETE' }, signal);
+  },
+
+  async deleteAppliance(homeId: number, applianceId: number, signal?: AbortSignal): Promise<void> {
+    await request<void>(`/homes/${homeId}/appliances/${applianceId}`, { method: 'DELETE' }, signal);
   },
 };
 

@@ -10,4 +10,5 @@ public interface LiveStateStore {
     HomeLiveState putIfAbsent(Long homeId, HomeLiveState initialState);
     HomeLiveState update(Long homeId, UnaryOperator<HomeLiveState> updater);
     boolean compareAndSet(Long homeId, HomeLiveState expected, HomeLiveState replacement);
+    default boolean remove(Long homeId) { return false; }
 }

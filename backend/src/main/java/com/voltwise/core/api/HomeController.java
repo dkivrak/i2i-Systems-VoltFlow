@@ -134,4 +134,18 @@ public class HomeController {
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return queryService.recommendations(homeId, page, size);
     }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/{homeId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete a home and all associated data")
+    public void deleteHome(@PathVariable Long homeId) {
+        homeService.deleteHome(homeId);
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/{homeId}/appliances/{applianceId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete an appliance from a home")
+    public void deleteAppliance(@PathVariable Long homeId, @PathVariable Long applianceId) {
+        homeService.deleteAppliance(homeId, applianceId);
+    }
 }

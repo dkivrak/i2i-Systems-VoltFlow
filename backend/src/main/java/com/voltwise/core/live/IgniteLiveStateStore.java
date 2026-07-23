@@ -78,6 +78,11 @@ public class IgniteLiveStateStore implements LiveStateStore {
         throw new IllegalStateException("Live state compare-and-set contention exceeded retry limit for home " + homeId);
     }
 
+    @Override
+    public boolean remove(Long homeId) {
+        return cache.remove(homeId);
+    }
+
     private String write(HomeLiveState state) {
         try { return objectMapper.writeValueAsString(state); }
         catch (JsonProcessingException ex) { throw new IllegalStateException("Cannot serialize live state", ex); }

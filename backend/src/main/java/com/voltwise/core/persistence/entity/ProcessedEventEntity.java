@@ -4,16 +4,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.time.Instant;
 import java.util.UUID;
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "processed_events")
 public class ProcessedEventEntity {
@@ -23,4 +16,16 @@ public class ProcessedEventEntity {
     private String eventType;
     @Column(name = "processed_at", nullable = false)
     private Instant processedAt;
+
+    public ProcessedEventEntity() {}
+
+    public ProcessedEventEntity(UUID eventId, String eventType, Instant processedAt) {
+        this.eventId = eventId;
+        this.eventType = eventType;
+        this.processedAt = processedAt;
+    }
+
+    public UUID getEventId() { return eventId; }
+    public String getEventType() { return eventType; }
+    public Instant getProcessedAt() { return processedAt; }
 }
