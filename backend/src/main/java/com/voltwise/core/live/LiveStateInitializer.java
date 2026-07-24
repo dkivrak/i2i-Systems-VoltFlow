@@ -8,6 +8,8 @@ import com.voltwise.core.persistence.entity.HomeEntity;
 import com.voltwise.core.persistence.repository.BillingLedgerRepository;
 import com.voltwise.core.persistence.repository.HomeRepository;
 import com.voltwise.core.persistence.repository.AnomalyEventRepository;
+import com.voltwise.core.config.VoltWiseProperties;
+import com.voltwise.core.registration.RegistrationPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -30,12 +32,18 @@ public class LiveStateInitializer {
     private final BillingLedgerRepository ledgers;
     private final AnomalyEventRepository anomalies;
 
+    private final RegistrationPublisher publisher;
+    private final VoltWiseProperties properties;
+
     public LiveStateInitializer(LiveStateStore store, HomeRepository homes, BillingLedgerRepository ledgers,
-                                AnomalyEventRepository anomalies) {
+                                AnomalyEventRepository anomalies, RegistrationPublisher publisher,
+                                VoltWiseProperties properties) {
         this.store = store;
         this.homes = homes;
         this.ledgers = ledgers;
         this.anomalies = anomalies;
+        this.publisher = publisher;
+        this.properties = properties;
     }
 
     @Transactional(readOnly = true)
@@ -51,8 +59,26 @@ public class LiveStateInitializer {
     @EventListener(ApplicationReadyEvent.class)
     @Transactional(readOnly = true)
     public void rebuildAfterStartup() {
-        homes.findAll().forEach(home -> ensure(home.getId()));
+        homes.findAll().forEach(home -> {
+            ensure(home.getId());
+            publishAssetRegistrationIfNeeded(home);
+        });
         log.info("Live-state startup rebuild checked {} registered homes", homes.count());
+    }
+
+    private void publishAssetRegistrationIfNeeded(HomeEntity home) {
+        try {
+            var applianceList = home.getAppliances().stream()
+                    .map(a -> new com.voltwise.core.event.AssetRegistrationEvent.RegisteredAppliance(
+                            a.getId(), a.getName(), a.getType(), a.getSafePowerLimitWatts()))
+                    .toList();
+            var event = new com.voltwise.core.event.AssetRegistrationEvent(
+                    java.util.UUID.randomUUID(), 1, "ASSET_REGISTRATION_DISCOVERED",
+                    java.time.Instant.now(), home.getId(), home.getName(), applianceList);
+            publisher.publish(properties.getKafka().getAssetRegistrationTopic(), event);
+        } catch (Exception ex) {
+            log.warn("Failed to publish asset registration on startup for homeId={}", home.getId(), ex);
+        }
     }
 
     private HomeLiveState initialize(Long homeId) {
