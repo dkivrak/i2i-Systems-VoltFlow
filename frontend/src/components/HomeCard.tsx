@@ -101,8 +101,25 @@ export const HomeCard = memo(function HomeCard({ home, onSelect }: HomeCardProps
     return () => window.clearInterval(interval);
   }, [freshness]);
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onSelect(home);
+    }
+  };
+
   return (
-    <article className={cardClasses} data-quota-state={quotaTone} data-anomaly={home.anomalyCount > 0}>
+    <article
+      className={cardClasses}
+      data-quota-state={quotaTone}
+      data-anomaly={home.anomalyCount > 0}
+      onClick={() => onSelect(home)}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label={`${home.homeName} detaylarını göster`}
+      style={{ cursor: 'pointer' }}
+    >
       <div className="home-card__accent" aria-hidden="true" />
       <div className="home-card__header">
         <div className="home-card__identity">
