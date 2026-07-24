@@ -82,6 +82,10 @@ public class TelemetryProcessingService {
 
         ApplianceEntity appliance = appliances.findById(event.applianceId()).orElse(null);
         if (appliance == null) {
+            // Asset-registration is delivered asynchronously. A simulator may still have
+            // an old asset in memory briefly after it has been removed from the system.
+            // Treat those late readings as consumed so one stale device cannot block all
+            // valid telemetry sharing the same Kafka partition.
             markProcessed(event);
             return;
         }
