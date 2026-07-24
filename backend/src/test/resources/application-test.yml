@@ -22,8 +22,6 @@ voltwise:
     enabled: false
   snapshots:
     interval-ms: 3600000
-  mail:
-    enabled: false
 logging:
   level:
     org.hibernate.SQL: warn

@@ -16,18 +16,6 @@ spring:
   kafka:
     listener:
       auto-startup: false
-  mail:
-    host: smtp.sendgrid.net
-    port: 587
-    username: apikey
-    password: ${SENDGRID_API_KEY:}
-    properties.mail.smtp:
-      auth: true
-      starttls.enable: true
-      connectiontimeout: 5000
-      timeout: 5000
-      writetimeout: 5000
-
 voltwise:
   kafka:
     enabled: false
@@ -37,6 +25,3 @@ voltwise:
     default-monthly-budget: 1000.00
     normal-tariff-per-kwh: 2.50
     penalty-tariff-multiplier: 1.50
-  mail:
-    enabled: true
-    from: ${MAIL_FROM:noreply@voltflow.space}

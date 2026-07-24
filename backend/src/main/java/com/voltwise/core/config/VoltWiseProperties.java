@@ -18,8 +18,6 @@ public class VoltWiseProperties {
     @Valid private Billing billing = new Billing();
     @Valid private Snapshots snapshots = new Snapshots();
     @Valid private Gemini gemini = new Gemini();
-    @Valid private Mail mail = new Mail();
-
     public Kafka getKafka() { return kafka; }
     public void setKafka(Kafka kafka) { this.kafka = kafka; }
 
@@ -37,9 +35,6 @@ public class VoltWiseProperties {
 
     public Gemini getGemini() { return gemini; }
     public void setGemini(Gemini gemini) { this.gemini = gemini; }
-
-    public Mail getMail() { return mail; }
-    public void setMail(Mail mail) { this.mail = mail; }
 
     public static class Kafka {
         private boolean enabled = true;
@@ -129,15 +124,5 @@ public class VoltWiseProperties {
         public void setConnectTimeoutMs(int connectTimeoutMs) { this.connectTimeoutMs = connectTimeoutMs; }
         public int getReadTimeoutMs() { return readTimeoutMs; }
         public void setReadTimeoutMs(int readTimeoutMs) { this.readTimeoutMs = readTimeoutMs; }
-    }
-
-    public static class Mail {
-        private boolean enabled = true;
-        @NotBlank private String from = "noreply@voltflow.space";
-
-        public boolean isEnabled() { return enabled; }
-        public void setEnabled(boolean enabled) { this.enabled = enabled; }
-        public String getFrom() { return from; }
-        public void setFrom(String from) { this.from = from; }
     }
 }

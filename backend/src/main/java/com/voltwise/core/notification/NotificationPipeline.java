@@ -19,16 +19,13 @@ public class NotificationPipeline {
     private final LiveStateInitializer initializer;
     private final RecommendationGenerator generator;
     private final NotificationPersistenceService persistence;
-    private final EmailGateway emailGateway;
 
     public NotificationPipeline(HomeRepository homes, LiveStateInitializer initializer,
-                                RecommendationGenerator generator, NotificationPersistenceService persistence,
-                                EmailGateway emailGateway) {
+                                RecommendationGenerator generator, NotificationPersistenceService persistence) {
         this.homes = homes;
         this.initializer = initializer;
         this.generator = generator;
         this.persistence = persistence;
-        this.emailGateway = emailGateway;
     }
 
     @Async("notificationExecutor")
@@ -39,13 +36,7 @@ public class NotificationPipeline {
             RecommendationGenerator.GeneratedRecommendation generated = generator.generate(context);
             String subject = subject(request);
             persistence.createPending(request, generated, subject).ifPresent(pending -> {
-                try {
-                    emailGateway.send(pending.recipient(), pending.subject(), pending.body());
-                    persistence.markSent(pending.notificationId());
-                } catch (Exception ex) {
-                    persistence.markFailed(pending.notificationId(), safeMessage(ex));
-                    log.warn("Notification {} delivery failed: {}", pending.notificationId(), safeMessage(ex));
-                }
+                persistence.markSent(pending.notificationId());
             });
         } catch (Exception ex) {
             log.error("Notification pipeline failed for trigger={} referenceId={}",
