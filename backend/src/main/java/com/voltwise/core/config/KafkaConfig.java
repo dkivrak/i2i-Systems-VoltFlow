@@ -33,8 +33,12 @@ public class KafkaConfig {
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(operations,
                 (record, exception) -> new org.apache.kafka.common.TopicPartition(
                         properties.getKafka().getTelemetryDltTopic(), record.partition()));
-        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3));
-        handler.addNotRetryableExceptions(IllegalArgumentException.class);
+        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 2));
+        handler.addNotRetryableExceptions(
+                IllegalArgumentException.class,
+                NullPointerException.class,
+                IllegalStateException.class
+        );
         return handler;
     }
 }
