@@ -75,8 +75,7 @@ function validate(form: RegistrationFormState): FieldErrors {
     (total, appliance) => total + (Number.isFinite(appliance.quantity) ? appliance.quantity : 0),
     0,
   );
-  if (!form.appliances.length) errors.appliances = 'En az bir cihaz ekleyin.';
-  else if (applianceCount > 20) errors.appliances = 'Bir eve en fazla 20 cihaz ekleyebilirsiniz.';
+  if (applianceCount > 20) errors.appliances = 'Bir eve en fazla 20 cihaz ekleyebilirsiniz.';
   form.appliances.forEach((appliance, index) => {
     const baseName =
       appliance.name.trim() || applianceTypeLabels[appliance.type];
@@ -367,7 +366,10 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
         >
           <legend>Cihazlar</legend>
           <div className="fieldset-heading">
-            <p>Cihaz türüne göre güvenli Watt sınırları otomatik ayarlanır.</p>
+            <p>
+              Cihazları şimdi ekleyebilir veya evi kaydettikten sonra cihaz
+              sekmesinden tanımlayabilirsiniz.
+            </p>
             <button
               className="button button--small button--secondary"
               type="button"
@@ -387,6 +389,12 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
           )}
 
           <div className="appliance-form-list">
+            {!form.appliances.length && (
+              <p className="appliance-form-list__empty" role="status">
+                Bu ev cihazsız kaydedilecek. İlk telemetri, daha sonra bir cihaz
+                eklediğinizde başlayacak.
+              </p>
+            )}
             {form.appliances.map((appliance, index) => {
               const bounds = safeLimitBounds[appliance.type];
               return (

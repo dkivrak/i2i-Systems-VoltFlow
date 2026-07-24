@@ -1,6 +1,9 @@
 package com.voltwise.core.api;
 
 import com.voltwise.core.persistence.repository.HomeRepository;
+import com.voltwise.core.persistence.repository.ApplianceRepository;
+import com.voltwise.core.persistence.repository.RegistrationOutboxRepository;
+import com.voltwise.core.event.AssetRegistrationEvent;
 import com.voltwise.core.auth.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +31,8 @@ class HomeApiIntegrationTest {
     @Autowired HomeRepository homes;
     @Autowired com.fasterxml.jackson.databind.ObjectMapper objectMapper;
     @Autowired JwtTokenProvider tokenProvider;
+    @Autowired ApplianceRepository appliances;
+    @Autowired RegistrationOutboxRepository outbox;
 
     @Test
     void registersHomeAndMultipleAppliancesTransactionally() throws Exception {
@@ -39,6 +44,118 @@ class HomeApiIntegrationTest {
                 .andExpect(jsonPath("$.appliances.length()").value(2))
                 .andExpect(jsonPath("$.appliances[0].type").value("KETTLE"));
         assertThat(homes.count()).isEqualTo(before + 1);
+    }
+
+    @Test
+    void registersHomeWithoutDevicesAndDefersAssetEventUntilFirstDevice() throws Exception {
+        String created = mvc.perform(authorized(post("/api/v1/homes"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Empty Home","contactEmail":"owner@example.com",
+                                 "monthlyBudget":1000,"normalTariffPerKwh":2.5,
+                                 "penaltyMultiplier":1.5,"appliances":[]}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.appliances").isEmpty())
+                .andReturn().getResponse().getContentAsString();
+        long homeId = objectMapper.readTree(created).get("id").asLong();
+        assertThat(outbox.findByHomeIdOrderByCreatedAtAsc(homeId)).isEmpty();
+
+        mvc.perform(authorized(post("/api/v1/homes/{homeId}/appliances", homeId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"İlk Cihaz","type":"LAMP","safePowerLimitWatts":60}
+                                """))
+                .andExpect(status().isCreated());
+
+        assertThat(outbox.findByHomeIdOrderByCreatedAtAsc(homeId)).hasSize(1);
+    }
+
+    @Test
+    void addsApplianceToOwnedHomePersistsItAndEnqueuesFullRegistrationSnapshot() throws Exception {
+        String created = mvc.perform(authorized(post("/api/v1/homes"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validRequest()))
+                .andReturn().getResponse().getContentAsString();
+        long homeId = objectMapper.readTree(created).get("id").asLong();
+        long before = appliances.count();
+
+        String response = mvc.perform(authorized(post("/api/v1/homes/{homeId}/appliances", homeId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Salon Televizyonu","type":"TELEVISION","safePowerLimitWatts":450}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.name").value("Salon Televizyonu"))
+                .andExpect(jsonPath("$.type").value("TELEVISION"))
+                .andExpect(jsonPath("$.safePowerLimitWatts").value(450))
+                .andReturn().getResponse().getContentAsString();
+
+        long applianceId = objectMapper.readTree(response).get("id").asLong();
+        assertThat(appliances.count()).isEqualTo(before + 1);
+        assertThat(appliances.findById(applianceId)).get()
+                .extracting(entity -> entity.getHome().getId())
+                .isEqualTo(homeId);
+
+        var registrationRows = outbox.findByHomeIdOrderByCreatedAtAsc(homeId);
+        assertThat(registrationRows).hasSize(2);
+        AssetRegistrationEvent event = objectMapper.readValue(
+                registrationRows.getLast().getEventPayload(),
+                AssetRegistrationEvent.class);
+        assertThat(event.eventType()).isEqualTo("HOME_REGISTERED");
+        assertThat(event.appliances()).hasSize(3)
+                .anySatisfy(item -> {
+                    assertThat(item.applianceId()).isEqualTo(applianceId);
+                    assertThat(item.type()).isEqualTo(com.voltwise.core.domain.ApplianceType.TELEVISION);
+                });
+    }
+
+    @Test
+    void rejectsUnauthenticatedApplianceRegistration() throws Exception {
+        mvc.perform(post("/api/v1/homes/1/appliances")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Cihaz","type":"LAMP","safePowerLimitWatts":50}
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Geçerli bir oturum gereklidir."));
+    }
+
+    @Test
+    void rejectsAddingApplianceToAnotherUsersHome() throws Exception {
+        String created = mvc.perform(authorizedAs(post("/api/v1/homes"), "owner@example.com")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validRequest()))
+                .andReturn().getResponse().getContentAsString();
+        long homeId = objectMapper.readTree(created).get("id").asLong();
+
+        mvc.perform(authorizedAs(
+                        post("/api/v1/homes/{homeId}/appliances", homeId),
+                        "intruder@example.com")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Yetkisiz Cihaz","type":"LAMP","safePowerLimitWatts":50}
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Bu ev üzerinde işlem yapma yetkiniz yok."));
+    }
+
+    @Test
+    void validatesInvalidAppliancePowerLimit() throws Exception {
+        String created = mvc.perform(authorized(post("/api/v1/homes"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validRequest()))
+                .andReturn().getResponse().getContentAsString();
+        long homeId = objectMapper.readTree(created).get("id").asLong();
+
+        mvc.perform(authorized(post("/api/v1/homes/{homeId}/appliances", homeId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Geçersiz Cihaz","type":"COMPUTER","safePowerLimitWatts":0}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.safePowerLimitWatts").exists());
     }
 
     @Test
@@ -125,9 +242,15 @@ class HomeApiIntegrationTest {
     }
 
     private MockHttpServletRequestBuilder authorized(MockHttpServletRequestBuilder request) {
+        return authorizedAs(request, "integration@example.com");
+    }
+
+    private MockHttpServletRequestBuilder authorizedAs(
+            MockHttpServletRequestBuilder request,
+            String email) {
         return request.header(
                 "Authorization",
-                "Bearer " + tokenProvider.generateToken("integration@example.com")
+                "Bearer " + tokenProvider.generateToken(email)
         );
     }
 }

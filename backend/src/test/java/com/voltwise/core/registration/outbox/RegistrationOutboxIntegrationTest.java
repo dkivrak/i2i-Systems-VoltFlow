@@ -2,6 +2,7 @@ package com.voltwise.core.registration.outbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.voltwise.core.api.HomeDtos.ApplianceRequest;
+import com.voltwise.core.api.HomeDtos.AddApplianceRequest;
 import com.voltwise.core.api.HomeDtos.CreateHomeRequest;
 import com.voltwise.core.config.VoltWiseProperties;
 import com.voltwise.core.domain.ApplianceType;
@@ -11,6 +12,7 @@ import com.voltwise.core.persistence.repository.HomeRepository;
 import com.voltwise.core.persistence.repository.RegistrationOutboxRepository;
 import com.voltwise.core.registration.HomeService;
 import com.voltwise.core.registration.RegistrationPublisher;
+import com.voltwise.core.auth.UserContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,6 +126,37 @@ class RegistrationOutboxIntegrationTest {
         RegistrationOutboxEntity published = singleOutbox(home.id());
         assertThat(published.getStatus()).isEqualTo(RegistrationOutboxStatus.PUBLISHED);
         assertThat(published.getAttemptCount()).isEqualTo(2);
+    }
+
+    @Test
+    void addingAppliancePublishesBackwardCompatibleFullHomeRegistrationEvent() throws Exception {
+        var home = homes.create(request("DeviceAdded"));
+        Invocation initial = publisher.take();
+        initial.acknowledgement().complete(null);
+
+        try {
+            UserContext.setCurrentUserEmail("outbox@example.com");
+            var appliance = homes.addAppliance(
+                    home.id(),
+                    new AddApplianceRequest(
+                            "Office Computer",
+                            ApplianceType.COMPUTER,
+                            new BigDecimal("700")));
+
+            Invocation addition = publisher.take();
+            assertThat(addition.topic()).isEqualTo("voltwise.asset-registration");
+            assertThat(addition.event().eventType()).isEqualTo("HOME_REGISTERED");
+            assertThat(addition.event().homeId()).isEqualTo(home.id());
+            assertThat(addition.event().appliances()).hasSize(2)
+                    .anySatisfy(item -> {
+                        assertThat(item.applianceId()).isEqualTo(appliance.id());
+                        assertThat(item.name()).isEqualTo("Office Computer");
+                        assertThat(item.type()).isEqualTo(ApplianceType.COMPUTER);
+                    });
+            addition.acknowledgement().complete(null);
+        } finally {
+            UserContext.clear();
+        }
     }
 
     private RegistrationOutboxEntity singleOutbox(Long homeId) {

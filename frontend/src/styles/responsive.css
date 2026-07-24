@@ -32,6 +32,14 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .add-appliance-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .add-appliance-form .field:first-of-type {
+    grid-column: 1 / -1;
+  }
+
   .appliance-telemetry-panel {
     position: static;
   }
@@ -489,6 +497,25 @@
   .home-overview-grid,
   .appliance-character-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .appliance-empty-state,
+  .add-appliance-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .add-appliance-form .field:first-of-type {
+    grid-column: auto;
+  }
+
+  .appliance-section-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .appliance-section-actions .button {
+    justify-content: center;
   }
 
   .detail-tabs {

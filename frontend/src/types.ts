@@ -97,4 +97,10 @@ export interface HomeRegistrationRequest {
   }>;
 }
 
+export interface ApplianceRegistrationRequest {
+  name: string;
+  type: ApplianceType;
+  safePowerLimitWatts: number;
+}
+
 export type FieldErrors = Record<string, string>;

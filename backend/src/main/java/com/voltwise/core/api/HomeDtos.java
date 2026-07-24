@@ -12,7 +12,6 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -45,9 +44,9 @@ public final class HomeDtos {
             @DecimalMin(value = "1.01", message = "Ek tarife çarpanı 1,01'den büyük olmalıdır")
             @DecimalMax(value = "10.00", message = "Ek tarife çarpanı en fazla 10,0 olabilir") BigDecimal penaltyMultiplier,
 
-            @Schema(description = "One to 20 appliances")
-            @NotEmpty(message = "En az bir cihaz eklenmelidir")
-            @Size(min = 1, max = 20, message = "Cihaz adedi 1 ile 20 arasında olmalıdır")
+            @Schema(description = "Zero to 20 appliances; devices may be registered later")
+            @NotNull(message = "Cihaz listesi zorunludur")
+            @Size(max = 20, message = "Bir eve en fazla 20 cihaz eklenebilir")
             List<@Valid ApplianceRequest> appliances
     ) {
         public CreateHomeRequest(String name, String contactEmail, BigDecimal monthlyBudget,
@@ -63,6 +62,19 @@ public final class HomeDtos {
             @Schema(example = "2300") @NotNull(message = "Güvenli Watt sınırı zorunludur")
             @DecimalMin(value = "1.0", message = "Güvenli Watt sınırı en az 1 W olmalıdır")
             @DecimalMax(value = "50000.0", message = "Güvenli Watt sınırı en fazla 50.000 W olabilir") BigDecimal safePowerLimitWatts
+    ) {}
+
+    public record AddApplianceRequest(
+            @Schema(example = "Salon Televizyonu")
+            @NotBlank(message = "Cihaz adı zorunludur")
+            @Size(max = 160, message = "Cihaz adı en fazla 160 karakter olabilir") String name,
+            @Schema(example = "TELEVISION")
+            @NotNull(message = "Cihaz türü zorunludur") ApplianceType type,
+            @Schema(example = "450")
+            @NotNull(message = "Güvenli Watt sınırı zorunludur")
+            @DecimalMin(value = "1.0", message = "Güvenli Watt sınırı en az 1 W olmalıdır")
+            @DecimalMax(value = "50000.0", message = "Güvenli Watt sınırı en fazla 50.000 W olabilir")
+            BigDecimal safePowerLimitWatts
     ) {}
 
     public record HomeResponse(

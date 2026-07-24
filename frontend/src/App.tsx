@@ -340,6 +340,7 @@ function Dashboard({ onLogout }: DashboardProps) {
               setSelectedHomeId(null);
               homesQuery.retry();
             }}
+            onChanged={homesQuery.retry}
           />
         </Suspense>
       )}

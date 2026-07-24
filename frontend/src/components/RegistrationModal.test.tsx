@@ -66,4 +66,27 @@ describe('home registration', () => {
     expect(callbacks.onCreated).toHaveBeenCalledOnce();
     expect(callbacks.onClose).toHaveBeenCalledOnce();
   });
+
+  it('allows a home to be created without devices for later registration', async () => {
+    const register = vi.spyOn(api, 'registerHome').mockResolvedValue({
+      ...normalHome,
+      appliances: [],
+    });
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.type(screen.getByLabelText('Ev adı'), 'Yeni Cihazsız Ev');
+    await user.type(
+      screen.getByLabelText('İletişim e-postası'),
+      'enerji@example.com',
+    );
+    await user.click(screen.getByRole('button', { name: '1. cihazı kaldır' }));
+    expect(
+      screen.getByText(/Bu ev cihazsız kaydedilecek/i),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Evi kaydet' }));
+
+    await waitFor(() => expect(register).toHaveBeenCalledOnce());
+    expect(register.mock.calls[0][0].appliances).toEqual([]);
+  });
 });

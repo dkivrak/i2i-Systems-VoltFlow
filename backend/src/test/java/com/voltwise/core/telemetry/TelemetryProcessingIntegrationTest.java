@@ -97,6 +97,15 @@ class TelemetryProcessingIntegrationTest {
     }
 
     @Test
+    void telemetryForAnApplianceThatNoLongerExistsIsConsumedWithoutBlockingThePartition() {
+        UUID eventId = UUID.randomUUID();
+
+        processor.process(event(999_001L, 999_001L, "125", Instant.now(), eventId));
+
+        assertThat(processedEvents.existsById(eventId)).isTrue();
+    }
+
+    @Test
     void committedReadingsAccumulateHomeAndApplianceIntervalMetrics() {
         var home = createHome(new BigDecimal("100"), new BigDecimal("2"), new BigDecimal("5000"));
         long applianceId = home.appliances().getFirst().id();

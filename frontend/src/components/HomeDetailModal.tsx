@@ -9,6 +9,7 @@ import {
   House,
   Lightbulb,
   MapPin,
+  Plus,
   PlugZap,
   RefreshCw,
   ShieldCheck,
@@ -25,6 +26,7 @@ import {
   useState,
 } from 'react';
 import { api, getUserFacingError } from '../api/client';
+import { ApplianceCharacter } from '../characters';
 import { getPollingInterval, usePollingResource } from '../hooks/usePollingResource';
 import {
   getTelemetryFreshness,
@@ -32,7 +34,13 @@ import {
   type AppliancePresentation,
   type TelemetryFreshness,
 } from '../presentation/appliancePresentation';
-import type { HistoryPoint, HomeEvent, HomeStatus, Recommendation } from '../types';
+import type {
+  ApplianceStatus,
+  HistoryPoint,
+  HomeEvent,
+  HomeStatus,
+  Recommendation,
+} from '../types';
 import {
   formatDateTime,
   formatEnergy,
@@ -44,6 +52,8 @@ import {
 import { Dialog } from './Dialog';
 import { EnergyCharts } from './EnergyCharts';
 import { ErrorState, InlineSpinner } from './PageStates';
+import { useToast } from './ToastProvider';
+import { AddApplianceForm } from './home-detail/AddApplianceForm';
 import { ApplianceCharacterGrid } from './home-detail/ApplianceCharacterGrid';
 import { ApplianceTelemetryPanel } from './home-detail/ApplianceTelemetryPanel';
 import { DetailTabs, type HomeDetailTab } from './home-detail/DetailTabs';
@@ -52,6 +62,7 @@ interface HomeDetailModalProps {
   summary: HomeStatus;
   onClose: () => void;
   onDeleted?: () => void;
+  onChanged?: () => void;
 }
 
 type AnalyticsSource = 'history' | 'events' | 'recommendations';
@@ -91,6 +102,7 @@ export function HomeDetailModal({
   summary,
   onClose,
   onDeleted,
+  onChanged,
 }: HomeDetailModalProps) {
   const homeId = summary.homeId;
   const detailRequest = useCallback(
@@ -99,7 +111,25 @@ export function HomeDetailModal({
   );
   const live = usePollingResource(detailRequest, getPollingInterval(), true, summary);
   const retryLive = live.retry;
-  const home = live.data ?? summary;
+  const serverHome = live.data ?? summary;
+  const [pendingAppliances, setPendingAppliances] = useState<ApplianceStatus[]>(
+    [],
+  );
+  const home = useMemo<HomeStatus>(() => {
+    if (!pendingAppliances.length) return serverHome;
+    const serverIds = new Set(
+      serverHome.appliances.map((appliance) => appliance.applianceId),
+    );
+    return {
+      ...serverHome,
+      appliances: [
+        ...serverHome.appliances,
+        ...pendingAppliances.filter(
+          (appliance) => !serverIds.has(appliance.applianceId),
+        ),
+      ],
+    };
+  }, [pendingAppliances, serverHome]);
 
   const [analyticsVersion, setAnalyticsVersion] = useState(0);
   const [analytics, setAnalytics] = useState<AnalyticsState>({
@@ -166,10 +196,23 @@ export function HomeDetailModal({
   );
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [mutationError, setMutationError] = useState('');
+  const [addFormOpen, setAddFormOpen] = useState(false);
   const cancelDeleteRef = useRef<HTMLButtonElement>(null);
   const deleteTriggerRef = useRef<HTMLElement | null>(null);
+  const addTriggerRef = useRef<HTMLButtonElement>(null);
   const tabId = useId();
   const deletePromptId = useId();
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    if (!pendingAppliances.length) return;
+    const serverIds = new Set(
+      serverHome.appliances.map((appliance) => appliance.applianceId),
+    );
+    setPendingAppliances((current) =>
+      current.filter((appliance) => !serverIds.has(appliance.applianceId)),
+    );
+  }, [pendingAppliances.length, serverHome.appliances]);
 
   useEffect(() => {
     setSelectedApplianceId((current) => {
@@ -313,6 +356,29 @@ export function HomeDetailModal({
     setSelectedApplianceId(applianceId);
   }, []);
 
+  const openAddForm = () => {
+    setMutationError('');
+    setAddFormOpen(true);
+  };
+
+  const closeAddForm = useCallback(() => {
+    setAddFormOpen(false);
+    window.requestAnimationFrame(() => addTriggerRef.current?.focus());
+  }, []);
+
+  const applianceAdded = (appliance: ApplianceStatus) => {
+    setPendingAppliances((current) => [...current, appliance]);
+    setSelectedApplianceId(appliance.applianceId);
+    setAddFormOpen(false);
+    showToast({
+      title: 'Cihaz eklendi',
+      message: `${appliance.name} için ilk telemetri bekleniyor.`,
+      tone: 'success',
+    });
+    retryLive();
+    onChanged?.();
+  };
+
   return (
     <Dialog
       title={home.homeName}
@@ -320,7 +386,9 @@ export function HomeDetailModal({
       description={`Son veri: ${formatDateTime(home.lastUpdatedAt)}`}
       onClose={onClose}
       wide
-      closeDisabled={deletingHome || deletingApplianceId !== null}
+      closeDisabled={
+        deletingHome || deletingApplianceId !== null || addFormOpen
+      }
     >
       <div className="detail-content">
         <div className="detail-toolbar">
@@ -592,39 +660,92 @@ export function HomeDetailModal({
               <p className="eyebrow">Cihazlar</p>
               <h3>Canlı cihaz karakterleri</h3>
             </div>
-            <span
-              className={`health-summary${
-                home.anomalyCount ? ' health-summary--alert' : ''
-              }`}
-            >
-              {home.anomalyCount ? (
-                <AlertTriangle aria-hidden="true" size={15} />
-              ) : (
-                <CheckCircle2 aria-hidden="true" size={15} />
+            <div className="appliance-section-actions">
+              <span
+                className={`health-summary${
+                  home.anomalyCount ? ' health-summary--alert' : ''
+                }`}
+              >
+                {home.anomalyCount ? (
+                  <AlertTriangle aria-hidden="true" size={15} />
+                ) : (
+                  <CheckCircle2 aria-hidden="true" size={15} />
+                )}
+                {home.anomalyCount
+                  ? `${home.anomalyCount} cihaz incelenmeli`
+                  : 'Tüm cihazlar normal'}
+              </span>
+              {home.appliances.length > 0 && !addFormOpen && (
+                <button
+                  ref={addTriggerRef}
+                  className="button button--primary button--small"
+                  type="button"
+                  onClick={openAddForm}
+                  disabled={
+                    deletingHome ||
+                    deletingApplianceId !== null ||
+                    deleteTarget !== null
+                  }
+                >
+                  <Plus aria-hidden="true" size={15} /> Cihaz ekle
+                </button>
               )}
-              {home.anomalyCount
-                ? `${home.anomalyCount} cihaz incelenmeli`
-                : 'Tüm cihazlar normal'}
-            </span>
+            </div>
           </div>
 
-          <div className="appliance-detail-layout">
-            <ApplianceCharacterGrid
-              items={appliancePresentations}
-              selectedApplianceId={selectedApplianceId}
-              isRefreshing={live.isRefreshing}
-              onSelect={selectAppliance}
+          {addFormOpen && (
+            <AddApplianceForm
+              homeId={homeId}
+              onCancel={closeAddForm}
+              onSuccess={applianceAdded}
             />
-            <ApplianceTelemetryPanel
-              item={selectedAppliance}
-              isDeleting={
-                deleteTarget !== null ||
-                deletingHome ||
-                deletingApplianceId !== null
-              }
-              onDelete={requestDeleteAppliance}
-            />
-          </div>
+          )}
+
+          {!home.appliances.length && !addFormOpen ? (
+            <div className="appliance-empty-state">
+              <div className="appliance-empty-state__character" aria-hidden="true">
+                <ApplianceCharacter
+                  type="LAMP"
+                  state="sleeping"
+                  size="md"
+                  decorative
+                />
+              </div>
+              <div>
+                <h4>Henüz cihaz eklenmemiş</h4>
+                <p>
+                  Canlı telemetrinin başlayabilmesi için bu eve en az bir cihaz
+                  kaydetmeniz gerekir.
+                </p>
+                <button
+                  ref={addTriggerRef}
+                  className="button button--primary"
+                  type="button"
+                  onClick={openAddForm}
+                >
+                  <Plus aria-hidden="true" size={17} /> Cihaz ekle
+                </button>
+              </div>
+            </div>
+          ) : home.appliances.length ? (
+            <div className="appliance-detail-layout">
+              <ApplianceCharacterGrid
+                items={appliancePresentations}
+                selectedApplianceId={selectedApplianceId}
+                isRefreshing={live.isRefreshing}
+                onSelect={selectAppliance}
+              />
+              <ApplianceTelemetryPanel
+                item={selectedAppliance}
+                isDeleting={
+                  deleteTarget !== null ||
+                  deletingHome ||
+                  deletingApplianceId !== null
+                }
+                onDelete={requestDeleteAppliance}
+              />
+            </div>
+          ) : null}
         </section>
 
         <section

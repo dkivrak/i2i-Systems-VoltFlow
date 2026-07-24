@@ -1,5 +1,6 @@
 import type {
   ApplianceHealthStatus,
+  ApplianceRegistrationRequest,
   ApplianceStatus,
   ApplianceType,
   FieldErrors,
@@ -549,6 +550,19 @@ export const api = {
       signal,
     );
     return response ? normalizeHomeStatus(response) : null;
+  },
+
+  async addAppliance(
+    homeId: number,
+    payload: ApplianceRegistrationRequest,
+    signal?: AbortSignal,
+  ): Promise<ApplianceStatus> {
+    const response = await request<unknown>(
+      `/homes/${homeId}/appliances`,
+      { method: 'POST', body: JSON.stringify(payload) },
+      signal,
+    );
+    return normalizeAppliance(response, 0);
   },
 
   async deleteHome(homeId: number, signal?: AbortSignal): Promise<void> {

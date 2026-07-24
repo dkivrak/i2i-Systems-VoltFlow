@@ -41,6 +41,7 @@ spring:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.trusted.packages: com.voltwise.core.event
         spring.json.use.type.headers: false
+        spring.json.value.default.type: com.voltwise.core.event.TelemetryEvent
     listener:
       ack-mode: record
 

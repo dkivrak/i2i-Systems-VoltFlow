@@ -17,6 +17,9 @@ import com.voltwise.core.persistence.repository.HomeRepository;
 import com.voltwise.core.persistence.repository.QuotaEventRepository;
 import com.voltwise.core.persistence.repository.RecommendationRepository;
 import com.voltwise.core.persistence.repository.TariffChangeEventRepository;
+import com.voltwise.core.auth.UserContext;
+import com.voltwise.core.registration.HomeAccessDeniedException;
+import com.voltwise.core.registration.ResourceNotFoundException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +50,12 @@ public class HomeQueryService {
     }
 
     public PagedResponse<HomeStatusResponse> statuses(int page, int size) {
+        String ownerEmail = UserContext.getCurrentUserEmail();
+        var ownedHomeIds = ownerEmail == null
+                ? null
+                : new java.util.HashSet<>(homes.findIdsByOwnerEmail(ownerEmail));
         var result = liveStates.getAll().stream()
+                .filter(state -> ownedHomeIds == null || ownedHomeIds.contains(state.homeId()))
                 .sorted(Comparator.comparing(HomeLiveState::homeId))
                 .map(this::map)
                 .toList();
@@ -56,12 +64,13 @@ public class HomeQueryService {
 
     @Transactional(readOnly = true)
     public HomeStatusResponse status(Long homeId) {
+        requireOwned(homeId);
         return map(initializer.ensure(homeId));
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<HomeEventResponse> events(Long homeId, int page, int size) {
-        if (!homes.existsById(homeId)) throw new com.voltwise.core.registration.ResourceNotFoundException("Home not found: " + homeId);
+        requireOwned(homeId);
         var result = new ArrayList<HomeEventResponse>();
         quotaEvents.findByHomeIdOrderByOccurredAtDesc(homeId).forEach(e -> result.add(map(e)));
         anomalyEvents.findByHomeIdOrderByDetectedAtDesc(homeId).forEach(e -> result.add(map(e)));
@@ -72,7 +81,7 @@ public class HomeQueryService {
 
     @Transactional(readOnly = true)
     public PagedResponse<RecommendationResponse> recommendations(Long homeId, int page, int size) {
-        if (!homes.existsById(homeId)) throw new com.voltwise.core.registration.ResourceNotFoundException("Home not found: " + homeId);
+        requireOwned(homeId);
         return PagedResponse.of(recommendations.findByHomeIdOrderByCreatedAtDesc(homeId, PageRequest.of(page, size))
                 .map(r -> new RecommendationResponse(r.getId(), r.getTriggerType(), r.getTriggerReferenceId(),
                         r.getRecommendationText(), r.getModelName(), r.isFallbackUsed(), r.getCreatedAt())));
@@ -91,6 +100,21 @@ public class HomeQueryService {
                 state.accumulatedEnergyKwh(), state.currentCost(), state.monthlyBudget(),
                 state.budgetUsagePercent(), state.tariffState(), anomalyCount,
                 state.lastUpdatedAt(), applianceStatuses);
+    }
+
+    private void requireOwned(Long homeId) {
+        String ownerEmail = UserContext.getCurrentUserEmail();
+        if (ownerEmail == null) {
+            if (!homes.existsById(homeId)) {
+                throw new ResourceNotFoundException("Home not found: " + homeId);
+            }
+            return;
+        }
+        var home = homes.findById(homeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Home not found: " + homeId));
+        if (!home.getOwnerEmail().equalsIgnoreCase(ownerEmail)) {
+            throw new HomeAccessDeniedException();
+        }
     }
 
     private HomeEventResponse map(QuotaEventEntity e) {

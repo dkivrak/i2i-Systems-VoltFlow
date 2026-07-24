@@ -49,4 +49,19 @@ class FlywayMigrationContractTest {
             );
         }
     }
+
+    @Test
+    void fifthMigrationBackfillsAndIndexesPersistentHomeOwnership() throws Exception {
+        try (var stream = getClass().getResourceAsStream(
+                "/db/migration/V5__add_home_owner_email.sql")) {
+            assertThat(stream).isNotNull();
+            String sql = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            assertThat(sql).contains(
+                    "ADD COLUMN owner_email VARCHAR(320)",
+                    "SET owner_email = LOWER(contact_email)",
+                    "ALTER COLUMN owner_email SET NOT NULL",
+                    "CREATE INDEX idx_homes_owner_email"
+            );
+        }
+    }
 }

@@ -7,6 +7,8 @@ import com.voltwise.core.persistence.entity.ConsumptionSnapshotEntity;
 import com.voltwise.core.persistence.repository.ConsumptionSnapshotRepository;
 import com.voltwise.core.persistence.repository.HomeRepository;
 import com.voltwise.core.registration.ResourceNotFoundException;
+import com.voltwise.core.registration.HomeAccessDeniedException;
+import com.voltwise.core.auth.UserContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +35,17 @@ public class HistoryService {
     @Transactional(readOnly = true)
     public PagedResponse<HistoryPoint> history(Long homeId, Instant from, Instant to,
                                                HistoryBucket bucket, int page, int size) {
-        if (!homes.existsById(homeId)) throw new ResourceNotFoundException("Home not found: " + homeId);
+        if (!homes.existsById(homeId)) {
+            throw new ResourceNotFoundException("Home not found: " + homeId);
+        }
+        String ownerEmail = UserContext.getCurrentUserEmail();
+        if (ownerEmail != null) {
+            var home = homes.findById(homeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Home not found: " + homeId));
+            if (!home.getOwnerEmail().equalsIgnoreCase(ownerEmail)) {
+                throw new HomeAccessDeniedException();
+            }
+        }
         if (from == null || to == null || !from.isBefore(to)) {
             throw new IllegalArgumentException("from must be earlier than to");
         }

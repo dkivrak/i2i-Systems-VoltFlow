@@ -266,6 +266,17 @@
   gap: var(--space-3);
 }
 
+.appliance-form-list__empty {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-neutral-soft);
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+}
+
 .appliance-form-row {
   display: grid;
   grid-template-columns:
@@ -712,6 +723,117 @@
   border-color: rgb(213 61 79 / 30%);
   background: var(--color-critical-soft);
   color: var(--color-critical);
+}
+
+.appliance-section-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.appliance-empty-state {
+  display: grid;
+  min-height: 310px;
+  grid-template-columns: minmax(150px, 0.38fr) minmax(260px, 0.62fr);
+  align-items: center;
+  gap: var(--space-7);
+  padding: clamp(var(--space-6), 5vw, var(--space-10));
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 15% 25%, var(--color-warning-soft), transparent 35%),
+    linear-gradient(135deg, var(--color-surface), var(--color-brand-soft));
+}
+
+.appliance-empty-state__character {
+  display: grid;
+  min-height: 190px;
+  place-items: center;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: 7px 7px 0 var(--color-ink);
+}
+
+.appliance-empty-state h4 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--font-size-xl);
+  font-weight: 900;
+}
+
+.appliance-empty-state p {
+  max-width: 52ch;
+  margin: var(--space-2) 0 var(--space-5);
+  color: var(--color-ink-muted);
+  line-height: 1.65;
+}
+
+.add-appliance-panel {
+  margin-bottom: var(--space-5);
+  overflow: hidden;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: 6px 6px 0 var(--color-brand);
+}
+
+.add-appliance-panel__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(110deg, var(--color-brand-soft), var(--color-warning-soft));
+}
+
+.add-appliance-panel__header h4,
+.add-appliance-panel__header p {
+  margin: 0;
+}
+
+.add-appliance-panel__header h4 {
+  color: var(--color-ink);
+  font-size: var(--font-size-lg);
+  font-weight: 900;
+}
+
+.add-appliance-panel__header p:last-child {
+  margin-top: var(--space-1);
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-xs);
+}
+
+.add-appliance-panel__icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  background: var(--color-energy);
+  color: var(--color-ink);
+}
+
+.add-appliance-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(190px, 0.9fr) minmax(210px, 0.8fr);
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.add-appliance-form > .mutation-feedback,
+.add-appliance-form__actions {
+  grid-column: 1 / -1;
+}
+
+.add-appliance-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
 }
 
 .appliance-detail-layout {

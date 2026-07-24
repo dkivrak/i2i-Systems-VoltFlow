@@ -4,6 +4,7 @@ import com.voltwise.core.auth.EmailAlreadyRegisteredException;
 import com.voltwise.core.auth.InvalidCredentialsException;
 import com.voltwise.core.live.LiveStateNotFoundException;
 import com.voltwise.core.registration.ResourceNotFoundException;
+import com.voltwise.core.registration.HomeAccessDeniedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -68,6 +69,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     ResponseEntity<ApiError> invalidCredentials(InvalidCredentialsException ex, HttpServletRequest request) {
         return response(HttpStatus.UNAUTHORIZED, "Unauthorized", ex.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(HomeAccessDeniedException.class)
+    ResponseEntity<ApiError> forbidden(HomeAccessDeniedException ex, HttpServletRequest request) {
+        return response(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage(), request, Map.of());
     }
 
     @ExceptionHandler({IllegalArgumentException.class, HttpMessageNotReadableException.class})

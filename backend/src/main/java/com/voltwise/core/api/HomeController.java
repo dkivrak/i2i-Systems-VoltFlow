@@ -1,6 +1,8 @@
 package com.voltwise.core.api;
 
 import com.voltwise.core.api.HomeDtos.CreateHomeRequest;
+import com.voltwise.core.api.HomeDtos.AddApplianceRequest;
+import com.voltwise.core.api.HomeDtos.ApplianceResponse;
 import com.voltwise.core.api.HomeDtos.HistoryPoint;
 import com.voltwise.core.api.HomeDtos.HomeEventResponse;
 import com.voltwise.core.api.HomeDtos.HomeResponse;
@@ -65,6 +67,15 @@ public class HomeController {
                             """)))
             @Valid @RequestBody CreateHomeRequest request) {
         return homeService.create(request);
+    }
+
+    @PostMapping("/{homeId}/appliances")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Register an appliance in an existing owned home")
+    public ApplianceResponse addAppliance(
+            @PathVariable Long homeId,
+            @Valid @RequestBody AddApplianceRequest request) {
+        return homeService.addAppliance(homeId, request);
     }
 
     @GetMapping

@@ -33,6 +33,9 @@ public class HomeEntity extends AuditedEntity {
     @Column(name = "contact_email", nullable = false, length = 320)
     private String contactEmail;
 
+    @Column(name = "owner_email", nullable = false, length = 320)
+    private String ownerEmail;
+
     @Column(nullable = false, length = 100)
     private String city = "İstanbul";
 
@@ -56,6 +59,9 @@ public class HomeEntity extends AuditedEntity {
 
     public String getContactEmail() { return contactEmail; }
     public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
+
+    public String getOwnerEmail() { return ownerEmail; }
+    public void setOwnerEmail(String ownerEmail) { this.ownerEmail = ownerEmail; }
 
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }

@@ -1,8 +1,10 @@
 package com.voltwise.core.registration;
 
 import com.voltwise.core.api.HomeDtos.ApplianceResponse;
+import com.voltwise.core.api.HomeDtos.AddApplianceRequest;
 import com.voltwise.core.api.HomeDtos.CreateHomeRequest;
 import com.voltwise.core.api.HomeDtos.HomeResponse;
+import com.voltwise.core.auth.UserContext;
 import com.voltwise.core.config.VoltWiseProperties;
 import com.voltwise.core.domain.ApplianceType;
 import com.voltwise.core.domain.TariffState;
@@ -38,6 +40,7 @@ import com.voltwise.core.live.LiveStateStore;
 import com.voltwise.core.persistence.repository.ApplianceRepository;
 
 import java.util.HashMap;
+import java.util.Locale;
 
 @Service
 public class HomeService {
@@ -87,6 +90,7 @@ public class HomeService {
         home.setName(request.name().trim());
         home.setCity(request.city() != null && !request.city().isBlank() ? request.city().trim() : "İstanbul");
         home.setContactEmail(request.contactEmail().trim().toLowerCase(java.util.Locale.ROOT));
+        home.setOwnerEmail(ownerEmailOr(request.contactEmail()));
 
         home.setMonthlyBudget(valueOrDefault(request.monthlyBudget(), properties.getBilling().getDefaultMonthlyBudget()));
         home.setNormalTariffPerKwh(valueOrDefault(request.normalTariffPerKwh(), properties.getBilling().getNormalTariffPerKwh()));
@@ -110,8 +114,12 @@ public class HomeService {
         ledger.setTariffState(TariffState.NORMAL);
         ledgers.save(ledger);
 
-        AssetRegistrationEvent event = toEvent(savedHome);
-        registrationOutbox.enqueue(savedHome, event);
+        AssetRegistrationEvent event = savedHome.getAppliances().isEmpty()
+                ? null
+                : toEvent(savedHome);
+        if (event != null) {
+            registrationOutbox.enqueue(savedHome, event);
+        }
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -122,17 +130,21 @@ public class HomeService {
                     } catch (Exception ex) {
                         log.error("Could not initialize live state after registration homeId={}", savedHome.getId(), ex);
                     }
-                    try {
-                        outboxDispatcher.requestImmediateDispatch(event.eventId());
-                    } catch (Exception ex) {
-                        log.error("Could not schedule immediate outbox dispatch homeId={} eventId={}",
-                                savedHome.getId(), event.eventId(), ex);
+                    if (event != null) {
+                        try {
+                            outboxDispatcher.requestImmediateDispatch(event.eventId());
+                        } catch (Exception ex) {
+                            log.error("Could not schedule immediate outbox dispatch homeId={} eventId={}",
+                                    savedHome.getId(), event.eventId(), ex);
+                        }
                     }
                 }
             });
         } else {
             liveStateInitializer.initializeRegistered(savedHome.getId());
-            outboxDispatcher.requestImmediateDispatch(event.eventId());
+            if (event != null) {
+                outboxDispatcher.requestImmediateDispatch(event.eventId());
+            }
         }
 
         return toResponse(savedHome);
@@ -140,18 +152,44 @@ public class HomeService {
 
     @Transactional(readOnly = true)
     public Page<HomeResponse> list(Pageable pageable) {
-        return homes.findAll(pageable).map(this::toResponseWithoutAppliances);
+        return homes.findAllByOwnerEmail(currentOwnerEmail(), pageable).map(this::toResponseWithoutAppliances);
     }
 
     @Transactional(readOnly = true)
     public HomeEntity requireDetailed(Long id) {
-        return homes.findDetailedById(id).orElseThrow(() -> new ResourceNotFoundException("Home not found: " + id));
+        HomeEntity home = homes.findDetailedById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Home not found: " + id));
+        requireOwnership(home);
+        return home;
+    }
+
+    @Transactional
+    public ApplianceResponse addAppliance(Long homeId, AddApplianceRequest request) {
+        validateAppliancePowerLimit(request.type(), request.safePowerLimitWatts());
+        HomeEntity home = requireDetailed(homeId);
+        if (home.getAppliances().size() >= 20) {
+            throw new IllegalArgumentException("Bir eve en fazla 20 cihaz eklenebilir.");
+        }
+
+        ApplianceEntity appliance = new ApplianceEntity();
+        appliance.setName(request.name().trim());
+        appliance.setType(request.type());
+        appliance.setSafePowerLimitWatts(request.safePowerLimitWatts());
+        home.addAppliance(appliance);
+        ApplianceEntity saved = appliances.saveAndFlush(appliance);
+
+        AssetRegistrationEvent event = toEvent(home);
+        registrationOutbox.enqueue(home, event);
+        afterCommit(home, saved, event);
+
+        return toApplianceResponse(saved);
     }
 
     @Transactional
     public void deleteHome(Long homeId) {
         HomeEntity home = homes.findById(homeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Home not found: " + homeId));
+        requireOwnership(home);
         homes.delete(home);
         liveStateStore.remove(homeId);
         log.info("Home deleted successfully homeId={}", homeId);
@@ -161,6 +199,7 @@ public class HomeService {
     public void deleteAppliance(Long homeId, Long applianceId) {
         HomeEntity home = homes.findById(homeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Home not found: " + homeId));
+        requireOwnership(home);
         ApplianceEntity appliance = appliances.findById(applianceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appliance not found: " + applianceId));
 
@@ -196,13 +235,60 @@ public class HomeService {
 
         for (int i = 0; i < request.appliances().size(); i++) {
             var app = request.appliances().get(i);
-            WattBounds bounds = SAFE_LIMIT_BOUNDS.get(app.type());
-            if (bounds != null && app.safePowerLimitWatts() != null) {
-                if (app.safePowerLimitWatts().compareTo(bounds.min()) < 0 || app.safePowerLimitWatts().compareTo(bounds.max()) > 0) {
-                    throw new IllegalArgumentException(String.format("%s için güvenli güç sınırı %s W ile %s W arasında olmalıdır.",
-                            app.type(), bounds.min().toPlainString(), bounds.max().toPlainString()));
+            validateAppliancePowerLimit(app.type(), app.safePowerLimitWatts());
+        }
+    }
+
+    private void validateAppliancePowerLimit(ApplianceType type, BigDecimal limit) {
+        WattBounds bounds = SAFE_LIMIT_BOUNDS.get(type);
+        if (bounds != null && limit != null
+                && (limit.compareTo(bounds.min()) < 0 || limit.compareTo(bounds.max()) > 0)) {
+            throw new IllegalArgumentException(String.format(
+                    "%s için güvenli güç sınırı %s W ile %s W arasında olmalıdır.",
+                    type, bounds.min().toPlainString(), bounds.max().toPlainString()));
+        }
+    }
+
+    private void afterCommit(HomeEntity home, ApplianceEntity appliance, AssetRegistrationEvent event) {
+        Runnable action = () -> {
+            try {
+                ApplianceLiveState empty = ApplianceLiveState.empty(
+                        appliance.getId(), appliance.getName(), appliance.getType(),
+                        appliance.getSafePowerLimitWatts());
+                if (liveStateStore.get(home.getId()).isEmpty()) {
+                    liveStateInitializer.initializeRegistered(home.getId());
+                } else {
+                    liveStateStore.update(home.getId(), current -> {
+                        Map<Long, ApplianceLiveState> updated = new HashMap<>(current.appliances());
+                        updated.put(appliance.getId(), empty);
+                        return new HomeLiveState(
+                                current.homeId(), current.homeName(), current.currentPowerWatts(),
+                                current.accumulatedEnergyKwh(), current.currentCost(), current.monthlyBudget(),
+                                current.budgetUsagePercent(), current.tariffState(), current.lastUpdatedAt(),
+                                updated, current.snapshotWindow());
+                    });
                 }
+            } catch (Exception ex) {
+                log.error("Could not add appliance to live state homeId={} applianceId={}",
+                        home.getId(), appliance.getId(), ex);
             }
+            try {
+                outboxDispatcher.requestImmediateDispatch(event.eventId());
+            } catch (Exception ex) {
+                log.error("Could not schedule appliance registration dispatch homeId={} applianceId={} eventId={}",
+                        home.getId(), appliance.getId(), event.eventId(), ex);
+            }
+        };
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+        } else {
+            action.run();
         }
     }
 
@@ -218,6 +304,31 @@ public class HomeService {
                 home.getNormalTariffPerKwh(), home.getPenaltyMultiplier(), home.getCreatedAt(),
                 home.getAppliances().stream().map(a -> new ApplianceResponse(a.getId(), a.getName(), a.getType(),
                         a.getSafePowerLimitWatts())).toList());
+    }
+
+    private ApplianceResponse toApplianceResponse(ApplianceEntity appliance) {
+        return new ApplianceResponse(appliance.getId(), appliance.getName(), appliance.getType(),
+                appliance.getSafePowerLimitWatts());
+    }
+
+    private String ownerEmailOr(String fallback) {
+        String authenticated = UserContext.getCurrentUserEmail();
+        String value = authenticated == null || authenticated.isBlank() ? fallback : authenticated;
+        return value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String currentOwnerEmail() {
+        String email = UserContext.getCurrentUserEmail();
+        if (email == null || email.isBlank()) {
+            throw new HomeAccessDeniedException();
+        }
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private void requireOwnership(HomeEntity home) {
+        if (!home.getOwnerEmail().equalsIgnoreCase(currentOwnerEmail())) {
+            throw new HomeAccessDeniedException();
+        }
     }
 
     private HomeResponse toResponseWithoutAppliances(HomeEntity home) {
