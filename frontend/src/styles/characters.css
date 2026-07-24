@@ -152,39 +152,48 @@ button.vw-character {
 
 .vw-character__eye {
   position: absolute;
-  top: 5%;
-  width: 24%;
-  height: 40%;
-  overflow: hidden;
-  border: max(1.5px, calc(var(--vw-character-size) * 0.018)) solid var(--vw-character-outline);
+  top: 2%;
+  width: 34%;
+  aspect-ratio: 1;
+  border: 2px solid var(--vw-character-outline);
   border-radius: 50%;
   background: var(--vw-character-highlight);
   transform-origin: center;
 }
 
 .vw-character__eye--left {
-  left: 15%;
+  left: 13%;
 }
 
 .vw-character__eye--right {
-  right: 15%;
+  right: 13%;
 }
 
 .vw-character__pupil {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 37%;
+  width: 38%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: var(--vw-character-outline);
-  box-shadow: inset 0.08rem 0.08rem 0 rgb(255 255 255 / 70%);
+  background: #110d21;
   transform:
     translate(
       calc(-50% + var(--vw-character-gaze-x)),
       calc(-50% + var(--vw-character-gaze-y))
     );
-  transition: transform 80ms linear;
+  transition: transform 60ms linear;
+}
+
+.vw-character__pupil::after {
+  position: absolute;
+  top: 18%;
+  left: 20%;
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: #ffffff;
+  content: '';
 }
 
 .vw-character__eyelid {
@@ -389,13 +398,22 @@ button.vw-character {
 }
 
 .vw-character--air-conditioner .vw-character__body {
-  bottom: 30%;
-  height: 35%;
-  border-radius: 18%;
+  right: 10%;
+  bottom: 16%;
+  left: 10%;
+  height: 68%;
+  border-radius: 16%;
 }
 
 .vw-character--air-conditioner .vw-character__face {
-  top: 16%;
+  top: 25%;
+  right: 15%;
+  left: 15%;
+  height: 28%;
+}
+
+.vw-character--air-conditioner .vw-character__ground-shadow {
+  transform: scaleX(0.55);
 }
 
 .vw-character--lamp .vw-character__body {
