@@ -8,7 +8,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-describe('VoltWise API client', () => {
+describe('VoltFlow API client', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     setStoredToken(null);

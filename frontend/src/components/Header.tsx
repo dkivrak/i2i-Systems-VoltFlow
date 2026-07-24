@@ -30,12 +30,12 @@ export function Header({
   return (
     <header className="app-header">
       <div className="app-header__inner">
-        <a className="brand" href="#main-content" aria-label="VoltWise ana içeriğe git">
+        <a className="brand" href="#main-content" aria-label="VoltFlow ana içeriğe git">
           <span className="brand__mark" aria-hidden="true">
             <Zap size={21} strokeWidth={2.6} />
           </span>
           <span className="brand__wordmark">
-            Volt<span>Wise</span>
+            Volt<span>Flow</span>
           </span>
         </a>
 

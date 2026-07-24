@@ -66,7 +66,7 @@ const steps = [
   {
     number: '02',
     title: 'Canlı enerji akışını izleyin',
-    copy: 'VoltWise yeni telemetriyi otomatik olarak işler ve ekranı kesintisiz günceller.',
+    copy: 'VoltFlow yeni telemetriyi otomatik olarak işler ve ekranı kesintisiz günceller.',
   },
   {
     number: '03',
@@ -84,12 +84,12 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
 
       <header className="landing-header">
         <div className="landing-header__inner">
-          <span className="brand" aria-label="VoltWise">
+          <span className="brand" aria-label="VoltFlow">
             <span className="brand__mark" aria-hidden="true">
               <Zap size={21} strokeWidth={2.6} />
             </span>
             <span className="brand__wordmark">
-              Volt<span>Wise</span>
+              Volt<span>Flow</span>
             </span>
           </span>
 
@@ -114,7 +114,7 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               Enerjiyi izlemek değil, <span>anlamak</span> için.
             </h1>
             <p>
-              VoltWise canlı cihaz tüketimini, bütçe risklerini ve anormal davranışları
+              VoltFlow canlı cihaz tüketimini, bütçe risklerini ve anormal davranışları
               tek bir sakin, anlaşılır akışta buluşturur.
             </p>
             <div className="landing-hero__actions">
@@ -125,7 +125,7 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
                 Hesabıma giriş yap
               </button>
             </div>
-            <ul className="landing-hero__proof" aria-label="VoltWise canlı sistem özellikleri">
+            <ul className="landing-hero__proof" aria-label="VoltFlow canlı sistem özellikleri">
               <li><span aria-hidden="true" /> 1–2 saniyelik canlı güncelleme</li>
               <li><span aria-hidden="true" /> Hassas Watt ve maliyet verisi</li>
               <li><span aria-hidden="true" /> Erişilebilir risk uyarıları</li>
@@ -162,7 +162,7 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
           </div>
         </section>
 
-        <section className="landing-signal-strip" aria-label="VoltWise enerji özeti örneği">
+        <section className="landing-signal-strip" aria-label="VoltFlow enerji özeti örneği">
           <p className="landing-signal-strip__label">Örnek enerji özeti</p>
           <article>
             <Activity aria-hidden="true" size={19} />
@@ -188,7 +188,7 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
 
         <section className="landing-section landing-benefits" aria-labelledby="benefits-title">
           <div className="landing-section__heading">
-            <p className="eyebrow">Bir bakışta VoltWise</p>
+            <p className="eyebrow">Bir bakışta VoltFlow</p>
             <h2 id="benefits-title">Teknik veriyi günlük kararlara dönüştürün.</h2>
             <p>İhtiyacınız olan ayrıntı görünür; geri kalanı siz istediğinizde açılır.</p>
           </div>
@@ -219,7 +219,7 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             <p className="eyebrow">Örnek anomali · sadece kırmızı bir nokta değil</p>
             <h2 id="story-title">Bir uyarının nedenini de görün.</h2>
             <p>
-              VoltWise, olağan dışı tüketimi karakter ifadesiyle görünür kılarken
+              VoltFlow, olağan dışı tüketimi karakter ifadesiyle görünür kılarken
               ölçülen gücü, güvenli sınırı ve ardışık ihlal sayısını eksiksiz korur.
             </p>
             <dl className="landing-story__metrics">
@@ -259,13 +259,13 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             <p>İlk evinizi ekleyin; canlı tüketim görünümünüz birkaç adımda hazır olsun.</p>
           </div>
           <button className="button button--primary button--large" type="button" onClick={onRegister}>
-            VoltWise&apos;ı keşfet <ArrowRight aria-hidden="true" size={18} />
+            VoltFlow&apos;u keşfet <ArrowRight aria-hidden="true" size={18} />
           </button>
         </section>
       </main>
 
       <footer className="landing-footer">
-        <span>VoltWise enerji zekâsı</span>
+        <span>VoltFlow enerji zekâsı</span>
         <span>Gerçek veriler · anlaşılır kararlar</span>
       </footer>
     </div>

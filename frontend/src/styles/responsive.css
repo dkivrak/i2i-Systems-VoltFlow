@@ -189,12 +189,20 @@
     display: flex;
     min-height: 100svh;
     flex-direction: column;
+    overflow-x: hidden;
   }
 
   .auth-panel {
     order: -1;
     min-height: auto;
     padding: 1.35rem clamp(1rem, 5vw, 2rem) 2.5rem;
+    overflow-y: auto;
+  }
+
+  .dialog__body,
+  .registration-form {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .auth-back {
@@ -519,6 +527,20 @@
 @media (max-width: 430px) {
   .brand__copy span {
     display: none;
+  }
+
+  .app-header__actions {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  
+  .header-add-button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
   }
 
   .header-logout-button span,

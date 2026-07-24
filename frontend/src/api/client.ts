@@ -226,7 +226,7 @@ async function request<T>(
           : response.status === 404
             ? 'İstenen kayıt bulunamadı.'
             : response.status >= 500
-              ? 'VoltWise servisine şu anda ulaşılamıyor.'
+              ? 'VoltFlow servisine şu anda ulaşılamıyor.'
               : serverMessage || 'İstek tamamlanamadı.';
       throw new ApiError(safeMessage, response.status, fieldErrors);
     }

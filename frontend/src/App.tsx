@@ -194,7 +194,7 @@ function Dashboard({ onLogout }: DashboardProps) {
               Evinizin enerjisi, <span>tek bakışta anlaşılır.</span>
             </h1>
             <p>
-              Tüketimi, maliyeti ve cihaz sağlığını canlı izleyin; VoltWise
+              Tüketimi, maliyeti ve cihaz sağlığını canlı izleyin; VoltFlow
               bütçe risklerini büyümeden görünür kılar.
             </p>
           </div>
@@ -311,7 +311,7 @@ function Dashboard({ onLogout }: DashboardProps) {
       </main>
 
       <footer className="app-footer">
-        <span>VoltWise · evinizin enerji arkadaşı</span>
+        <span>VoltFlow · evinizin enerji arkadaşı</span>
         <span>
           <i aria-hidden="true" /> Sistem izleniyor
         </span>
@@ -389,10 +389,10 @@ export default function App() {
       window.history.replaceState({}, '', routePaths.LOGIN);
     }
     const routeTitles: Record<AppRoute, string> = {
-      LANDING: 'VoltWise · Akıllı Ev Enerji Takibi',
-      LOGIN: 'Giriş Yap · VoltWise',
-      REGISTER: 'Kaydol · VoltWise',
-      DASHBOARD: 'Enerji Paneli · VoltWise',
+      LANDING: 'VoltFlow · Akıllı Ev Enerji Takibi',
+      LOGIN: 'Giriş Yap · VoltFlow',
+      REGISTER: 'Kaydol · VoltFlow',
+      DASHBOARD: 'Enerji Paneli · VoltFlow',
     };
     const routeTargets: Record<AppRoute, string> = {
       LANDING: 'landing-main',
