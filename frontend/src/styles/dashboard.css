@@ -167,24 +167,24 @@
   width: min(calc(100% - clamp(2rem, 8vw, 8rem)), var(--content-width));
   min-height: calc(100vh - 150px);
   margin-inline: auto;
-  padding: clamp(2.5rem, 6vw, 5.5rem) 0 clamp(4rem, 8vw, 7rem);
+  padding: clamp(1.2rem, 2.5vw, 2rem) 0 clamp(2.5rem, 5vw, 4rem);
 }
 
 .dashboard-intro {
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: var(--space-10);
+  align-items: center;
+  gap: var(--space-6);
   overflow: hidden;
-  margin-bottom: var(--space-8);
-  padding: clamp(2rem, 5vw, 4.5rem);
+  margin-bottom: var(--space-5);
+  padding: clamp(1.2rem, 2.5vw, 2.2rem) clamp(1.5rem, 4vw, 2.8rem);
   border: 3px solid var(--color-ink);
   border-radius: var(--radius-xl);
   background:
     radial-gradient(circle at 82% 16%, rgb(118 216 255 / 30%), transparent 15rem),
     var(--color-brand);
-  box-shadow: 9px 9px 0 var(--color-ink);
+  box-shadow: 7px 7px 0 var(--color-ink);
   color: #fff;
 }
 
@@ -209,15 +209,16 @@
 
 .dashboard-intro .eyebrow {
   color: var(--color-energy);
+  margin-bottom: 0.4rem;
 }
 
 .dashboard-intro h1 {
   max-width: 780px;
   margin: 0;
   color: #fff;
-  font-size: clamp(2.6rem, 5vw, 5.5rem);
+  font-size: clamp(1.6rem, 3.2vw, 2.8rem);
   font-weight: 940;
-  line-height: 0.92;
+  line-height: 1.05;
 }
 
 .dashboard-intro h1 span {
@@ -226,19 +227,20 @@
 
 .dashboard-intro > div:first-child > p:last-child {
   max-width: 650px;
-  margin: var(--space-5) 0 0;
+  margin: var(--space-2) 0 0;
   color: #fff;
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
+  line-height: 1.35;
 }
 
 .dashboard-intro__signal {
   position: relative;
   z-index: 2;
   display: flex;
-  min-width: 260px;
+  min-width: 220px;
   align-items: center;
   gap: var(--space-3);
-  padding: 0.9rem 1rem;
+  padding: 0.6rem 0.85rem;
   border: 1px solid rgb(255 255 255 / 22%);
   border-radius: var(--radius-md);
   background: rgb(36 32 54 / 38%);
