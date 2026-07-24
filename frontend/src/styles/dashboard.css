@@ -1268,3 +1268,171 @@
     transform: translateX(12px);
   }
 }
+
+/* Peak-Hour Tariff Banner & Advisory Styles */
+.peak-hour-banner {
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 6%);
+  transition: all 0.2s ease;
+}
+
+.peak-hour-banner--active {
+  border-color: var(--color-orange);
+  background: linear-gradient(135deg, #fffcf5 0%, #fff6eb 100%);
+}
+
+.peak-hour-banner--offpeak {
+  border-color: var(--color-brand);
+  background: linear-gradient(135deg, #f8f6ff 0%, #f0ebff 100%);
+}
+
+.peak-hour-banner__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.peak-hour-banner__title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.peak-hour-banner__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-md);
+  background: var(--color-energy);
+  font-size: 1.3rem;
+  box-shadow: 2px 2px 0 var(--color-ink);
+}
+
+.peak-hour-banner__title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.peak-hour-banner__subtitle {
+  margin: 2px 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-ink-soft);
+}
+
+.peak-hour-banner__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.peak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.35rem 0.75rem;
+  border: 1.5px solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 800;
+  box-shadow: 1px 1px 0 var(--color-ink);
+}
+
+.peak-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.peak-badge--peak {
+  background: #ffe8d6;
+  color: #c94a00;
+  border-color: #c94a00;
+}
+
+.peak-badge--normal {
+  background: var(--color-brand-soft);
+  color: var(--color-brand-strong);
+  border-color: var(--color-brand-strong);
+}
+
+.peak-badge--savings {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.peak-hour-banner__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.peak-advice-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 3%);
+}
+
+.peak-advice-item__icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.peak-advice-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.peak-advice-item__message {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-ink);
+  line-height: 1.35;
+}
+
+.peak-advice-item__power {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  color: var(--color-ink-muted);
+}
+
+.peak-advice-item__saving-badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.peak-hour-banner__empty {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-ink-soft);
+  font-style: italic;
+}
+

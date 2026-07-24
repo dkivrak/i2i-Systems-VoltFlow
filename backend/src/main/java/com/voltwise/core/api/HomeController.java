@@ -12,6 +12,8 @@ import com.voltwise.core.api.HomeDtos.RecommendationResponse;
 import com.voltwise.core.domain.HistoryBucket;
 import com.voltwise.core.registration.HomeService;
 import com.voltwise.core.snapshot.HistoryService;
+import com.voltwise.core.tariff.PeakHourTariffAdvisor;
+import com.voltwise.core.api.HomeDtos.PeakHourAdvisoryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -44,11 +46,13 @@ public class HomeController {
     private final HomeService homeService;
     private final HomeQueryService queryService;
     private final HistoryService historyService;
+    private final PeakHourTariffAdvisor peakHourAdvisor;
 
-    public HomeController(HomeService homeService, HomeQueryService queryService, HistoryService historyService) {
+    public HomeController(HomeService homeService, HomeQueryService queryService, HistoryService historyService, PeakHourTariffAdvisor peakHourAdvisor) {
         this.homeService = homeService;
         this.queryService = queryService;
         this.historyService = historyService;
+        this.peakHourAdvisor = peakHourAdvisor;
     }
 
     @PostMapping
@@ -117,6 +121,18 @@ public class HomeController {
                                     """))))
     public HomeStatusResponse status(@PathVariable Long homeId) {
         return queryService.status(homeId);
+    }
+
+    @GetMapping("/{homeId}/peak-hour-advisory")
+    @Operation(summary = "Get Peak-Hour Tariff status and personalized shift savings advisories")
+    public PeakHourAdvisoryResponse peakHourAdvisory(@PathVariable Long homeId) {
+        HomeStatusResponse currentStatus = queryService.status(homeId);
+        java.math.BigDecimal normalTariff = null;
+        try {
+            var home = homeService.findOwnedHome(homeId);
+            if (home != null) normalTariff = home.getNormalTariffPerKwh();
+        } catch (Exception ignored) {}
+        return peakHourAdvisor.evaluate(currentStatus, normalTariff);
     }
 
     @GetMapping("/{homeId}/history")

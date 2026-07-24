@@ -71,6 +71,7 @@ public class GeminiRecommendationGenerator implements RecommendationGenerator {
                 Aylık bütçe: %s TL
                 Bütçe kullanım oranı: %s%%
                 Aktif tarife: %s
+                Pik Tarife Saatleri: 17:00 - 22:00 (Yüksek güçlü cihazların 22:00 sonrasına ertelenmesi önerilir)
                 Anormal cihazlar ve sınırlar: %s
                 En fazla 4 madde kullan; ölçümleri açıkla, güvenliği öncele ve uydurma veri ekleme.
                 """.formatted(context.homeName(), context.triggerType(),
