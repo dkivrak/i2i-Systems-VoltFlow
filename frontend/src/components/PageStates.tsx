@@ -73,7 +73,7 @@ export function EmptyState({ onRegister }: EmptyStateProps) {
       <div>
         <p className="eyebrow">İlk adım</p>
         <h2>Enerji yolculuğunuz burada başlıyor</h2>
-        <p>Bir ev ve cihazlarını ekleyin; VoltWise canlı tüketimi sizin için izlemeye başlasın.</p>
+        <p>Bir ev ve cihazlarını ekleyin; VoltFlow canlı tüketimi sizin için izlemeye başlasın.</p>
       </div>
       <button className="button button--primary" type="button" onClick={onRegister}>
         İlk evimi ekle

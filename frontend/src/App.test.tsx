@@ -9,7 +9,7 @@ import { anomalousHome, normalHome, warningHome } from './test/fixtures';
 import { getStoredToken, setStoredToken } from './api/client';
 import { beforeEach } from 'vitest';
 
-describe('VoltWise dashboard', () => {
+describe('VoltFlow dashboard', () => {
   beforeEach(() => {
     setStoredToken('mock-jwt-token-for-test');
     window.history.replaceState({}, '', '/dashboard');
@@ -97,13 +97,13 @@ describe('VoltWise dashboard', () => {
   it('shows a readable API error and retries without exposing server details', async () => {
     const statuses = vi
       .spyOn(api, 'getHomeStatuses')
-      .mockRejectedValueOnce(new ApiError('VoltWise servisine şu anda ulaşılamıyor.', 500))
+      .mockRejectedValueOnce(new ApiError('VoltFlow servisine şu anda ulaşılamıyor.', 500))
       .mockResolvedValue([normalHome]);
     const user = userEvent.setup();
     render(<App />);
 
     expect(await screen.findByText('Veriler alınamadı')).toBeInTheDocument();
-    expect(screen.getByText('VoltWise servisine şu anda ulaşılamıyor.')).toBeInTheDocument();
+    expect(screen.getByText('VoltFlow servisine şu anda ulaşılamıyor.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Yeniden dene' }));
 
     expect(await screen.findByRole('heading', { name: 'Kadıköy Evi' })).toBeInTheDocument();
@@ -160,7 +160,7 @@ describe('home card visual states', () => {
   });
 });
 
-describe('public VoltWise routes', () => {
+describe('public VoltFlow routes', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     window.history.replaceState({}, '', '/');
@@ -184,7 +184,7 @@ describe('public VoltWise routes', () => {
 
     expect(window.location.pathname).toBe('/register');
     expect(
-      await screen.findByRole('heading', { name: 'VoltWise’a Katılın' }),
+      await screen.findByRole('heading', { name: 'VoltFlow’a Katılın' }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Şifre')).toBeInTheDocument();
     expect(screen.getByLabelText('Şifre tekrarı')).toBeInTheDocument();

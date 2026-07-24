@@ -4,7 +4,8 @@
   inset: 0;
   display: grid;
   overflow-y: auto;
-  place-items: center;
+  align-items: safe center;
+  justify-items: center;
   padding: var(--space-5);
   background: rgb(33 29 52 / 62%);
   backdrop-filter: blur(10px);
@@ -29,6 +30,8 @@
 
 .dialog--wide {
   width: min(var(--dialog-wide-width), calc(100vw - 2rem));
+  max-height: 90svh;
+  overflow-y: auto;
 }
 
 .dialog__header,
@@ -121,6 +124,7 @@
   gap: var(--space-5);
   padding: var(--space-6);
   background: var(--color-canvas);
+  overflow-y: auto;
 }
 
 .registration-form > .form-alert {
@@ -312,6 +316,7 @@
   gap: var(--space-5);
   padding: var(--space-5);
   background: var(--color-canvas);
+  overflow-y: auto;
 }
 
 .detail-toolbar {

@@ -686,7 +686,7 @@ export function HomeDetailModal({
                   <Sparkles size={18} />
                 </span>
                 <div>
-                  <p className="eyebrow">VoltWise önerisi</p>
+                  <p className="eyebrow">VoltFlow önerisi</p>
                   <h3>Akıllı tasarruf notları</h3>
                 </div>
               </header>

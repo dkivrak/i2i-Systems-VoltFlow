@@ -3,6 +3,7 @@
   min-height: 100svh;
   grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
   background: var(--color-canvas);
+  overflow: hidden;
 }
 
 .auth-visual {
@@ -205,6 +206,7 @@
     linear-gradient(rgb(247 245 239 / 91%), rgb(247 245 239 / 97%)),
     radial-gradient(circle at 1px 1px, rgb(33 29 52 / 15%) 1px, transparent 0);
   background-size: auto, 22px 22px;
+  overflow-y: auto;
 }
 
 .auth-panel__inner {
@@ -1100,4 +1102,67 @@
   color: var(--color-ink-muted);
   font-size: var(--font-size-xs);
   font-weight: 700;
+}
+
+/* ── Test login ─────────────────────────────────────── */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.auth-divider span {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+}
+
+.auth-test-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: var(--space-3) var(--space-5);
+  margin-top: var(--space-4);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1207;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border: 2px solid #d97706;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    transform 120ms ease,
+    box-shadow 180ms ease;
+  box-shadow: 0 2px 6px rgb(245 158 11 / 25%);
+}
+
+.auth-test-login:hover {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgb(245 158 11 / 35%);
+}
+
+.auth-test-login:active {
+  transform: translateY(0);
+}
+
+.auth-test-login:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }

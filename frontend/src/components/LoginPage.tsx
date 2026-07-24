@@ -233,6 +233,46 @@ export function LoginPage({
     }
   };
 
+  const handleTestLogin = async () => {
+    if (loading) return;
+    requestController.current?.abort();
+    const controller = new AbortController();
+    requestController.current = controller;
+    setLoading(true);
+    setError('');
+    setFieldErrors({});
+    setSuccessMessage('');
+
+    const testEmail = `test-${Date.now()}@voltflow.test`;
+    const testPassword = 'TestPassword123!';
+
+    try {
+      const response = await api.register(
+        testEmail,
+        testPassword,
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      setSuccessMessage('Test hesabı oluşturuldu, yönlendiriliyorsunuz...');
+      showReaction('success');
+      setLoading(false);
+      successTimer.current = window.setTimeout(
+        () => onLoginSuccess(response.user.email),
+        320,
+      );
+    } catch (requestError) {
+      if (
+        requestError instanceof DOMException &&
+        requestError.name === 'AbortError'
+      ) {
+        return;
+      }
+      setError(getUserFacingError(requestError));
+      showReaction('error', 780);
+      setLoading(false);
+    }
+  };
+
   const changeMode = (nextMode: AuthMode) => {
     if (loading || nextMode === activeMode) return;
     requestController.current?.abort();
@@ -283,7 +323,7 @@ export function LoginPage({
               <Zap size={21} strokeWidth={2.6} />
             </span>
             <span className="brand__wordmark">
-              Volt<span>Wise</span>
+              Volt<span>Flow</span>
             </span>
           </a>
           <span className="auth-visual__badge">
@@ -297,7 +337,7 @@ export function LoginPage({
             Enerjinizin <span>karakterini</span> tanıyın.
           </h1>
           <p>
-            Cihazlarınız tüketimi anlatır, VoltWise bütçenizi korur ve olağan
+            Cihazlarınız tüketimi anlatır, VoltFlow bütçenizi korur ve olağan
             dışı davranışları büyümeden haber verir.
           </p>
         </div>
@@ -348,7 +388,7 @@ export function LoginPage({
           <div className="auth-character-stage__platform" aria-hidden="true" />
         </CharacterGroup>
 
-        <div className="auth-visual__metrics" aria-label="VoltWise özellikleri">
+        <div className="auth-visual__metrics" aria-label="VoltFlow özellikleri">
           <div>
             <strong>1–2 sn</strong>
             <span>Canlı yenileme</span>
@@ -368,7 +408,7 @@ export function LoginPage({
         <div className="auth-panel__inner">
           {onBack && (
             <button className="auth-back" type="button" onClick={onBack}>
-              <ArrowLeft aria-hidden="true" size={17} /> VoltWise’ı keşfet
+              <ArrowLeft aria-hidden="true" size={17} /> VoltFlow’u keşfet
             </button>
           )}
 
@@ -408,7 +448,7 @@ export function LoginPage({
               <h2>
                 {activeMode === 'LOGIN'
                   ? 'Hesabınıza Giriş Yapın'
-                  : 'VoltWise’a Katılın'}
+                  : 'VoltFlow’a Katılın'}
               </h2>
               <p>
                 {activeMode === 'LOGIN'
@@ -613,6 +653,28 @@ export function LoginPage({
             </button>
           </form>
 
+          <div className="auth-divider">
+            <span>veya</span>
+          </div>
+          <button
+            className="auth-test-login"
+            type="button"
+            onClick={handleTestLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="spinner" aria-hidden="true" />
+                Test hesabı oluşturuluyor
+              </>
+            ) : (
+              <>
+                <Zap aria-hidden="true" size={18} />
+                Test Girişi
+              </>
+            )}
+          </button>
+
           <div className="auth-mode-prompt">
             <span>
               {activeMode === 'LOGIN'
@@ -632,7 +694,7 @@ export function LoginPage({
           <div className="auth-security-note">
             <ShieldCheck aria-hidden="true" size={17} />
             <p>
-              Şifreniz güvenli biçimde saklanır ve hiçbir zaman VoltWise
+              Şifreniz güvenli biçimde saklanır ve hiçbir zaman VoltFlow
               yanıtlarında gösterilmez.
             </p>
           </div>
