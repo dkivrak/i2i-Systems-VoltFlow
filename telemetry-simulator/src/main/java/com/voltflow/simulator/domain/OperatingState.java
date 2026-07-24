@@ -1,0 +1,8 @@
+package com.voltflow.simulator.domain;
+
+public enum OperatingState {
+    OFF,
+    STANDBY,
+    ON,
+    HIGH_LOAD
+}

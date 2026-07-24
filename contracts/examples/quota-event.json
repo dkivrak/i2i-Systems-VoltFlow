@@ -1,0 +1,12 @@
+{
+  "eventId": "21f605b6-96de-47b0-a47a-69d824c71868",
+  "eventVersion": 1,
+  "eventType": "QUOTA_THRESHOLD_REACHED",
+  "occurredAt": "2026-07-21T12:30:00Z",
+  "homeId": 1,
+  "threshold": "EIGHTY_PERCENT",
+  "usagePercent": 80.13,
+  "currentCost": 1201.95,
+  "monthlyBudget": 1500,
+  "tariffState": "NORMAL"
+}

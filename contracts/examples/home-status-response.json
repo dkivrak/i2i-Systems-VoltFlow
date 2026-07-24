@@ -1,0 +1,27 @@
+{
+  "homeId": 1,
+  "homeName": "Kadikoy Home",
+  "currentPowerWatts": 1850.4,
+  "accumulatedEnergyKwh": 0.0148,
+  "currentCost": 0.0414,
+  "monthlyBudget": 1500,
+  "budgetUsagePercent": 0.0028,
+  "tariffState": "NORMAL",
+  "anomalyCount": 0,
+  "lastUpdatedAt": "2026-07-21T12:00:01Z",
+  "appliances": [
+    {
+      "applianceId": 10,
+      "name": "Kitchen Kettle",
+      "type": "KETTLE",
+      "currentPowerWatts": 1850.4,
+      "accumulatedEnergyKwh": 0.0148,
+      "accumulatedCost": 0.0414,
+      "operatingState": "ON",
+      "safePowerLimitWatts": 2200,
+      "consecutiveBreachCount": 0,
+      "healthStatus": "NORMAL",
+      "lastUpdatedAt": "2026-07-21T12:00:01Z"
+    }
+  ]
+}

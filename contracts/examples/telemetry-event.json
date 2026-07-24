@@ -1,0 +1,11 @@
+{
+  "eventId": "a5a14b85-73c8-428b-bc0f-b1c3548e58fe",
+  "eventVersion": 1,
+  "eventType": "APPLIANCE_TELEMETRY_RECORDED",
+  "occurredAt": "2026-07-21T12:00:01Z",
+  "homeId": 1,
+  "applianceId": 10,
+  "applianceType": "KETTLE",
+  "powerWatts": 1850.4,
+  "operatingState": "ON"
+}

@@ -1,0 +1,74 @@
+package com.voltflow.core.persistence.entity;
+
+import com.voltflow.core.domain.TariffState;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "billing_ledgers", uniqueConstraints = @UniqueConstraint(name = "uk_billing_home_period", columnNames = {"home_id", "billing_period"}))
+public class BillingLedgerEntity extends AuditedEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "home_id", nullable = false)
+    private HomeEntity home;
+
+    @Column(name = "billing_period", nullable = false)
+    private LocalDate billingPeriod;
+
+    @Column(name = "accumulated_energy_kwh", nullable = false, precision = 24, scale = 9)
+    private BigDecimal accumulatedEnergyKwh = BigDecimal.ZERO;
+
+    @Column(name = "accumulated_cost", nullable = false, precision = 19, scale = 6)
+    private BigDecimal accumulatedCost = BigDecimal.ZERO;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tariff_state", nullable = false, length = 20)
+    private TariffState tariffState = TariffState.NORMAL;
+
+    @Version
+    private long version;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public HomeEntity getHome() { return home; }
+    public void setHome(HomeEntity home) { this.home = home; }
+
+    public LocalDate getBillingPeriod() { return billingPeriod; }
+    public void setBillingPeriod(LocalDate billingPeriod) { this.billingPeriod = billingPeriod; }
+
+    public BigDecimal getAccumulatedEnergyKwh() { return accumulatedEnergyKwh; }
+    public void setAccumulatedEnergyKwh(BigDecimal accumulatedEnergyKwh) { this.accumulatedEnergyKwh = accumulatedEnergyKwh; }
+
+    public BigDecimal getAccumulatedCost() { return accumulatedCost; }
+    public void setAccumulatedCost(BigDecimal accumulatedCost) { this.accumulatedCost = accumulatedCost; }
+
+    public TariffState getTariffState() { return tariffState; }
+    public void setTariffState(TariffState tariffState) { this.tariffState = tariffState; }
+
+    public long getVersion() { return version; }
+    public void setVersion(long version) { this.version = version; }
+}

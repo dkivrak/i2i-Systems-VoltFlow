@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voltflow.local/contracts/home-status-response.schema.json",
+  "title": "Home live status response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "homeId",
+    "homeName",
+    "currentPowerWatts",
+    "accumulatedEnergyKwh",
+    "currentCost",
+    "monthlyBudget",
+    "budgetUsagePercent",
+    "tariffState",
+    "anomalyCount",
+    "lastUpdatedAt",
+    "appliances"
+  ],
+  "properties": {
+    "homeId": { "$ref": "common.schema.json#/$defs/positiveId" },
+    "homeName": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "currentPowerWatts": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "accumulatedEnergyKwh": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "currentCost": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "monthlyBudget": { "$ref": "common.schema.json#/$defs/positiveDecimal" },
+    "budgetUsagePercent": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "tariffState": { "$ref": "common.schema.json#/$defs/tariffState" },
+    "anomalyCount": { "type": "integer", "minimum": 0 },
+    "lastUpdatedAt": { "$ref": "common.schema.json#/$defs/nullableUtcInstant" },
+    "appliances": {
+      "type": "array",
+      "items": { "$ref": "appliance-status-response.schema.json" }
+    }
+  }
+}

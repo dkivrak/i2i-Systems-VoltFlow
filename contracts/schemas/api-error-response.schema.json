@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voltflow.local/contracts/api-error-response.schema.json",
+  "title": "Standard API error response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["timestamp", "status", "error", "message", "path", "fieldErrors"],
+  "properties": {
+    "timestamp": { "$ref": "common.schema.json#/$defs/utcInstant" },
+    "status": { "type": "integer", "minimum": 400, "maximum": 599 },
+    "error": { "type": "string", "minLength": 1 },
+    "message": { "type": "string", "minLength": 1 },
+    "path": { "type": "string", "pattern": "^/" },
+    "fieldErrors": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  }
+}

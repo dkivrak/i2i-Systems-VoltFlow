@@ -1,0 +1,40 @@
+package com.voltflow.core.config;
+
+import org.apache.kafka.clients.admin.NewTopic;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.TopicBuilder;
+import org.springframework.kafka.core.KafkaOperations;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.util.backoff.FixedBackOff;
+
+@Configuration
+@ConditionalOnProperty(prefix = "voltflow.kafka", name = "enabled", havingValue = "true", matchIfMissing = true)
+public class KafkaConfig {
+    @Bean
+    NewTopic registrationTopic(VoltFlowProperties properties) {
+        return TopicBuilder.name(properties.getKafka().getAssetRegistrationTopic()).partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    NewTopic telemetryTopic(VoltFlowProperties properties) {
+        return TopicBuilder.name(properties.getKafka().getTelemetryTopic()).partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    NewTopic telemetryDltTopic(VoltFlowProperties properties) {
+        return TopicBuilder.name(properties.getKafka().getTelemetryDltTopic()).partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    DefaultErrorHandler kafkaErrorHandler(KafkaOperations<Object, Object> operations, VoltFlowProperties properties) {
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(operations,
+                (record, exception) -> new org.apache.kafka.common.TopicPartition(
+                        properties.getKafka().getTelemetryDltTopic(), record.partition()));
+        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3));
+        handler.addNotRetryableExceptions(IllegalArgumentException.class);
+        return handler;
+    }
+}
