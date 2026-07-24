@@ -1,28 +1,45 @@
 .auth-page {
   display: grid;
-  min-height: 100svh;
-  grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
+  height: 100vh;
+  max-height: 100vh;
+  grid-template-columns: minmax(0, 1.08fr) minmax(400px, 0.92fr);
   align-items: stretch;
   background: var(--color-canvas);
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 .auth-visual {
-  position: sticky;
-  top: 0;
-  height: 100svh;
+  position: relative;
+  height: 100vh;
   max-height: 100vh;
   isolation: isolate;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
-  padding: clamp(1.5rem, 4vw, 3.5rem);
+  padding: clamp(1.2rem, 3vw, 2.5rem);
   background:
     radial-gradient(circle at 72% 20%, rgb(118 216 255 / 26%), transparent 20rem),
     radial-gradient(circle at 12% 88%, rgb(255 216 77 / 23%), transparent 22rem),
     #28213f;
   color: var(--color-on-dark);
+}
+
+/* ... keep pseudoelements ... */
+
+.auth-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  max-height: 100vh;
+  padding: clamp(1rem, 2.5vw, 1.8rem);
+  background:
+    linear-gradient(rgb(247 245 239 / 91%), rgb(247 245 239 / 97%)),
+    radial-gradient(circle at 1px 1px, rgb(33 29 52 / 15%) 1px, transparent 0);
+  background-size: auto, 22px 22px;
+  overflow: hidden !important;
 }
 
 .auth-visual::before,
@@ -78,30 +95,31 @@
 .auth-visual__copy {
   position: relative;
   z-index: 2;
-  max-width: 670px;
-  margin-top: clamp(2rem, 6vh, 5rem);
+  max-width: 780px;
+  margin-top: clamp(1rem, 3vh, 2.5rem);
 }
 
 .auth-visual__copy h1 {
-  max-width: 660px;
+  max-width: 760px;
   margin: 0;
   color: #fff;
-  font-size: clamp(3.1rem, 6.3vw, 6.5rem);
-  font-weight: 920;
-  letter-spacing: -0.075em;
-  line-height: 0.87;
+  font-size: clamp(2.3rem, 4.3vw, 4.0rem);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
 }
 
 .auth-visual__copy h1 span {
-  display: block;
+  display: inline-block;
   color: var(--color-energy);
 }
 
 .auth-visual__copy > p:last-child {
-  max-width: 560px;
-  margin: var(--space-6) 0 0;
-  color: rgb(255 253 247 / 72%);
-  font-size: clamp(0.95rem, 1.4vw, 1.12rem);
+  max-width: 580px;
+  margin: var(--space-4) 0 0;
+  color: rgb(255 253 247 / 75%);
+  font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+  line-height: 1.45;
 }
 
 .auth-character-stage {
@@ -200,19 +218,7 @@
   white-space: nowrap;
 }
 
-.auth-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100svh;
-  padding: clamp(1rem, 2.5vw, 2rem) clamp(1.2rem, 4vw, 3rem);
-  background:
-    linear-gradient(rgb(247 245 239 / 91%), rgb(247 245 239 / 97%)),
-    radial-gradient(circle at 1px 1px, rgb(33 29 52 / 15%) 1px, transparent 0);
-  background-size: auto, 22px 22px;
-  overflow-y: auto;
-}
+
 
 .auth-panel__inner {
   display: flex;
