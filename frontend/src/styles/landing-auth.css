@@ -201,10 +201,12 @@
 }
 
 .auth-panel {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   min-height: 100svh;
-  place-items: center;
-  padding: clamp(1.5rem, 5vw, 4rem);
+  padding: clamp(2rem, 4vw, 3.5rem) clamp(1.5rem, 5vw, 3.5rem);
   background:
     linear-gradient(rgb(247 245 239 / 91%), rgb(247 245 239 / 97%)),
     radial-gradient(circle at 1px 1px, rgb(33 29 52 / 15%) 1px, transparent 0);
@@ -213,7 +215,10 @@
 }
 
 .auth-panel__inner {
-  width: min(100%, 470px);
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 480px);
+  margin-top: clamp(0.5rem, 3vh, 2rem);
 }
 
 .auth-nav-header {
@@ -408,20 +413,25 @@
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .auth-input > svg:first-child {
   position: absolute;
-  z-index: 1;
-  left: 1rem;
+  z-index: 5;
+  left: 1.15rem !important;
   color: var(--color-ink-muted);
   pointer-events: none;
 }
 
 .auth-input input {
-  width: 100%;
-  min-height: 54px;
-  padding: 0.78rem 3rem 0.78rem 3.4rem;
+  width: 100% !important;
+  min-height: 54px !important;
+  padding-top: 0.78rem !important;
+  padding-bottom: 0.78rem !important;
+  padding-left: 3.6rem !important;
+  padding-right: 3rem !important;
+  box-sizing: border-box !important;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-sm);
   outline: 0;
