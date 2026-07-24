@@ -67,7 +67,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
         {toasts.map((toast) => {
           const Icon = toast.tone === 'success' ? CheckCircle2 : toast.tone === 'error' ? AlertTriangle : Info;
           return (
-            <div className={`toast toast--${toast.tone}`} role="status" key={toast.id}>
+            <div className={`toast toast--${toast.tone}`} key={toast.id}>
               <Icon aria-hidden="true" size={19} />
               <div className="toast__copy">
                 <strong>{toast.title}</strong>

@@ -76,6 +76,9 @@ springdoc:
     operations-sorter: method
 
 voltwise:
+  auth:
+    jwt-secret: ${JWT_SECRET:VoltWiseVoltFlowSecretKeyForJWTAuthSuperSecure2026}
+    jwt-expiration-seconds: ${JWT_EXPIRATION_SECONDS:86400}
   kafka:
     enabled: ${KAFKA_ENABLED:true}
     asset-registration-topic: voltwise.asset-registration

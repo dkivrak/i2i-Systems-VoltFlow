@@ -82,6 +82,20 @@ function asEnum<T extends string>(value: unknown, allowed: Set<T>, fallback: T):
   return allowed.has(candidate) ? candidate : fallback;
 }
 
+function safeServerMessage(value: string): string {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (
+    !normalized ||
+    normalized.length > 240 ||
+    /(exception\b|stack\s*trace|caused by|org\.spring|java\.|hibernate|sqlstate)/i.test(
+      normalized,
+    )
+  ) {
+    return '';
+  }
+  return normalized;
+}
+
 function extractItems(payload: unknown): unknown[] {
   if (Array.isArray(payload)) return payload;
   if (!isRecord(payload)) return [];
@@ -118,6 +132,11 @@ interface LinkedSignal {
   signal: AbortSignal;
   dispose: () => void;
   timedOut: () => boolean;
+}
+
+interface RequestBehavior {
+  handleUnauthorized?: boolean;
+  unauthorizedMessage?: string;
 }
 
 function createLinkedSignal(external?: AbortSignal): LinkedSignal {
@@ -157,6 +176,7 @@ async function request<T>(
   options: RequestInit = {},
   externalSignal?: AbortSignal,
   sharedSignal?: LinkedSignal,
+  behavior: RequestBehavior = {},
 ): Promise<T> {
   const linkedSignal = sharedSignal ?? createLinkedSignal(externalSignal);
   const { signal, timedOut } = linkedSignal;
@@ -178,19 +198,28 @@ async function request<T>(
     const payload = await readPayload(response);
 
     if (response.status === 401) {
-      setStoredToken(null);
-      window.dispatchEvent(new Event('voltflow_unauthorized'));
-      throw new ApiError('Oturum süreniz doldu, lütfen tekrar giriş yapın.', 401);
+      if (behavior.handleUnauthorized !== false) {
+        setStoredToken(null);
+        window.dispatchEvent(new Event('voltflow_unauthorized'));
+      }
+      throw new ApiError(
+        behavior.unauthorizedMessage ??
+          'Oturum süreniz doldu, lütfen tekrar giriş yapın.',
+        401,
+      );
     }
 
     if (!response.ok) {
       const errorBody = nestedRecord(payload);
       const fieldErrors = isRecord(errorBody.fieldErrors)
         ? Object.fromEntries(
-            Object.entries(errorBody.fieldErrors).map(([key, value]) => [key, asString(value, 'Geçersiz değer')]),
+            Object.entries(errorBody.fieldErrors).map(([key, value]) => [
+              key.replace(/\[(\d+)\]/g, '.$1'),
+              asString(value, 'Geçersiz değer'),
+            ]),
           )
         : {};
-      const serverMessage = asString(errorBody.message);
+      const serverMessage = safeServerMessage(asString(errorBody.message));
       const safeMessage =
         response.status === 400 && serverMessage
           ? serverMessage
@@ -214,6 +243,46 @@ async function request<T>(
     if (!sharedSignal) linkedSignal.dispose();
   }
 }
+
+export interface AuthenticatedUser {
+  id: number;
+  email: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthenticatedUser;
+  message: string;
+}
+
+function normalizeAuthResponse(payload: unknown): AuthResponse {
+  const body = nestedRecord(payload);
+  const user = nestedRecord(body.user);
+  const token = asString(body.token).trim();
+  const email = asString(firstDefined(user, ['email']) ?? body.email).trim().toLowerCase();
+  const tokenParts = token.split('.');
+  if (
+    tokenParts.length !== 3 ||
+    tokenParts.some((part) => !part) ||
+    !emailPatternForAuth.test(email)
+  ) {
+    throw new ApiError(
+      'Güvenli oturum oluşturulamadı. Lütfen yeniden deneyin.',
+    );
+  }
+  const response: AuthResponse = {
+    token,
+    user: {
+      id: asNumber(user.id),
+      email,
+    },
+    message: safeServerMessage(asString(body.message)) || 'İşlem başarılı.',
+  };
+  setStoredToken(token);
+  return response;
+}
+
+const emailPatternForAuth = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function normalizeAppliance(rawValue: unknown, index: number): ApplianceStatus {
   const raw = nestedRecord(rawValue);
@@ -259,6 +328,7 @@ export function normalizeHomeStatus(rawValue: unknown, index = 0): HomeStatus {
   return {
     homeId: asNumber(firstDefined(live, ['homeId', 'id']), index + 1),
     homeName: asString(firstDefined(live, ['homeName', 'name']), `Ev ${index + 1}`),
+    city: asString(firstDefined(live, ['city', 'location'])) || undefined,
     currentPowerWatts: asNumber(firstDefined(live, ['currentPowerWatts', 'totalPowerWatts'])),
     accumulatedEnergyKwh: asNumber(firstDefined(live, ['accumulatedEnergyKwh', 'energyKwh'])),
     currentCost: asNumber(firstDefined(live, ['currentCost', 'accumulatedCost', 'cost'])),
@@ -366,22 +436,37 @@ function normalizeRecommendation(value: unknown, index: number): Recommendation 
 }
 
 export const api = {
-  async sendOtp(email: string): Promise<{ message: string; expiresSeconds: number }> {
-    return request<{ message: string; expiresSeconds: number }>('/auth/send-otp', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
+  async login(
+    email: string,
+    password: string,
+    signal?: AbortSignal,
+  ): Promise<AuthResponse> {
+    const payload = await request<unknown>(
+      '/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      },
+      signal,
+      undefined,
+      {
+        handleUnauthorized: false,
+        unauthorizedMessage: 'E-posta adresi veya şifre hatalı.',
+      },
+    );
+    return normalizeAuthResponse(payload);
   },
 
-  async verifyOtp(email: string, code: string): Promise<{ token: string; email: string; message: string }> {
-    const res = await request<{ token: string; email: string; message: string }>('/auth/verify-otp', {
+  async register(
+    email: string,
+    password: string,
+    signal?: AbortSignal,
+  ): Promise<AuthResponse> {
+    const payload = await request<unknown>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, code }),
-    });
-    if (res.token) {
-      setStoredToken(res.token);
-    }
-    return res;
+      body: JSON.stringify({ email, password }),
+    }, signal);
+    return normalizeAuthResponse(payload);
   },
 
   async getHomeStatuses(signal?: AbortSignal): Promise<HomeStatus[]> {
@@ -441,7 +526,7 @@ export const api = {
       to: to.toISOString(),
       bucket: 'HOUR',
       page: '0',
-      size: '168',
+      size: '200',
     });
     const payload = await request<unknown>(`/homes/${homeId}/history?${query}`, {}, signal);
     return extractItems(payload).map(normalizeHistoryPoint);

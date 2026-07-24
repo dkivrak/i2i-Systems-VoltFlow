@@ -52,6 +52,7 @@ describe('home registration', () => {
     const payload = register.mock.calls[0][0] as HomeRegistrationRequest;
     expect(payload).toMatchObject({
       name: 'Ataşehir Evi',
+      city: 'İstanbul',
       contactEmail: 'enerji@example.com',
       monthlyBudget: 1500,
       normalTariffPerKwh: 2.5,

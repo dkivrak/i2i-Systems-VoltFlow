@@ -52,7 +52,6 @@ export function usePollingResource<T>(
       controller = new AbortController();
       setState((current) => ({
         ...current,
-        error: undefined,
         isLoading: current.data === undefined,
         isRefreshing: current.data !== undefined,
       }));

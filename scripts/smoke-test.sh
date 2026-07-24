@@ -24,9 +24,27 @@ wait_for_url "OpenAPI" "${backend_url}/v3/api-docs"
 wait_for_url "frontend" "${frontend_url}/"
 
 unique_suffix="$(date +%s)"
+auth_response="$(curl --fail --silent --show-error \
+  -X POST "${backend_url}/api/v1/auth/register" \
+  -H 'Content-Type: application/json' \
+  --data "{
+    \"email\": \"smoke-user-${unique_suffix}@example.com\",
+    \"password\": \"SmokeTestPassword!\"
+  }")"
+
+auth_token="$(printf '%s' "$auth_response" \
+  | sed -n 's/.*"token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+  | head -n 1)"
+if [[ -z "$auth_token" ]]; then
+  echo "Account registration response did not contain a JWT: ${auth_response}" >&2
+  exit 1
+fi
+echo "OK: registered and authenticated smoke-test user"
+
 create_response="$(curl --fail --silent --show-error \
   -X POST "${backend_url}/api/v1/homes" \
   -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer ${auth_token}" \
   --data "{
     \"name\": \"Smoke Test Home ${unique_suffix}\",
     \"contactEmail\": \"smoke-${unique_suffix}@example.com\",
@@ -42,7 +60,9 @@ create_response="$(curl --fail --silent --show-error \
     ]
   }")"
 
-home_id="$(printf '%s' "$create_response" | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' | head -n 1)"
+home_id="$(printf '%s' "$create_response" \
+  | sed -n 's/^[[:space:]]*{"id"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' \
+  | head -n 1)"
 if [[ -z "$home_id" ]]; then
   echo "Home creation response did not contain a numeric id: ${create_response}" >&2
   exit 1
@@ -52,6 +72,7 @@ echo "OK: created home ${home_id}"
 status_deadline="$(( $(date +%s) + 45 ))"
 while true; do
   status_response="$(curl --fail --silent --show-error \
+    -H "Authorization: Bearer ${auth_token}" \
     "${backend_url}/api/v1/homes/${home_id}/status" 2>/dev/null || true)"
   timestamp_matches="$(printf '%s' "$status_response" \
     | grep -o '"lastUpdatedAt":"[^"]*"' || true)"

@@ -60,15 +60,33 @@ function newAppliance(rowId: string, type: ApplianceType = 'REFRIGERATOR'): Regi
 
 function validate(form: RegistrationFormState): FieldErrors {
   const errors: FieldErrors = {};
-  if (form.name.trim().length < 2) errors.name = 'Ev adı en az 2 karakter olmalıdır.';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail.trim())) {
+  const normalizedName = form.name.trim();
+  const normalizedEmail = form.contactEmail.trim();
+  if (normalizedName.length < 2) errors.name = 'Ev adı en az 2 karakter olmalıdır.';
+  else if (normalizedName.length > 160) errors.name = 'Ev adı en fazla 160 karakter olabilir.';
+  if (form.city.length > 100) errors.city = 'Şehir adı en fazla 100 karakter olabilir.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) || normalizedEmail.length > 320) {
     errors.contactEmail = 'Geçerli bir e-posta adresi girin.';
   }
   if (!(form.monthlyBudget >= 1 && form.monthlyBudget <= 1000000)) {
     errors.monthlyBudget = 'Aylık bütçe 1 ₺ ile 1.000.000 ₺ arasında olmalıdır.';
   }
+  const applianceCount = form.appliances.reduce(
+    (total, appliance) => total + (Number.isFinite(appliance.quantity) ? appliance.quantity : 0),
+    0,
+  );
   if (!form.appliances.length) errors.appliances = 'En az bir cihaz ekleyin.';
+  else if (applianceCount > 20) errors.appliances = 'Bir eve en fazla 20 cihaz ekleyebilirsiniz.';
   form.appliances.forEach((appliance, index) => {
+    const baseName =
+      appliance.name.trim() || applianceTypeLabels[appliance.type];
+    const longestExpandedName =
+      appliance.quantity > 1
+        ? `${baseName} ${appliance.quantity}`
+        : baseName;
+    if (longestExpandedName.length > 160) {
+      errors[`appliances.${index}.name`] = 'Cihaz adı en fazla 160 karakter olabilir.';
+    }
     if (!Number.isInteger(appliance.quantity) || appliance.quantity < 1 || appliance.quantity > 20) {
       errors[`appliances.${index}.quantity`] = 'Adet 1–20 arasında olmalıdır.';
     }
@@ -83,6 +101,7 @@ function validate(form: RegistrationFormState): FieldErrors {
 export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps) {
   const nextRowId = useRef(2);
   const requestController = useRef<AbortController>();
+  const addApplianceButtonRef = useRef<HTMLButtonElement>(null);
   const [form, setForm] = useState<RegistrationFormState>({
     name: '',
     city: 'İstanbul',
@@ -150,6 +169,7 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
       ...current,
       appliances: current.appliances.filter((_, applianceIndex) => applianceIndex !== index),
     }));
+    window.requestAnimationFrame(() => addApplianceButtonRef.current?.focus());
   };
 
   const close = useCallback(() => {
@@ -165,6 +185,13 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
     if (Object.keys(validationErrors).length) {
       setErrors(validationErrors);
       setSubmitError('Lütfen işaretli alanları kontrol edin.');
+      window.requestAnimationFrame(() => {
+        document
+          .querySelector<HTMLElement>(
+            '#registration-form [aria-invalid="true"]',
+          )
+          ?.focus();
+      });
       return;
     }
 
@@ -186,6 +213,7 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
       await api.registerHome(
         {
           name: form.name.trim(),
+          city: form.city,
           contactEmail: form.contactEmail.trim(),
           monthlyBudget: form.monthlyBudget,
           normalTariffPerKwh: form.normalTariffPerKwh,
@@ -204,7 +232,16 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
       onClose();
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return;
-      if (error instanceof ApiError && Object.keys(error.fieldErrors).length) setErrors(error.fieldErrors);
+      if (error instanceof ApiError && Object.keys(error.fieldErrors).length) {
+        setErrors(error.fieldErrors);
+        window.requestAnimationFrame(() => {
+          document
+            .querySelector<HTMLElement>(
+              '#registration-form [aria-invalid="true"]',
+            )
+            ?.focus();
+        });
+      }
       const message = getUserFacingError(error);
       setSubmitError(message);
     } finally {
@@ -212,7 +249,14 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
     }
   };
 
-  const fieldError = (key: string) => (errors[key] ? <span className="field-error">{errors[key]}</span> : null);
+  const errorId = (key: string) =>
+    `registration-${key.replace(/[^a-z0-9_-]/gi, '-')}-error`;
+  const fieldError = (key: string) =>
+    errors[key] ? (
+      <span className="field-error" id={errorId(key)}>
+        {errors[key]}
+      </span>
+    ) : null;
 
   return (
     <Dialog
@@ -220,6 +264,7 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
       eyebrow="Varlık yönetimi"
       description="Ev lokasyonunu, aylık bütçeyi ve canlı izlenecek cihazları tanımlayın."
       onClose={close}
+      closeDisabled={isSubmitting}
       footer={
         <>
           <button className="button button--ghost" type="button" onClick={close} disabled={isSubmitting}>
@@ -247,6 +292,7 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
                 value={form.name}
                 onChange={(event) => updateField('name', event.target.value)}
                 aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? errorId('name') : undefined}
                 placeholder="Örn. Kadıköy Evim"
               />
               {fieldError('name')}
@@ -254,11 +300,17 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
 
             <label className="field">
               <span>Şehir</span>
-              <select value={form.city} onChange={(event) => updateField('city', event.target.value)}>
+              <select
+                value={form.city}
+                onChange={(event) => updateField('city', event.target.value)}
+                aria-invalid={Boolean(errors.city)}
+                aria-describedby={errors.city ? errorId('city') : undefined}
+              >
                 {CITIES.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
+              {fieldError('city')}
             </label>
 
             <label className="field">
@@ -268,6 +320,8 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
                 value={form.contactEmail}
                 onChange={(event) => updateField('contactEmail', event.target.value)}
                 aria-invalid={Boolean(errors.contactEmail)}
+                aria-describedby={errors.contactEmail ? errorId('contactEmail') : undefined}
+                autoComplete="email"
                 placeholder="siz@example.com"
               />
               {fieldError('contactEmail')}
@@ -285,21 +339,21 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
                 value={form.monthlyBudget}
                 onChange={(event) => updateField('monthlyBudget', Number(event.target.value))}
                 aria-invalid={Boolean(errors.monthlyBudget)}
+                aria-describedby={errors.monthlyBudget ? errorId('monthlyBudget') : undefined}
               />
               {fieldError('monthlyBudget')}
             </label>
 
-            {/* Read-Only System Tariff Explanation Box */}
-            <div className="p-3 bg-slate-800/40 border border-slate-700/50 rounded-xl text-xs space-y-1.5">
-              <div className="flex items-center gap-1.5 font-medium text-cyan-400">
-                <Info className="w-4 h-4 shrink-0" />
+            <div className="tariff-explainer">
+              <div className="tariff-explainer__heading">
+                <Info aria-hidden="true" size={16} />
                 <span>Sistem Aşamalı Ceza Tarifesi</span>
               </div>
-              <p className="text-slate-300 text-[11px] leading-relaxed">
+              <p>
                 Normal Tarife: <strong>2,50 ₺/kWh</strong> | Çarpan: <strong>1,50x</strong>
               </p>
-              <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-700/40">
-                • Bütçe $\le$ %100: 2,50 ₺/kWh<br />
+              <div className="tariff-explainer__tiers">
+                • Bütçe ≤ %100: 2,50 ₺/kWh<br />
                 • %100 - %150: 3,75 ₺/kWh<br />
                 • &gt; %150: 5,625 ₺/kWh
               </div>
@@ -307,17 +361,30 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
           </div>
         </fieldset>
 
-        <fieldset className="form-section appliance-form-section">
+        <fieldset
+          className="form-section appliance-form-section"
+          aria-describedby={errors.appliances ? errorId('appliances') : undefined}
+        >
+          <legend>Cihazlar</legend>
           <div className="fieldset-heading">
-            <div>
-              <legend>Cihazlar</legend>
-              <p>Cihaz türüne göre güvenli Watt sınırları otomatik ayarlanır.</p>
-            </div>
-            <button className="button button--small button--secondary" type="button" onClick={addAppliance}>
+            <p>Cihaz türüne göre güvenli Watt sınırları otomatik ayarlanır.</p>
+            <button
+              className="button button--small button--secondary"
+              type="button"
+              onClick={addAppliance}
+              ref={addApplianceButtonRef}
+            >
               <Plus aria-hidden="true" size={15} /> Cihaz ekle
             </button>
           </div>
-          {errors.appliances && <span className="field-error field-error--block">{errors.appliances}</span>}
+          {errors.appliances && (
+            <span
+              className="field-error field-error--block"
+              id={errorId('appliances')}
+            >
+              {errors.appliances}
+            </span>
+          )}
 
           <div className="appliance-form-list">
             {form.appliances.map((appliance, index) => {
@@ -346,9 +413,16 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
                     <input
                       value={appliance.name}
                       aria-label={`${index + 1}. cihaz adı`}
+                      aria-invalid={Boolean(errors[`appliances.${index}.name`])}
+                      aria-describedby={
+                        errors[`appliances.${index}.name`]
+                          ? errorId(`appliances.${index}.name`)
+                          : undefined
+                      }
                       onChange={(event) => updateAppliance(index, 'name', event.target.value)}
                       placeholder={applianceTypeLabels[appliance.type]}
                     />
+                    {fieldError(`appliances.${index}.name`)}
                   </label>
 
                   <label className="field field--quantity">
@@ -360,6 +434,12 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
                       step="1"
                       value={appliance.quantity}
                       aria-label={`${index + 1}. cihaz adedi`}
+                      aria-invalid={Boolean(errors[`appliances.${index}.quantity`])}
+                      aria-describedby={
+                        errors[`appliances.${index}.quantity`]
+                          ? errorId(`appliances.${index}.quantity`)
+                          : undefined
+                      }
                       onChange={(event) => updateAppliance(index, 'quantity', Number(event.target.value))}
                     />
                     {fieldError(`appliances.${index}.quantity`)}
@@ -374,6 +454,14 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
                       step="10"
                       value={appliance.safePowerLimitWatts}
                       aria-label={`${index + 1}. cihaz güvenli güç sınırı`}
+                      aria-invalid={Boolean(
+                        errors[`appliances.${index}.safePowerLimitWatts`],
+                      )}
+                      aria-describedby={
+                        errors[`appliances.${index}.safePowerLimitWatts`]
+                          ? errorId(`appliances.${index}.safePowerLimitWatts`)
+                          : undefined
+                      }
                       onChange={(event) => updateAppliance(index, 'safePowerLimitWatts', Number(event.target.value))}
                     />
                     {fieldError(`appliances.${index}.safePowerLimitWatts`)}

@@ -1,0 +1,95 @@
+:root {
+  color-scheme: light;
+  font-family:
+    'Manrope Variable',
+    'Manrope',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-synthesis: none;
+
+  --color-canvas: #f7f5ef;
+  --color-canvas-warm: #fff9e8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eeebe4;
+  --color-surface-strong: #242036;
+  --color-ink: #211d34;
+  --color-ink-soft: #5e596f;
+  --color-ink-muted: #686276;
+  --color-on-dark: #fffdf7;
+  --color-border: #dfdbe7;
+  --color-border-strong: #bbb4ca;
+
+  --color-brand: #6c47ff;
+  --color-brand-strong: #5130db;
+  --color-brand-soft: #ebe5ff;
+  --color-energy: #ffd84d;
+  --color-energy-strong: #e0a900;
+  --color-orange: #ff8b4a;
+  --color-orange-soft: #fff0e5;
+  --color-sky: #76d8ff;
+  --color-sky-soft: #e2f7ff;
+  --color-success: #0e6842;
+  --color-success-soft: #ddf7eb;
+  --color-warning: #7d4800;
+  --color-warning-soft: #fff1c7;
+  --color-critical: #a32639;
+  --color-critical-soft: #ffe7e8;
+  --color-neutral-soft: #ece9f1;
+
+  --status-normal: var(--color-success);
+  --status-info: #176f9c;
+  --status-warning: var(--color-warning);
+  --status-critical: var(--color-critical);
+  --status-disconnected: #686276;
+
+  --font-display: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+  --font-body: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.375rem;
+  --font-size-2xl: clamp(1.8rem, 3vw, 2.6rem);
+  --font-size-display: clamp(3rem, 7vw, 6.6rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  --radius-xs: 0.5rem;
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
+  --radius-pill: 999px;
+
+  --shadow-1: 0 1px 2px rgb(35 28 59 / 8%);
+  --shadow-2: 0 12px 32px rgb(43 31 81 / 10%);
+  --shadow-3: 0 24px 70px rgb(43 31 81 / 16%);
+  --shadow-brand: 0 14px 30px rgb(108 71 255 / 24%);
+
+  --motion-instant: 90ms;
+  --motion-fast: 160ms;
+  --motion-medium: 260ms;
+  --motion-slow: 520ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --focus-ring: 0 0 0 4px rgb(108 71 255 / 22%);
+  --content-width: 1440px;
+  --dialog-width: 720px;
+  --dialog-wide-width: 1180px;
+  --touch-target: 44px;
+}

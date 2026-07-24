@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { api } from './client';
+import { api, getStoredToken, setStoredToken } from './client';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -9,7 +9,89 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 describe('VoltWise API client', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setStoredToken(null);
+  });
+
+  it('persists a valid JWT returned by password login', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        token: 'header.payload.signature',
+        user: { id: 4, email: 'owner@example.com' },
+        message: 'Giriş başarılı.',
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await api.login('owner@example.com', 'securePassword');
+
+    expect(response.user).toEqual({ id: 4, email: 'owner@example.com' });
+    expect(getStoredToken()).toBe('header.payload.signature');
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/login'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'owner@example.com',
+          password: 'securePassword',
+        }),
+      }),
+    );
+  });
+
+  it('persists the registration JWT and rejects malformed auth responses', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          token: 'header.payload.signature',
+          user: { id: 8, email: 'new@example.com' },
+          message: 'Hesabınız oluşturuldu.',
+        }, 201),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          token: 'not-a-jwt',
+          user: { id: 8, email: 'new@example.com' },
+        }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await api.register('new@example.com', 'securePassword');
+    expect(getStoredToken()).toBe('header.payload.signature');
+
+    setStoredToken(null);
+    await expect(
+      api.login('new@example.com', 'securePassword'),
+    ).rejects.toMatchObject({
+      message: 'Güvenli oturum oluşturulamadı. Lütfen yeniden deneyin.',
+    });
+    expect(getStoredToken()).toBeNull();
+  });
+
+  it('uses a generic login error without triggering the expired-session event', async () => {
+    const unauthorizedListener = vi.fn();
+    window.addEventListener('voltflow_unauthorized', unauthorizedListener);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          { message: 'Account not found' },
+          401,
+        ),
+      ),
+    );
+
+    await expect(
+      api.login('missing@example.com', 'wrongPassword'),
+    ).rejects.toMatchObject({
+      message: 'E-posta adresi veya şifre hatalı.',
+      status: 401,
+    });
+    expect(unauthorizedListener).not.toHaveBeenCalled();
+    window.removeEventListener('voltflow_unauthorized', unauthorizedListener);
+  });
 
   it('normalizes the concrete paged home status contract', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
@@ -194,6 +276,80 @@ describe('VoltWise API client', () => {
       id: 99,
       text: 'Cihazı kapatıp güvenli bağlantıyı kontrol edin.',
       triggerType: 'APPLIANCE_ANOMALY',
+    });
+  });
+
+  it('requests every possible hourly bucket in the seven-day history window', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ content: [], page: 0, size: 200, totalPages: 0 }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await api.getHistory(41);
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain(
+      '/homes/41/history?',
+    );
+    expect(String(fetchMock.mock.calls[0][0])).toContain('size=200');
+  });
+
+  it('normalizes indexed backend field-error paths for registration fields', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          {
+            message: 'Geçersiz istek',
+            fieldErrors: {
+              'appliances[0].name': 'Cihaz adı çok uzun.',
+            },
+          },
+          400,
+        ),
+      ),
+    );
+
+    const request = api.registerHome({
+      name: 'Ev',
+      city: 'İstanbul',
+      contactEmail: 'owner@example.com',
+      monthlyBudget: 1000,
+      normalTariffPerKwh: 2.5,
+      penaltyMultiplier: 1.5,
+      appliances: [
+        {
+          name: 'Cihaz',
+          type: 'LAMP',
+          safePowerLimitWatts: 60,
+        },
+      ],
+    });
+
+    await expect(request).rejects.toMatchObject({
+      fieldErrors: {
+        'appliances.0.name': 'Cihaz adı çok uzun.',
+      },
+    });
+  });
+
+  it('does not expose technical backend exception text to users', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          {
+            message:
+              'java.lang.IllegalStateException: caused by org.springframework failure',
+          },
+          400,
+        ),
+      ),
+    );
+
+    await expect(
+      api.register('owner@example.com', 'securePassword'),
+    ).rejects.toMatchObject({
+      message: 'İstek tamamlanamadı.',
     });
   });
 });

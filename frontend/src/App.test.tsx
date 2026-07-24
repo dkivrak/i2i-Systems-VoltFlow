@@ -12,9 +12,13 @@ import { beforeEach } from 'vitest';
 describe('VoltWise dashboard', () => {
   beforeEach(() => {
     setStoredToken('mock-jwt-token-for-test');
+    window.history.replaceState({}, '', '/dashboard');
   });
 
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    window.history.replaceState({}, '', '/');
+  });
 
   it('renders live home cards and overview values', async () => {
     vi.spyOn(api, 'getHomeStatuses').mockResolvedValue([normalHome]);
@@ -153,5 +157,97 @@ describe('home card visual states', () => {
     expect(screen.getByText('%112,5')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Moda Evi detaylarını aç' }));
     expect(onSelect).toHaveBeenCalledWith(anomalousHome);
+  });
+});
+
+describe('public VoltWise routes', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('keeps the landing page public and opens the real password registration experience', async () => {
+    setStoredToken(null);
+    window.history.replaceState({}, '', '/');
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    expect(
+      screen.getByRole('heading', {
+        name: /Enerjiyi izlemek değil, anlamak için/i,
+      }),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: /Evimi izlemeye başla/i }),
+    );
+
+    expect(window.location.pathname).toBe('/register');
+    expect(
+      await screen.findByRole('heading', { name: 'VoltWise’a Katılın' }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Şifre')).toBeInTheDocument();
+    expect(screen.getByLabelText('Şifre tekrarı')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /google|oauth|sosyal/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('allows an authenticated visitor to view the public landing page', () => {
+    setStoredToken('header.payload.signature');
+    window.history.replaceState({}, '', '/');
+
+    render(<App />);
+
+    expect(
+      screen.getByRole('heading', {
+        name: /Enerjiyi izlemek değil, anlamak için/i,
+      }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+  });
+
+  it('sends an authenticated landing-page visitor straight to the dashboard', async () => {
+    setStoredToken('header.payload.signature');
+    window.history.replaceState({}, '', '/');
+    vi.spyOn(api, 'getHomeStatuses').mockResolvedValue([]);
+    const user = userEvent.setup();
+
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Giriş yap' }));
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /Evinizin enerjisi, tek bakışta anlaşılır/i,
+      }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/dashboard');
+  });
+
+  it('redirects unauthenticated dashboard navigation to login', async () => {
+    setStoredToken(null);
+    window.history.replaceState({}, '', '/dashboard');
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Hesabınıza Giriş Yapın' }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/login');
+  });
+
+  it('redirects authenticated login navigation to the dashboard', async () => {
+    setStoredToken('header.payload.signature');
+    window.history.replaceState({}, '', '/login');
+    vi.spyOn(api, 'getHomeStatuses').mockResolvedValue([]);
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /Evinizin enerjisi, tek bakışta anlaşılır/i,
+      }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/dashboard');
   });
 });

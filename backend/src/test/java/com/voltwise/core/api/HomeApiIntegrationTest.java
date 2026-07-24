@@ -1,6 +1,7 @@
 package com.voltwise.core.api;
 
 import com.voltwise.core.persistence.repository.HomeRepository;
+import com.voltwise.core.auth.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -8,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
@@ -25,11 +27,12 @@ class HomeApiIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired HomeRepository homes;
     @Autowired com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    @Autowired JwtTokenProvider tokenProvider;
 
     @Test
     void registersHomeAndMultipleAppliancesTransactionally() throws Exception {
         long before = homes.count();
-        mvc.perform(post("/api/v1/homes").contentType(MediaType.APPLICATION_JSON).content(validRequest()))
+        mvc.perform(authorized(post("/api/v1/homes")).contentType(MediaType.APPLICATION_JSON).content(validRequest()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.name").value("Kadikoy Home"))
@@ -40,7 +43,7 @@ class HomeApiIntegrationTest {
 
     @Test
     void returnsConsistentFieldValidationErrors() throws Exception {
-        mvc.perform(post("/api/v1/homes").contentType(MediaType.APPLICATION_JSON).content("""
+        mvc.perform(authorized(post("/api/v1/homes")).contentType(MediaType.APPLICATION_JSON).content("""
                 {"name":"","contactEmail":"bad","monthlyBudget":0,"normalTariffPerKwh":0,
                  "penaltyMultiplier":0.5,"appliances":[]}
                 """))
@@ -52,22 +55,22 @@ class HomeApiIntegrationTest {
     }
 
     @Test
-    void exposesAuthenticationEndpointAndValidatesItsRequest() throws Exception {
-        mvc.perform(post("/api/v1/auth/send-otp")
+    void exposesRegistrationEndpointAndValidatesItsRequest() throws Exception {
+        mvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Validation Failed"))
                 .andExpect(jsonPath("$.fieldErrors.email").exists())
-                .andExpect(jsonPath("$.path").value("/api/v1/auth/send-otp"));
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/register"));
     }
 
     @Test
     void lazilyInitializesEmptyLiveStateAndListsIt() throws Exception {
-        String response = mvc.perform(post("/api/v1/homes").contentType(MediaType.APPLICATION_JSON).content(validRequest()))
+        String response = mvc.perform(authorized(post("/api/v1/homes")).contentType(MediaType.APPLICATION_JSON).content(validRequest()))
                 .andReturn().getResponse().getContentAsString();
         long id = new com.fasterxml.jackson.databind.ObjectMapper().readTree(response).get("id").asLong();
-        mvc.perform(get("/api/v1/homes/{id}/status", id))
+        mvc.perform(authorized(get("/api/v1/homes/{id}/status", id)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.currentPowerWatts").value(0))
                 .andExpect(jsonPath("$.tariffState").value("NORMAL"))
@@ -77,7 +80,7 @@ class HomeApiIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void appliesConfiguredDefaultsAndListsRegistrationFromLiveStateAfterCommit() throws Exception {
-        String created = mvc.perform(post("/api/v1/homes").contentType(MediaType.APPLICATION_JSON).content("""
+        String created = mvc.perform(authorized(post("/api/v1/homes")).contentType(MediaType.APPLICATION_JSON).content("""
                 {"name":"Defaults Home","contactEmail":"defaults@example.com","appliances":[
                   {"name":"Desk Lamp","type":"LAMP","safePowerLimitWatts":60}
                 ]}
@@ -89,7 +92,7 @@ class HomeApiIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         long homeId = objectMapper.readTree(created).get("id").asLong();
 
-        String statuses = mvc.perform(get("/api/v1/homes/status"))
+        String statuses = mvc.perform(authorized(get("/api/v1/homes/status")))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(objectMapper.readTree(statuses).get("content")).anySatisfy(node ->
@@ -98,14 +101,14 @@ class HomeApiIntegrationTest {
 
     @Test
     void mapsQueryTypeDateAndConstraintFailuresToSafeBadRequests() throws Exception {
-        mvc.perform(get("/api/v1/homes/1/history").param("bucket", "MINUTE"))
+        mvc.perform(authorized(get("/api/v1/homes/1/history")).param("bucket", "MINUTE"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.fieldErrors.bucket").value("has an invalid value"));
-        mvc.perform(get("/api/v1/homes/1/history").param("from", "not-a-date"))
+        mvc.perform(authorized(get("/api/v1/homes/1/history")).param("from", "not-a-date"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Invalid request parameter"));
-        mvc.perform(get("/api/v1/homes/status").param("page", "-1"))
+        mvc.perform(authorized(get("/api/v1/homes/status")).param("page", "-1"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Validation Failed"));
     }
@@ -119,5 +122,12 @@ class HomeApiIntegrationTest {
                     {"name":"Spare Kettle","type":"KETTLE","safePowerLimitWatts":2100}
                  ]}
                 """;
+    }
+
+    private MockHttpServletRequestBuilder authorized(MockHttpServletRequestBuilder request) {
+        return request.header(
+                "Authorization",
+                "Bearer " + tokenProvider.generateToken("integration@example.com")
+        );
     }
 }

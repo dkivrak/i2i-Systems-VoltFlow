@@ -34,4 +34,19 @@ class FlywayMigrationContractTest {
                     "uk_registration_outbox_event_id", "idx_registration_outbox_due");
         }
     }
+
+    @Test
+    void fourthMigrationDefinesPasswordBackedApplicationUsers() throws Exception {
+        try (var stream = getClass().getResourceAsStream("/db/migration/V4__add_application_users.sql")) {
+            assertThat(stream).isNotNull();
+            String sql = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            assertThat(sql).contains(
+                    "CREATE TABLE app_users",
+                    "email VARCHAR(320) NOT NULL",
+                    "password_hash VARCHAR(100) NOT NULL",
+                    "enabled BOOLEAN NOT NULL",
+                    "uk_app_users_email UNIQUE"
+            );
+        }
+    }
 }

@@ -2,37 +2,36 @@ package com.voltwise.core.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public final class AuthDtos {
     private AuthDtos() {}
 
-    public record SendOtpRequest(
+    public record RegisterRequest(
             @NotBlank(message = "E-posta adresi boş bırakılamaz")
             @Email(message = "Geçerli bir e-posta adresi giriniz")
             @Size(max = 320)
-            String email
+            String email,
+            @NotBlank(message = "Şifre boş bırakılamaz")
+            @Size(min = 8, max = 72, message = "Şifre 8 ile 72 karakter arasında olmalıdır")
+            String password
     ) {}
 
-    public record SendOtpResponse(
-            String message,
-            int expiresSeconds
-    ) {}
-
-    public record VerifyOtpRequest(
+    public record LoginRequest(
             @NotBlank(message = "E-posta adresi boş bırakılamaz")
             @Email(message = "Geçerli bir e-posta adresi giriniz")
+            @Size(max = 320)
             String email,
-
-            @NotBlank(message = "Doğrulama kodu boş bırakılamaz")
-            @Pattern(regexp = "^[0-9]{6}$", message = "Doğrulama kodu 6 haneli rakam olmalıdır")
-            String code
+            @NotBlank(message = "Şifre boş bırakılamaz")
+            @Size(max = 72, message = "Şifre en fazla 72 karakter olabilir")
+            String password
     ) {}
+
+    public record AuthUserResponse(Long id, String email) {}
 
     public record AuthResponse(
             String token,
-            String email,
+            AuthUserResponse user,
             String message
     ) {}
 }

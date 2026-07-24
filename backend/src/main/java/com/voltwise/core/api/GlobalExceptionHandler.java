@@ -1,5 +1,7 @@
 package com.voltwise.core.api;
 
+import com.voltwise.core.auth.EmailAlreadyRegisteredException;
+import com.voltwise.core.auth.InvalidCredentialsException;
 import com.voltwise.core.live.LiveStateNotFoundException;
 import com.voltwise.core.registration.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -56,6 +58,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ResourceNotFoundException.class, LiveStateNotFoundException.class})
     ResponseEntity<ApiError> notFound(RuntimeException ex, HttpServletRequest request) {
         return response(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(EmailAlreadyRegisteredException.class)
+    ResponseEntity<ApiError> duplicateAccount(EmailAlreadyRegisteredException ex, HttpServletRequest request) {
+        return response(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    ResponseEntity<ApiError> invalidCredentials(InvalidCredentialsException ex, HttpServletRequest request) {
+        return response(HttpStatus.UNAUTHORIZED, "Unauthorized", ex.getMessage(), request, Map.of());
     }
 
     @ExceptionHandler({IllegalArgumentException.class, HttpMessageNotReadableException.class})

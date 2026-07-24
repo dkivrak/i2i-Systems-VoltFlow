@@ -195,6 +195,8 @@ Mailpit at <http://localhost:8025> to inspect messages without real delivery.
 
 The versioned API is rooted at `/api/v1`:
 
+- `POST /auth/register` creates an email/password account and returns a JWT;
+- `POST /auth/login` validates credentials and returns a JWT;
 - `POST /homes` registers a home with multiple appliances;
 - `GET /homes?page=0&size=20` lists registered homes;
 - `GET /homes/status?page=0&size=50` returns bounded live summaries;
@@ -209,11 +211,21 @@ The versioned API is rooted at `/api/v1`:
 Swagger UI documents validation and examples and is available at
 <http://localhost:8080/swagger-ui.html> after startup.
 
-Example registration:
+Register an account and use the returned token as
+`Authorization: Bearer <token>` for home APIs:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"owner@example.com","password":"securePassword"}'
+```
+
+Example home registration:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/homes \
   -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <token>' \
   -d '{
     "name": "Kadikoy Home",
     "contactEmail": "owner@example.com",
@@ -262,6 +274,7 @@ cp .env.example .env
 | --- | --- | --- |
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | local values in template | Database bootstrap credentials |
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://postgres:5432/voltwise` | Core JDBC URL |
+| `JWT_SECRET`, `JWT_EXPIRATION_SECONDS` | local secret, `86400` | JWT signing secret and lifetime |
 | `KAFKA_BOOTSTRAP_SERVERS` | `kafka:29092` | Internal broker address |
 | `IGNITE_ADDRESSES` | `ignite:10800` | Ignite thin-client addresses |
 | `REGISTRATION_OUTBOX_*` | retry `5000`, batch `50`, ack `35000` | Durable registration retry cadence, bounds, and backoff |

@@ -1,10 +1,12 @@
 package com.voltwise.core.auth;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
@@ -12,15 +14,28 @@ import java.util.Base64;
 
 @Component
 public class JwtTokenProvider {
-    private static final String SECRET_KEY = "VoltWiseVoltFlowSecretKeyForJWTAuthSuperSecure2026";
-    private static final long EXPIRATION_SECONDS = 86400; // 24 Hours
+    private final String secretKey;
+    private final long expirationSeconds;
+
+    public JwtTokenProvider(
+            @Value("${voltwise.auth.jwt-secret:VoltWiseVoltFlowSecretKeyForJWTAuthSuperSecure2026}") String secretKey,
+            @Value("${voltwise.auth.jwt-expiration-seconds:86400}") long expirationSeconds) {
+        if (secretKey == null || secretKey.length() < 32) {
+            throw new IllegalArgumentException("JWT secret must contain at least 32 characters");
+        }
+        if (expirationSeconds <= 0) {
+            throw new IllegalArgumentException("JWT expiration must be positive");
+        }
+        this.secretKey = secretKey;
+        this.expirationSeconds = expirationSeconds;
+    }
 
     public String generateToken(String email) {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("Email cannot be null or empty");
         }
         long now = Instant.now().getEpochSecond();
-        long exp = now + EXPIRATION_SECONDS;
+        long exp = now + expirationSeconds;
         String cleanEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
 
         String headerJson = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
@@ -30,7 +45,7 @@ public class JwtTokenProvider {
         String payloadBase64 = base64UrlEncode(payloadJson.getBytes(StandardCharsets.UTF_8));
 
         String dataToSign = headerBase64 + "." + payloadBase64;
-        String signature = hmacSha256(dataToSign, SECRET_KEY);
+        String signature = hmacSha256(dataToSign, secretKey);
 
         return dataToSign + "." + signature;
     }
@@ -42,14 +57,21 @@ public class JwtTokenProvider {
         if (parts.length != 3) return null;
 
         String dataToSign = parts[0] + "." + parts[1];
-        String expectedSignature = hmacSha256(dataToSign, SECRET_KEY);
+        String expectedSignature = hmacSha256(dataToSign, secretKey);
 
-        if (!expectedSignature.equals(parts[2])) {
+        if (!MessageDigest.isEqual(
+                expectedSignature.getBytes(StandardCharsets.US_ASCII),
+                parts[2].getBytes(StandardCharsets.US_ASCII))) {
             return null; // Invalid signature
         }
 
-        byte[] payloadBytes = base64UrlDecode(parts[1]);
-        String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
+        String payloadJson;
+        try {
+            byte[] payloadBytes = base64UrlDecode(parts[1]);
+            payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
 
         long exp = extractLongField(payloadJson, "exp");
         if (exp > 0 && Instant.now().getEpochSecond() > exp) {
