@@ -134,36 +134,58 @@
 .auth-character {
   position: absolute;
   z-index: 2;
-  filter: drop-shadow(0 20px 18px rgb(12 8 26 / 25%));
+  filter: drop-shadow(0 16px 14px rgb(12 8 26 / 28%));
   transition:
     transform var(--motion-medium) var(--ease-bounce),
     filter var(--motion-medium) var(--ease-standard);
+  will-change: transform;
 }
 
 .auth-character:hover {
   z-index: 4;
-  filter: drop-shadow(0 26px 22px rgb(12 8 26 / 35%));
-  transform: translateY(-7px) rotate(1deg);
+  filter: drop-shadow(0 24px 20px rgb(12 8 26 / 40%));
+  animation-play-state: paused;
+  transform: translateY(-8px) scale(1.04) rotate(1deg);
 }
 
+/* Align all characters on the same horizontal baseline (bottom: 14%) */
 .auth-character--fridge {
-  bottom: 13%;
-  left: 12%;
+  bottom: 14%;
+  left: 6%;
+  animation: characterFloatAndWiggle 3.4s ease-in-out infinite;
 }
 
 .auth-character--washer {
-  right: 30%;
-  bottom: 12%;
+  bottom: 14%;
+  left: 31%;
+  animation: characterFloatAndWiggle 2.9s ease-in-out infinite 0.4s;
 }
 
 .auth-character--kettle {
-  right: 8%;
-  bottom: 16%;
+  bottom: 14%;
+  left: 55%;
+  animation: characterFloatAndWiggle 3.6s ease-in-out infinite 0.8s;
 }
 
 .auth-character--lamp {
-  top: 9%;
-  left: 48%;
+  bottom: 14%;
+  left: 77%;
+  animation: characterFloatAndWiggle 3.1s ease-in-out infinite 0.2s;
+}
+
+@keyframes characterFloatAndWiggle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-6px) rotate(-2.5deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(1.5deg);
+  }
+  75% {
+    transform: translateY(-8px) rotate(2.5deg);
+  }
 }
 
 .auth-character-stage__platform {
