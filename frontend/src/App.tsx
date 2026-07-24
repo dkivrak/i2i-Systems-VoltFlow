@@ -86,7 +86,8 @@ function Dashboard({ onLogout }: DashboardProps) {
     getPollingInterval(),
     selectedHomeId === null && !registrationOpen,
   );
-  const homes = homesQuery.data ?? [];
+  const rawHomes = homesQuery.data ?? [];
+  const homes = useMemo(() => [...rawHomes].reverse(), [rawHomes]);
   const presentationEpoch =
     Math.floor(
       (homesQuery.lastUpdatedAt?.getTime() ?? Date.now()) / 5_000,

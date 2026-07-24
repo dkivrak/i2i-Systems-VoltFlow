@@ -31,6 +31,13 @@ const ApplianceCharacterCard = memo(function ApplianceCharacterCard({
     [appliance.applianceId, onSelect],
   );
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      activate();
+    }
+  };
+
   return (
     <article
       className={[
@@ -42,7 +49,12 @@ const ApplianceCharacterCard = memo(function ApplianceCharacterCard({
         .join(' ')}
       data-selected={selected}
       data-freshness={item.freshness}
-      role="listitem"
+      role="button"
+      tabIndex={0}
+      onClick={activate}
+      onKeyDown={handleKeyDown}
+      aria-label={`${appliance.name} cihazını seç ve telemetrisini göster`}
+      style={{ cursor: 'pointer' }}
     >
       <div className="appliance-character-card__visual">
         <ApplianceCharacter

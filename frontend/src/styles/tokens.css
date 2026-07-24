@@ -89,7 +89,7 @@
 
   --focus-ring: 0 0 0 4px rgb(108 71 255 / 22%);
   --content-width: 1440px;
-  --dialog-width: 720px;
-  --dialog-wide-width: 1180px;
+  --dialog-width: 860px;
+  --dialog-wide-width: 1240px;
   --touch-target: 44px;
 }

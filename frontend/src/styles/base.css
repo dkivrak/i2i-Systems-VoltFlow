@@ -61,10 +61,19 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
-[tabindex]:focus-visible {
+[tabindex]:not([tabindex='-1']):focus-visible {
   outline: 3px solid var(--color-brand);
   outline-offset: 3px;
   box-shadow: var(--focus-ring);
+}
+
+main,
+main:focus,
+main:focus-visible,
+[tabindex='-1']:focus,
+[tabindex='-1']:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 ::selection {

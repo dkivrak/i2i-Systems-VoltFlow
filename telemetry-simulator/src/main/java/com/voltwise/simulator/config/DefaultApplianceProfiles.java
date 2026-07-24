@@ -13,82 +13,82 @@ public final class DefaultApplianceProfiles {
         Map<ApplianceType, ApplianceProfile> profiles = new EnumMap<>(ApplianceType.class);
 
         profiles.put(ApplianceType.REFRIGERATOR, new ApplianceProfile()
-                .range("idle", 5, 15)
-                .range("compressor", 70, 180)
-                .range("startup", 181, 350)
-                .probability("compressor-start", 0.18)
+                .range("idle", 25, 45)
+                .range("compressor", 120, 240)
+                .range("startup", 220, 380)
+                .probability("compressor-start", 0.45)
                 .duration("startup", 1)
-                .duration("compressor", 5));
+                .duration("compressor", 8));
 
         profiles.put(ApplianceType.KETTLE, new ApplianceProfile()
                 .range("off", 0, 0)
                 .range("active", 1500, 2400)
-                .probability("start", 0.035)
-                .duration("active", 2));
+                .probability("start", 0.25)
+                .duration("active", 4));
 
         profiles.put(ApplianceType.OVEN, new ApplianceProfile()
-                .range("standby", 2, 8)
+                .range("standby", 15, 35)
                 .range("heating", 1800, 3000)
                 .range("thermostat-on", 1400, 2600)
-                .range("thermostat-off", 8, 40)
-                .probability("start", 0.018)
-                .probability("stop", 0.12)
+                .range("thermostat-off", 20, 50)
+                .probability("start", 0.30)
+                .probability("stop", 0.10)
                 .duration("preheat", 6)
-                .duration("thermostat-on", 3)
+                .duration("thermostat-on", 5)
                 .duration("thermostat-off", 2));
 
         profiles.put(ApplianceType.TELEVISION, new ApplianceProfile()
-                .range("standby", 1, 5)
-                .range("on", 60, 200)
-                .probability("turn-on", 0.06)
-                .probability("turn-off", 0.025));
+                .range("standby", 10, 25)
+                .range("on", 80, 220)
+                .probability("turn-on", 0.55)
+                .probability("turn-off", 0.08));
 
         profiles.put(ApplianceType.WASHING_MACHINE, new ApplianceProfile()
-                .range("idle", 0, 3)
-                .range("filling", 5, 30)
-                .range("washing", 200, 500)
+                .range("idle", 5, 15)
+                .range("filling", 25, 60)
+                .range("washing", 250, 550)
                 .range("heating", 1500, 2200)
-                .range("spinning", 400, 900)
-                .probability("start", 0.015)
+                .range("spinning", 450, 950)
+                .probability("start", 0.35)
                 .duration("filling", 2)
-                .duration("washing", 5)
-                .duration("heating", 3)
+                .duration("washing", 6)
+                .duration("heating", 4)
                 .duration("rinse", 3)
-                .duration("spinning", 3));
+                .duration("spinning", 4));
 
         profiles.put(ApplianceType.AIR_CONDITIONER, new ApplianceProfile()
-                .range("standby", 1, 5)
-                .range("fan", 50, 150)
-                .range("compressor", 700, 2500)
-                .probability("turn-on", 0.04)
-                .probability("turn-off", 0.05)
+                .range("standby", 15, 30)
+                .range("fan", 80, 180)
+                .range("compressor", 800, 2400)
+                .probability("turn-on", 0.50)
+                .probability("turn-off", 0.08)
                 .duration("fan", 3)
-                .duration("compressor", 5));
+                .duration("compressor", 8));
 
         profiles.put(ApplianceType.MICROWAVE, new ApplianceProfile()
                 .range("off", 0, 0)
-                .range("active", 800, 1500)
-                .probability("start", 0.025)
-                .duration("active", 2));
+                .range("active", 850, 1600)
+                .probability("start", 0.28)
+                .duration("active", 3));
 
         profiles.put(ApplianceType.LAMP, new ApplianceProfile()
                 .range("off", 0, 0)
-                .range("on", 5, 100)
-                .probability("turn-on", 0.07)
-                .probability("turn-off", 0.04));
+                .range("on", 15, 75)
+                .probability("turn-on", 0.65)
+                .probability("turn-off", 0.12));
 
         profiles.put(ApplianceType.COMPUTER, new ApplianceProfile()
                 .range("off", 0, 0)
-                .range("standby", 1, 10)
-                .range("idle", 50, 180)
-                .range("high-load", 200, 800)
-                .probability("power-on", 0.045)
-                .probability("wake", 0.18)
-                .probability("sleep", 0.025)
-                .probability("power-off", 0.035)
-                .probability("high-load", 0.09)
+                .range("standby", 10, 25)
+                .range("idle", 70, 210)
+                .range("high-load", 250, 750)
+                .probability("power-on", 0.50)
+                .probability("wake", 0.45)
+                .probability("sleep", 0.05)
+                .probability("power-off", 0.05)
+                .probability("high-load", 0.25)
                 .duration("boot", 2)
-                .duration("high-load", 4));
+                .duration("high-load", 5));
 
         return profiles;
     }

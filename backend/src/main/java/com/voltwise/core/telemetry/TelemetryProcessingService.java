@@ -90,12 +90,20 @@ public class TelemetryProcessingService {
             return;
         }
         if (!appliance.getHome().getId().equals(event.homeId()) || appliance.getType() != event.applianceType()) {
-            throw new IllegalArgumentException("Telemetry asset identity does not match registered appliance");
+            markProcessed(event);
+            return;
         }
 
         HomeLiveState previousHome = initializer.ensure(event.homeId());
         ApplianceLiveState previousAppliance = previousHome.appliances().get(event.applianceId());
-        if (previousAppliance == null) throw new IllegalArgumentException("Appliance is not initialized in live state");
+        if (previousAppliance == null) {
+            previousHome = initializer.initializeRegistered(event.homeId());
+            previousAppliance = previousHome.appliances().get(event.applianceId());
+        }
+        if (previousAppliance == null) {
+            markProcessed(event);
+            return;
+        }
         if (previousAppliance.lastUpdatedAt() != null && !event.occurredAt().isAfter(previousAppliance.lastUpdatedAt())) {
             markProcessed(event);
             return;
