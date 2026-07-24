@@ -7,9 +7,8 @@ billing and audit records in PostgreSQL. A responsive React dashboard exposes
 live power, energy, cost, quota, tariff, anomaly, and historical information.
 
 The system is designed to remain useful when external services are unavailable:
-Gemini has bounded timeouts and a deterministic Turkish fallback, notification
-work runs away from Kafka listener threads, and Mailpit captures development
-email without delivering it to real recipients.
+Gemini has bounded timeouts and a deterministic Turkish fallback, and notification
+work runs away from Kafka listener threads.
 
 ## Architecture
 
@@ -23,8 +22,6 @@ flowchart LR
     Simulator -->|telemetry| Kafka
     Kafka -->|telemetry| Core
     Core -. bounded async request .-> Gemini[Google Gemini]
-    Core -->|SMTP| Mailpit[Mailpit]
-    Mailpit --> MailUI[Mailpit web UI]
 ```
 
 VoltWise Core is one modular application, not a set of microservices. The
@@ -57,14 +54,13 @@ independent, and its only application-level integration with the Core is Kafka.
 
 | Component | Responsibility |
 | --- | --- |
-| `backend` | Registration API, master data, Kafka integration, live-state updates, billing, quota/anomaly transitions, snapshots, Gemini, email, OpenAPI |
+| `backend` | Registration API, master data, Kafka integration, live-state updates, billing, quota/anomaly transitions, snapshots, Gemini, OpenAPI |
 | `telemetry-simulator` | Dynamic asset discovery and stateful, seeded, configurable appliance telemetry generation |
 | `frontend` | Registration workflow, live dashboard and modal, historical charts, events and recommendations |
 | `contracts` | Stable JSON Schema and examples shared by producers, consumers, and UI implementers |
 | PostgreSQL | Permanent source of truth for master, financial, historical, and audit data |
 | Apache Ignite | Volatile, rebuildable state optimized for frequent dashboard reads |
 | Apache Kafka | Asynchronous registration and telemetry transport with retry/DLT paths |
-| Mailpit | Safe local SMTP receiver and message inspection UI |
 
 ## Kafka topology and contracts
 
@@ -187,9 +183,7 @@ request fails, VoltWise persists this deterministic Turkish fallback:
 
 > Enerji kullanımınız tanımlanan sınıra ulaşmış veya bir cihazda olağan dışı tüketim algılanmıştır. Lütfen cihazlarınızı ve güncel tüketim değerlerinizi kontrol ediniz.
 
-A notification row is persisted as `PENDING` before SMTP is attempted, then
-becomes `SENT` or `FAILED` with a sanitized failure reason. In Compose, open
-Mailpit at <http://localhost:8025> to inspect messages without real delivery.
+A notification row is persisted as `SENT` when created.
 
 ## REST API
 
@@ -281,9 +275,6 @@ cp .env.example .env
 | `GEMINI_API_KEY` | blank | Optional secret; blank selects fallback |
 | `GEMINI_MODEL` | `gemini-2.0-flash` | Configurable model identifier |
 | `GEMINI_CONNECT_TIMEOUT_MS`, `GEMINI_READ_TIMEOUT_MS` | `3000`, `7000` | External-call bounds |
-| `MAIL_HOST`, `MAIL_PORT` | `mailpit`, `1025` | SMTP endpoint |
-| `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | blank / local sender | SMTP authentication and sender |
-| `MAIL_CONNECT_TIMEOUT_MS`, `MAIL_READ_TIMEOUT_MS`, `MAIL_WRITE_TIMEOUT_MS` | `3000`, `5000`, `5000` | SMTP operation bounds |
 | `TELEMETRY_INTERVAL_MS` | `1000` | Simulator scheduling interval |
 | `SNAPSHOT_INTERVAL_MS` | `60000` | Durable snapshot interval |
 | `SIMULATION_RANDOM_SEED` | `20260721` | Repeatable PRNG seed |
@@ -308,7 +299,7 @@ docker compose up --build
 ```
 
 Compose starts PostgreSQL, a single-node Kafka KRaft broker, topic initializer,
-Ignite, Mailpit, Core, simulator, and frontend. Health-based dependencies keep
+Ignite, Core, simulator, and frontend. Health-based dependencies keep
 applications from racing infrastructure initialization. PostgreSQL data is kept
 in the named `postgres-data` volume.
 
@@ -318,7 +309,6 @@ URLs:
 - Core health: <http://localhost:8080/actuator/health>
 - Swagger UI: <http://localhost:8080/swagger-ui.html>
 - OpenAPI JSON: <http://localhost:8080/v3/api-docs>
-- Mailpit UI: <http://localhost:8025>
 
 Stop containers without deleting history:
 
@@ -334,7 +324,7 @@ troubleshooting because it removes permanent local records.
 Start only the infrastructure first:
 
 ```bash
-docker compose up -d postgres kafka kafka-init ignite mailpit
+docker compose up -d postgres kafka kafka-init ignite
 ```
 
 Use local addresses in separate terminals:
@@ -345,8 +335,7 @@ SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/voltwise \
 SPRING_DATASOURCE_USERNAME=voltwise \
 SPRING_DATASOURCE_PASSWORD=change-me-for-non-local-use \
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092 \
-IGNITE_ADDRESSES=localhost:10800 \
-MAIL_HOST=localhost mvn spring-boot:run
+IGNITE_ADDRESSES=localhost:10800 mvn spring-boot:run
 ```
 
 ```bash

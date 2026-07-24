@@ -28,8 +28,8 @@ cd frontend && npm ci && npm run test -- --run && npm run build
 ```
 
 The frontend is available at `http://localhost:3000`, Swagger UI at
-`http://localhost:8080/swagger-ui.html`, OpenAPI JSON at
-`http://localhost:8080/v3/api-docs`, and Mailpit at `http://localhost:8025`.
+`http://localhost:8080/swagger-ui.html`, and OpenAPI JSON at
+`http://localhost:8080/v3/api-docs`.
 
 ## Engineering conventions
 
@@ -45,7 +45,7 @@ The frontend is available at `http://localhost:3000`, Swagger UI at
 - Keep permanent financial and audit data in PostgreSQL. Ignite contains only
   rebuildable live operational state.
 - Treat one appliance telemetry event as exactly one anomaly evaluation cycle.
-- External AI and SMTP calls must be bounded, asynchronous, failure-tolerant,
+- External AI calls must be bounded, asynchronous, failure-tolerant,
   and unable to stall Kafka listener threads.
 - Frontend user-facing errors must be concise and must never contain backend
   stack traces.

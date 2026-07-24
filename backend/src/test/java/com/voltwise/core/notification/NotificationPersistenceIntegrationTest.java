@@ -42,10 +42,9 @@ class NotificationPersistenceIntegrationTest {
                 .isEqualTo(NotificationStatus.PENDING);
         assertThat(persistence.createPending(request, generated, "VoltWise Test")).isEmpty();
 
-        persistence.markFailed(pending.orElseThrow().notificationId(), "SMTP unavailable");
-        var failed = notifications.findById(pending.orElseThrow().notificationId()).orElseThrow();
-        assertThat(failed.getStatus()).isEqualTo(NotificationStatus.FAILED);
-        assertThat(failed.getFailureReason()).isEqualTo("SMTP unavailable");
+        persistence.markSent(pending.orElseThrow().notificationId());
+        var sent = notifications.findById(pending.orElseThrow().notificationId()).orElseThrow();
+        assertThat(sent.getStatus()).isEqualTo(NotificationStatus.SENT);
         assertThat(recommendations.existsByHomeIdAndTriggerTypeAndTriggerReferenceId(
                 home.id(), TriggerType.QUOTA_80, request.triggerReferenceId())).isTrue();
     }
