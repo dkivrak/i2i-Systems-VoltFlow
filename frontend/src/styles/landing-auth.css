@@ -2,15 +2,18 @@
   display: grid;
   min-height: 100svh;
   grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
+  align-items: stretch;
   background: var(--color-canvas);
   overflow: hidden;
 }
 
 .auth-visual {
-  position: relative;
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  max-height: 100vh;
   isolation: isolate;
   display: flex;
-  min-height: 100svh;
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
@@ -213,6 +216,15 @@
   width: min(100%, 470px);
 }
 
+.auth-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  margin-bottom: var(--space-8);
+}
+
 .auth-back,
 .auth-mode-prompt button {
   display: inline-flex;
@@ -227,7 +239,7 @@
 
 .auth-back {
   min-height: var(--touch-target);
-  margin: 0 0 var(--space-8);
+  margin: 0;
   padding: 0;
 }
 
@@ -240,7 +252,7 @@
   display: inline-grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-1);
-  margin-bottom: var(--space-10);
+  margin-bottom: 0;
   padding: var(--space-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
@@ -409,7 +421,7 @@
 .auth-input input {
   width: 100%;
   min-height: 54px;
-  padding: 0.78rem 3rem;
+  padding: 0.78rem 3rem 0.78rem 3.4rem;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-sm);
   outline: 0;

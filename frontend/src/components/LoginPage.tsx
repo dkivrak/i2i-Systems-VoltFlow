@@ -392,29 +392,31 @@ export function LoginPage({
 
       <section className="auth-panel">
         <div className="auth-panel__inner">
-          {onBack && (
-            <button className="auth-back" type="button" onClick={onBack}>
-              <ArrowLeft aria-hidden="true" size={17} /> VoltFlow’u keşfet
-            </button>
-          )}
+          <div className="auth-nav-header">
+            {onBack ? (
+              <button className="auth-back" type="button" onClick={onBack}>
+                <ArrowLeft aria-hidden="true" size={17} /> VoltFlow’u keşfet
+              </button>
+            ) : <div />}
 
-          <div className="auth-tabs" role="group" aria-label="Hesap işlemi">
-            <button
-              type="button"
-              aria-pressed={activeMode === 'LOGIN'}
-              className={activeMode === 'LOGIN' ? 'is-active' : ''}
-              onClick={() => changeMode('LOGIN')}
-            >
-              Giriş yap
-            </button>
-            <button
-              type="button"
-              aria-pressed={activeMode === 'SIGNUP'}
-              className={activeMode === 'SIGNUP' ? 'is-active' : ''}
-              onClick={() => changeMode('SIGNUP')}
-            >
-              Kaydol
-            </button>
+            <div className="auth-tabs" role="group" aria-label="Hesap işlemi">
+              <button
+                type="button"
+                aria-pressed={activeMode === 'LOGIN'}
+                className={activeMode === 'LOGIN' ? 'is-active' : ''}
+                onClick={() => changeMode('LOGIN')}
+              >
+                Giriş yap
+              </button>
+              <button
+                type="button"
+                aria-pressed={activeMode === 'SIGNUP'}
+                className={activeMode === 'SIGNUP' ? 'is-active' : ''}
+                onClick={() => changeMode('SIGNUP')}
+              >
+                Kaydol
+              </button>
+            </div>
           </div>
 
           <div className="auth-heading">
