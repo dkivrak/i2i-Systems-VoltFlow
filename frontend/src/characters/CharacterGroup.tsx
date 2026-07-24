@@ -117,26 +117,29 @@ const CharacterGroupComponent = forwardRef<HTMLDivElement, CharacterGroupProps>(
         return;
       }
 
-      const eyes = Array.from(root.querySelectorAll<HTMLElement>('.vw-character__eye'));
-      
-      if (eyes.length === 0) {
-        // Geriye dönük uyumluluk: göz bulamazsa sadece global değişkeni salla
-        const bounds = root.getBoundingClientRect();
-        if (bounds.width > 0 && bounds.height > 0) {
-          let x = (pendingPointer.clientX - (bounds.left + bounds.width / 2)) / (bounds.width / 2);
-          let y = (pendingPointer.clientY - (bounds.top + bounds.height / 2)) / (bounds.height / 2);
-          const magnitude = Math.hypot(x, y);
-          if (magnitude > 1) {
-            x /= magnitude;
-            y /= magnitude;
-          }
-          writeGaze(
-            x * resolvedStrength * resolvedLimit,
-            y * resolvedStrength * resolvedLimit,
-          );
+      const bounds = root.getBoundingClientRect();
+      if (bounds.width > 0 && bounds.height > 0) {
+        let x =
+          (pendingPointer.clientX - (bounds.left + bounds.width / 2)) /
+          (bounds.width / 2);
+        let y =
+          (pendingPointer.clientY - (bounds.top + bounds.height / 2)) /
+          (bounds.height / 2);
+        const magnitude = Math.hypot(x, y);
+        if (magnitude > 1) {
+          x /= magnitude;
+          y /= magnitude;
         }
-        return;
+        writeGaze(
+          x * resolvedStrength * resolvedLimit,
+          y * resolvedStrength * resolvedLimit,
+        );
       }
+
+      const eyes = Array.from(
+        root.querySelectorAll<HTMLElement>('.vw-character__eye'),
+      );
+      if (eyes.length === 0) return;
 
       const mx = pendingPointer.clientX;
       const my = pendingPointer.clientY;
@@ -193,7 +196,7 @@ const CharacterGroupComponent = forwardRef<HTMLDivElement, CharacterGroupProps>(
 
     useEffect(() => {
       if (!trackViewport || !gazeEnabled || shouldReduceMotion) return undefined;
-      const handleViewportPointer = (event: PointerEvent) => {
+      const handleViewportPointer = (event: MouseEvent) => {
         schedulePointer({ clientX: event.clientX, clientY: event.clientY });
       };
       const resetPointer = () => schedulePointer(null);
