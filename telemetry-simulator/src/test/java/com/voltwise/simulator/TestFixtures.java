@@ -17,6 +17,7 @@ import com.voltwise.simulator.generator.OvenTelemetryGenerator;
 import com.voltwise.simulator.generator.RefrigeratorTelemetryGenerator;
 import com.voltwise.simulator.generator.TelevisionTelemetryGenerator;
 import com.voltwise.simulator.generator.WashingMachineTelemetryGenerator;
+import com.voltwise.simulator.generator.FallbackTelemetryGenerator;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
@@ -42,7 +43,8 @@ public final class TestFixtures {
                 new AirConditionerTelemetryGenerator(),
                 new MicrowaveTelemetryGenerator(),
                 new LampTelemetryGenerator(),
-                new ComputerTelemetryGenerator()
+                new ComputerTelemetryGenerator(),
+                new FallbackTelemetryGenerator()
         );
     }
 
@@ -52,6 +54,7 @@ public final class TestFixtures {
 
     public static AssetRegistrationEvent registrationEvent(UUID eventId, long homeId) {
         List<RegisteredAppliance> appliances = Arrays.stream(ApplianceType.values())
+                .filter(type -> type != ApplianceType.UNKNOWN)
                 .map(type -> new RegisteredAppliance(
                         100L + type.ordinal(),
                         type.name() + " appliance",

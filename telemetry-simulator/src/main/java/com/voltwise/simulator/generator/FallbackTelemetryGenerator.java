@@ -10,11 +10,11 @@ import java.util.random.RandomGenerator;
 import org.springframework.stereotype.Component;
 
 @Component
-public class RefrigeratorTelemetryGenerator extends GeneratorSupport implements ApplianceTelemetryGenerator {
+public class FallbackTelemetryGenerator extends GeneratorSupport implements ApplianceTelemetryGenerator {
 
     @Override
     public ApplianceType supportedType() {
-        return ApplianceType.REFRIGERATOR;
+        return ApplianceType.UNKNOWN;
     }
 
     @Override
@@ -28,42 +28,39 @@ public class RefrigeratorTelemetryGenerator extends GeneratorSupport implements 
         state.initialize(OperationalState.STANDBY, "STANDBY", now);
 
         if (state.getOperationalState() == OperationalState.FAULT) {
+            // Keep current FAULT behavior (it is managed by AnomalyInjector)
             BigDecimal base = state.getSessionBaseWatts().signum() > 0
                     ? state.getSessionBaseWatts()
-                    : safePowerLimitWatts.multiply(BigDecimal.valueOf(0.20));
+                    : safePowerLimitWatts.multiply(BigDecimal.valueOf(0.5));
             return reading(addNoise(base, 0.015, random), OperatingState.HIGH_LOAD);
         }
 
-        // Transitions
+        // Check state transitions
         if (state.getOperationalState() == OperationalState.STANDBY) {
-            double prob = profile.probability("compressor-start");
-            if (prob < 1.0) {
-                prob = prob * 0.002;
-            }
+            // Chance to start (0.00005 per simulated second)
+            double hourlyProb = 0.05; // 5% chance of starting per hour under normal conditions
+            double secondsPerCycle = 1.0;
+            // In case we want to scale with simulation speed:
+            double prob = 0.00005;
             if (chance(random, prob)) {
-                state.transitionTo(OperationalState.TEMPORARY_PEAK, "STARTUP", now);
-                double peakFactor = 1.15 + random.nextDouble() * 0.15;
-                state.setSessionBaseWatts(safePowerLimitWatts.multiply(BigDecimal.valueOf(peakFactor)));
-            }
-        } else if (state.getOperationalState() == OperationalState.TEMPORARY_PEAK) {
-            if (state.getCyclesInPhase() >= 1) {
-                state.transitionTo(OperationalState.ACTIVE, "COMPRESSOR", now);
-                double activeFactor = 0.15 + random.nextDouble() * 0.10;
-                state.setSessionBaseWatts(safePowerLimitWatts.multiply(BigDecimal.valueOf(activeFactor)));
+                state.transitionTo(OperationalState.ACTIVE, "ACTIVE", now);
+                // Set stable active nominal watt value (e.g. 50% to 70% of safe limit)
+                double factor = 0.50 + random.nextDouble() * 0.20;
+                state.setSessionBaseWatts(safePowerLimitWatts.multiply(BigDecimal.valueOf(factor)));
             }
         } else if (state.getOperationalState() == OperationalState.ACTIVE) {
-            if (Duration.between(state.getPhaseStartedAt(), now).getSeconds() >= 900) {
+            // Active session lasts 30 minutes (1800 simulated seconds)
+            if (Duration.between(state.getPhaseStartedAt(), now).getSeconds() >= 1800) {
                 state.transitionTo(OperationalState.STANDBY, "STANDBY", now);
             }
         }
 
-        // Output generation
-        if (state.getOperationalState() == OperationalState.TEMPORARY_PEAK) {
-            return reading(addNoise(state.getSessionBaseWatts(), 0.015, random), OperatingState.HIGH_LOAD);
-        } else if (state.getOperationalState() == OperationalState.ACTIVE) {
+        // Generate reading based on state
+        if (state.getOperationalState() == OperationalState.ACTIVE) {
             return reading(addNoise(state.getSessionBaseWatts(), 0.015, random), OperatingState.ON);
         } else {
-            BigDecimal standbyBase = safePowerLimitWatts.multiply(BigDecimal.valueOf(0.025));
+            // Standby uses 1% to 2% of safePowerLimitWatts
+            BigDecimal standbyBase = safePowerLimitWatts.multiply(BigDecimal.valueOf(0.015));
             return reading(addNoise(standbyBase, 0.05, random), OperatingState.STANDBY);
         }
     }

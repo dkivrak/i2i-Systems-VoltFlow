@@ -31,15 +31,23 @@ spring:
 simulation:
   enabled: ${SIMULATION_ENABLED:true}
   interval-ms: ${TELEMETRY_INTERVAL_MS:1000}
-  random-seed: ${SIMULATION_RANDOM_SEED:42}
+  random-seed: ${TELEMETRY_RANDOM_SEED:${SIMULATION_RANDOM_SEED:42}}
+  simulation-speed: ${TELEMETRY_SIMULATION_SPEED:1}
   processed-event-cache-size: ${SIMULATION_PROCESSED_EVENT_CACHE_SIZE:10000}
   anomaly:
-    probability: ${SIMULATION_ANOMALY_PROBABILITY:0.02}
+    # Per-cycle fault-injection probability. At intervalMs=1000 and the default 0.00001,
+    # a single appliance faults on average once every ~28 hours.
+    # Use TELEMETRY_ANOMALY_RATE_PER_HOUR for a time-normalised alternative that automatically
+    # adjusts when intervalMs or simulationSpeed changes.
+    probability: ${TELEMETRY_ANOMALY_PROBABILITY:${SIMULATION_ANOMALY_PROBABILITY:0.00001}}
+    # Optional: when > 0, overrides probability. Unit: expected faults per appliance per hour.
+    # Example: TELEMETRY_ANOMALY_RATE_PER_HOUR=1.0  → ~1 fault/appliance/hour
+    rate-per-hour: ${TELEMETRY_ANOMALY_RATE_PER_HOUR:0.0}
     burst-cycles: ${SIMULATION_ANOMALY_BURST_CYCLES:3}
     cooldown-cycles: ${SIMULATION_ANOMALY_COOLDOWN_CYCLES:20}
     min-power-multiplier: ${SIMULATION_ANOMALY_MIN_MULTIPLIER:1.05}
     max-power-multiplier: ${SIMULATION_ANOMALY_MAX_MULTIPLIER:1.25}
-    demo-enabled: ${SIMULATION_ANOMALY_DEMO_ENABLED:false}
+    demo-enabled: ${TELEMETRY_DEMO_MODE:${SIMULATION_ANOMALY_DEMO_ENABLED:false}}
     demo-start-cycle: ${SIMULATION_ANOMALY_DEMO_START_CYCLE:5}
     demo-repeat-every-cycles: ${SIMULATION_ANOMALY_DEMO_REPEAT_CYCLES:0}
     demo-appliance-ids: ${SIMULATION_ANOMALY_DEMO_APPLIANCE_IDS:}
