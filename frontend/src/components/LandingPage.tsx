@@ -6,6 +6,7 @@ import {
   CircleDollarSign,
   Gauge,
   HousePlug,
+  Mail,
   ShieldAlert,
   Sparkles,
   Waves,
@@ -20,6 +21,11 @@ interface BenefitCardProps {
   copy: string;
   tone: string;
   index: number;
+}
+
+interface LandingPageProps {
+  onLogin: () => void;
+  onRegister: () => void;
 }
 
 const BenefitCard: React.FC<BenefitCardProps> = ({ icon: Icon, title, copy, tone, index }) => {
