@@ -20,8 +20,6 @@ import {
 } from 'react';
 import { ApiError, api, getUserFacingError } from '../api/client';
 import {
-  ApplianceCharacter,
-  CharacterGroup,
   type CharacterState,
 } from '../characters';
 
@@ -342,51 +340,7 @@ export function LoginPage({
           </p>
         </div>
 
-        <CharacterGroup
-          className="auth-character-stage"
-          gazeEnabled={!passwordIsFocused || focusedPasswordIsVisible}
-          gazeStrength={0.9}
-          gazeLimit={5}
-          trackViewport
-        >
-          <div className="auth-character auth-character--fridge">
-            <ApplianceCharacter
-              type="REFRIGERATOR"
-              state={characterState}
-              size="lg"
-              gaze={focusedCharacterGaze}
-              decorative
-            />
-          </div>
-          <div className="auth-character auth-character--washer">
-            <ApplianceCharacter
-              type="WASHING_MACHINE"
-              state={characterState === 'error' ? 'warning' : characterState}
-              size="md"
-              gaze={focusedCharacterGaze}
-              decorative
-            />
-          </div>
-          <div className="auth-character auth-character--kettle">
-            <ApplianceCharacter
-              type="KETTLE"
-              state={characterState}
-              size="md"
-              gaze={focusedCharacterGaze}
-              decorative
-            />
-          </div>
-          <div className="auth-character auth-character--lamp">
-            <ApplianceCharacter
-              type="LAMP"
-              state={characterState === 'approved' ? 'happy' : characterState}
-              size="sm"
-              gaze={focusedCharacterGaze}
-              decorative
-            />
-          </div>
-          <div className="auth-character-stage__platform" aria-hidden="true" />
-        </CharacterGroup>
+
 
       </section>
 

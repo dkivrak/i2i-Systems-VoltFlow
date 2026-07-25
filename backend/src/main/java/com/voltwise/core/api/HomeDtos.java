@@ -77,6 +77,12 @@ public final class HomeDtos {
             BigDecimal safePowerLimitWatts
     ) {}
 
+    public record UpdateApplianceRequest(
+            @Schema(example = "Yeni Cihaz Adı")
+            @NotBlank(message = "Cihaz adı zorunludur")
+            @Size(max = 160, message = "Cihaz adı en fazla 160 karakter olabilir") String name
+    ) {}
+
     public record HomeResponse(
             Long id, String name, String city, String contactEmail, BigDecimal monthlyBudget,
             BigDecimal normalTariffPerKwh, BigDecimal penaltyMultiplier,

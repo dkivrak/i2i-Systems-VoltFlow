@@ -1,13 +1,16 @@
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 import {
   AlertTriangle,
+  Check,
   CheckCircle2,
   CircleDollarSign,
   Clock3,
   Gauge,
+  Pencil,
   RadioTower,
   ShieldCheck,
   Trash2,
+  X,
   Zap,
 } from 'lucide-react';
 import type { AppliancePresentation } from '../../presentation/appliancePresentation';
@@ -24,14 +27,29 @@ interface ApplianceTelemetryPanelProps {
   item: AppliancePresentation | undefined;
   isDeleting: boolean;
   onDelete: (applianceId: number, applianceName: string) => void;
+  onRename: (applianceId: number, newName: string) => Promise<void>;
 }
 
 export const ApplianceTelemetryPanel = memo(function ApplianceTelemetryPanel({
   item,
   isDeleting,
   onDelete,
+  onRename,
 }: ApplianceTelemetryPanelProps) {
-  if (!item) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [localError, setLocalError] = useState('');
+
+  const appliance = item?.appliance;
+
+  useEffect(() => {
+    setIsEditing(false);
+    setEditedName(appliance?.name ?? '');
+    setLocalError('');
+  }, [appliance?.applianceId, appliance?.name]);
+
+  if (!item || !appliance) {
     return (
       <div className="appliance-telemetry-panel appliance-telemetry-panel--empty">
         <RadioTower aria-hidden="true" size={24} />
@@ -43,8 +61,6 @@ export const ApplianceTelemetryPanel = memo(function ApplianceTelemetryPanel({
     );
   }
 
-  const { appliance } = item;
-
   return (
     <article
       className={`appliance-telemetry-panel appliance-telemetry-panel--${item.tone}`}
@@ -52,11 +68,109 @@ export const ApplianceTelemetryPanel = memo(function ApplianceTelemetryPanel({
       id={`appliance-telemetry-panel-${appliance.applianceId}`}
     >
       <header className="appliance-telemetry-panel__header">
-        <div>
+        <div style={{ flex: 1 }}>
           <p className="eyebrow">Seçili cihaz</p>
-          <h4 id={`appliance-telemetry-${appliance.applianceId}`}>
-            {appliance.name} telemetrisi
-          </h4>
+          {isEditing ? (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const trimmed = editedName.trim();
+                if (!trimmed) {
+                  setLocalError('Cihaz adı boş bırakılamaz.');
+                  return;
+                }
+                if (trimmed.length > 160) {
+                  setLocalError('Cihaz adı en fazla 160 karakter olabilir.');
+                  return;
+                }
+                setIsSaving(true);
+                setLocalError('');
+                try {
+                  await onRename(appliance.applianceId, trimmed);
+                  setIsEditing(false);
+                } catch (err: any) {
+                  setLocalError(err.message || 'Ad değiştirilemedi.');
+                } finally {
+                  setIsSaving(false);
+                }
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  className="input"
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '1rem',
+                    fontWeight: 750,
+                    borderRadius: 'var(--radius-md)',
+                    border: '2px solid var(--color-ink)',
+                    width: '100%',
+                    maxWidth: '300px',
+                    height: '36px'
+                  }}
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  disabled={isSaving}
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="button button--small button--primary"
+                  style={{ minWidth: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  disabled={isSaving}
+                  title="Kaydet"
+                >
+                  <Check size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="button button--small"
+                  style={{ minWidth: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  disabled={isSaving}
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditedName(appliance.name);
+                    setLocalError('');
+                  }}
+                  title="İptal"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              {localError && (
+                <span style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: 600 }}>{localError}</span>
+              )}
+            </form>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h4 id={`appliance-telemetry-${appliance.applianceId}`} style={{ margin: 0 }}>
+                {appliance.name}
+              </h4>
+              <button
+                type="button"
+                className="button-icon rename-appliance-button"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-ink-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '4px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'color 0.2s',
+                }}
+                onClick={() => setIsEditing(true)}
+                title="İsmi Düzenle"
+                aria-label="Cihaz ismini değiştir"
+              >
+                <Pencil size={15} />
+              </button>
+            </div>
+          )}
           <p>{applianceTypeLabels[appliance.type]}</p>
         </div>
         <div className="appliance-telemetry-panel__actions">

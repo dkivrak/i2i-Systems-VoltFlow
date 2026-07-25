@@ -2,6 +2,7 @@ package com.voltwise.core.api;
 
 import com.voltwise.core.api.HomeDtos.CreateHomeRequest;
 import com.voltwise.core.api.HomeDtos.AddApplianceRequest;
+import com.voltwise.core.api.HomeDtos.UpdateApplianceRequest;
 import com.voltwise.core.api.HomeDtos.ApplianceResponse;
 import com.voltwise.core.api.HomeDtos.HistoryPoint;
 import com.voltwise.core.api.HomeDtos.HomeEventResponse;
@@ -29,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -169,6 +171,15 @@ public class HomeController {
     @Operation(summary = "Delete a home and all associated data")
     public void deleteHome(@PathVariable Long homeId) {
         homeService.deleteHome(homeId);
+    }
+
+    @PutMapping("/{homeId}/appliances/{applianceId}")
+    @Operation(summary = "Update name of a registered appliance")
+    public ApplianceResponse updateAppliance(
+            @PathVariable Long homeId,
+            @PathVariable Long applianceId,
+            @Valid @RequestBody UpdateApplianceRequest request) {
+        return homeService.updateApplianceName(homeId, applianceId, request);
     }
 
     @org.springframework.web.bind.annotation.DeleteMapping("/{homeId}/appliances/{applianceId}")

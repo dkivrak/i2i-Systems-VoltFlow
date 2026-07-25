@@ -80,7 +80,7 @@ export interface RegistrationApplianceRow {
   type: ApplianceType;
   name: string;
   quantity: number;
-  safePowerLimitWatts: number;
+  safePowerLimitWatts: number | string;
 }
 
 export interface HomeRegistrationRequest {

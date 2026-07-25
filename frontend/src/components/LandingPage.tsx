@@ -12,6 +12,65 @@ import {
   Zap,
 } from 'lucide-react';
 import { ApplianceCharacter, CharacterGroup } from '../characters';
+import { useEffect, useRef, useState } from 'react';
+
+interface BenefitCardProps {
+  icon: React.ComponentType<any>;
+  title: string;
+  copy: string;
+  tone: string;
+  index: number;
+}
+
+const BenefitCard: React.FC<BenefitCardProps> = ({ icon: Icon, title, copy, tone, index }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const elementRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    const el = elementRef.current;
+    if (el) {
+      observer.observe(el);
+    }
+
+    return () => {
+      if (el) {
+        observer.unobserve(el);
+      }
+      observer.disconnect();
+    };
+  }, []);
+
+  return (
+    <article
+      ref={elementRef}
+      className={`landing-feature-card landing-feature-card--${tone} scroll-reveal ${isVisible ? 'is-visible' : ''}`}
+      style={{
+        transitionDelay: isVisible ? `${index * 100}ms` : undefined,
+      }}
+    >
+      <span className="landing-feature-card__icon" aria-hidden="true">
+        <Icon size={21} />
+      </span>
+      <h3>{title}</h3>
+      <p>{copy}</p>
+    </article>
+  );
+};
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -62,18 +121,137 @@ const steps = [
     number: '01',
     title: 'Evinizi ve cihazlarınızı ekleyin',
     copy: 'Aylık bütçenizi ve her cihaz için güvenli Watt sınırını tanımlayın.',
+    videoUrl: `${import.meta.env.BASE_URL}videos/setup-home.mp4`,
   },
   {
     number: '02',
     title: 'Canlı enerji akışını izleyin',
     copy: 'VoltFlow yeni telemetriyi otomatik olarak işler ve ekranı kesintisiz günceller.',
+    videoUrl: `${import.meta.env.BASE_URL}videos/monitor-energy.mp4`,
   },
   {
     number: '03',
     title: 'Uyarıyı anlayıp harekete geçin',
     copy: 'Karakter durumu, kesin ölçümler ve önerilen adım birlikte sunulur.',
+    videoUrl: `${import.meta.env.BASE_URL}videos/improve-usage.mp4`,
   },
 ] as const;
+
+const ScrollDrivenSection: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const viewHeight = window.innerHeight;
+      const scrollHeight = rect.height;
+      const offsetTop = -rect.top;
+      const totalScrollable = scrollHeight - viewHeight;
+
+      if (totalScrollable <= 0) return;
+      const currentProgress = Math.min(Math.max(offsetTop / totalScrollable, 0), 1);
+      setProgress(currentProgress);
+    };
+
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      handleScroll();
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const cardWidth = Math.min(840, windowWidth * 0.85);
+  const gap = 32;
+  const initialOffset = (windowWidth - cardWidth) / 2;
+  const translateX = initialOffset - (progress * 2) * (cardWidth + gap);
+
+  const activeIndex = progress < 0.33 ? 0 : progress < 0.66 ? 1 : 2;
+
+  const scrollToCard = (index: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const absoluteTop = window.scrollY + rect.top;
+    const viewHeight = window.innerHeight;
+    const scrollHeight = rect.height;
+    const totalScrollable = scrollHeight - viewHeight;
+    const targetProgress = index / 2;
+    const targetScroll = absoluteTop + targetProgress * totalScrollable;
+    window.scrollTo({
+      top: targetScroll,
+      behavior: 'smooth',
+    });
+  };
+
+  const isDesktop = windowWidth > 991;
+
+  return (
+    <div ref={containerRef} className="scroll-horizontal-container" id="landing-how-scroll">
+      <div className="sticky-wrapper">
+        <div className="scroll-horizontal-header">
+          <p className="eyebrow">Üç adımda kontrol</p>
+          <h2 id="how-title">Kurun, izleyin, iyileştirin.</h2>
+        </div>
+
+        <nav className="scroll-driven-navbar" aria-label="Adım navigasyonu">
+          {steps.map((step, index) => (
+            <button
+              key={step.number}
+              type="button"
+              className={`scroll-driven-nav-btn ${activeIndex === index ? 'is-active' : ''}`}
+              onClick={() => scrollToCard(index)}
+            >
+              {step.number} {index === 0 ? 'Kurulum' : index === 1 ? 'İzleme' : 'İyileştirme'}
+            </button>
+          ))}
+        </nav>
+
+        <div className="horizontal-carousel-wrapper">
+          <div
+            className="horizontal-track"
+            style={isDesktop ? { transform: `translateX(${translateX}px)` } : undefined}
+          >
+            {steps.map((step, index) => (
+              <div
+                className={`horizontal-card ${activeIndex === index ? 'is-active' : ''}`}
+                key={step.number}
+              >
+                <div className="card-video-wrapper">
+                  <video
+                    src={step.videoUrl}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    controls={false}
+                    disablePictureInPicture
+                    className="card-video"
+                  />
+                </div>
+                <div className="card-body">
+                  <span aria-hidden="true" className="card-step-num">{step.number}</span>
+                  <h3>{step.title}</h3>
+                  <p>{step.copy}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
   return (
@@ -193,14 +371,15 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             <p>İhtiyacınız olan ayrıntı görünür; geri kalanı siz istediğinizde açılır.</p>
           </div>
           <div className="landing-benefits__grid">
-            {benefits.map(({ icon: Icon, title, copy, tone }) => (
-              <article className={`landing-feature-card landing-feature-card--${tone}`} key={title}>
-                <span className="landing-feature-card__icon" aria-hidden="true">
-                  <Icon size={21} />
-                </span>
-                <h3>{title}</h3>
-                <p>{copy}</p>
-              </article>
+            {benefits.map(({ icon: Icon, title, copy, tone }, index) => (
+              <BenefitCard
+                key={title}
+                icon={Icon}
+                title={title}
+                copy={copy}
+                tone={tone}
+                index={index}
+              />
             ))}
           </div>
         </section>
@@ -230,23 +409,7 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
           </div>
         </section>
 
-        <section className="landing-section landing-how" aria-labelledby="how-title">
-          <div className="landing-section__heading">
-            <p className="eyebrow">Üç adımda kontrol</p>
-            <h2 id="how-title">Kurun, izleyin, iyileştirin.</h2>
-          </div>
-          <ol className="landing-steps">
-            {steps.map((step) => (
-              <li key={step.number}>
-                <span aria-hidden="true">{step.number}</span>
-                <div>
-                  <h3>{step.title}</h3>
-                  <p>{step.copy}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
+        <ScrollDrivenSection />
 
         <section className="landing-final-cta" aria-labelledby="final-cta-title">
           <div className="landing-final-cta__characters" aria-hidden="true">

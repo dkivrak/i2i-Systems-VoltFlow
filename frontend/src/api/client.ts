@@ -586,6 +586,20 @@ export const api = {
   async deleteAppliance(homeId: number, applianceId: number, signal?: AbortSignal): Promise<void> {
     await request<void>(`/homes/${homeId}/appliances/${applianceId}`, { method: 'DELETE' }, signal);
   },
+
+  async renameAppliance(
+    homeId: number,
+    applianceId: number,
+    name: string,
+    signal?: AbortSignal,
+  ): Promise<ApplianceStatus> {
+    const response = await request<unknown>(
+      `/homes/${homeId}/appliances/${applianceId}`,
+      { method: 'PUT', body: JSON.stringify({ name }) },
+      signal,
+    );
+    return normalizeAppliance(response, 0);
+  },
 };
 
 export function getUserFacingError(error: unknown): string {

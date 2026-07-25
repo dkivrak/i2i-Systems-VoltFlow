@@ -119,16 +119,16 @@ public class HomeQueryService {
 
     private HomeEventResponse map(QuotaEventEntity e) {
         return new HomeEventResponse("QUOTA_EVENT", e.getId(), e.getOccurredAt(), e.getThreshold().name(),
-                e.getUsagePercent(), null, null, "Cost %s / budget %s".formatted(e.getCurrentCost(), e.getMonthlyBudget()));
+                e.getUsagePercent(), null, null, "Maliyet %s / bütçe %s".formatted(e.getCurrentCost(), e.getMonthlyBudget()));
     }
     private HomeEventResponse map(AnomalyEventEntity e) {
         return new HomeEventResponse("ANOMALY_EVENT", e.getId(), e.getDetectedAt(), e.getStatus().name(),
                 null, e.getMeasuredPowerWatts(), e.getAppliance().getId(),
-                "Safe limit %s W; consecutive breaches %d".formatted(e.getSafePowerLimitWatts(), e.getConsecutiveBreachCount()));
+                "Güvenli limit %s W; ardışık ihlal %d".formatted(e.getSafePowerLimitWatts(), e.getConsecutiveBreachCount()));
     }
     private HomeEventResponse map(TariffChangeEventEntity e) {
         return new HomeEventResponse("TARIFF_CHANGE_EVENT", e.getId(), e.getChangedAt(), e.getNewTariff().name(),
                 e.getTriggerUsagePercent(), null, null,
-                "Rate changed from %s to %s".formatted(e.getPreviousRate(), e.getNewRate()));
+                "Birim fiyat %s değerinden %s değerine değişti".formatted(e.getPreviousRate(), e.getNewRate()));
     }
 }
