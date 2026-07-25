@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class SimulationRegistry {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SimulationRegistry.class);
+
     private final SimulationProperties properties;
     private final ConcurrentMap<ApplianceKey, ApplianceRuntime> appliances = new ConcurrentHashMap<>();
     private final ConcurrentMap<Long, String> homeNames = new ConcurrentHashMap<>();
@@ -36,6 +38,22 @@ public class SimulationRegistry {
             if (existing != null && existing.appliance().type() != appliance.type()) {
                 throw new IllegalArgumentException("An appliance type cannot change after registration");
             }
+        }
+
+        // Clean up obsolete simulation state when appropriate.
+        java.util.Set<Long> incomingApplianceIds = new java.util.HashSet<>();
+        for (RegisteredAppliance app : event.appliances()) {
+            incomingApplianceIds.add(app.applianceId());
+        }
+        List<ApplianceKey> obsoleteKeys = new ArrayList<>();
+        for (ApplianceKey key : appliances.keySet()) {
+            if (key.homeId() == event.homeId() && !incomingApplianceIds.contains(key.applianceId())) {
+                obsoleteKeys.add(key);
+            }
+        }
+        for (ApplianceKey key : obsoleteKeys) {
+            appliances.remove(key);
+            log.info("Cleaned up obsolete simulation state for homeId={} applianceId={}", key.homeId(), key.applianceId());
         }
 
         homeNames.put(event.homeId(), event.homeName().trim());

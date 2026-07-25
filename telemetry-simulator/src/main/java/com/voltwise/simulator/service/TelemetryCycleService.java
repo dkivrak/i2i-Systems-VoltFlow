@@ -10,6 +10,7 @@ import com.voltwise.simulator.kafka.TelemetryPublisher;
 import com.voltwise.simulator.runtime.ApplianceRuntime;
 import com.voltwise.simulator.runtime.SimulationRegistry;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,17 +48,26 @@ public class TelemetryCycleService {
         this.clock = clock;
     }
 
+    private Instant simulatedTime;
+
     @Scheduled(fixedDelayString = "${simulation.interval-ms:1000}")
     public void generateCycle() {
+        if (simulatedTime == null) {
+            simulatedTime = clock.instant();
+        } else {
+            long stepMs = simulationProperties.getIntervalMs() * simulationProperties.getSimulationSpeed();
+            simulatedTime = simulatedTime.plusMillis(stepMs);
+        }
+
         for (ApplianceRuntime runtime : registry.snapshot()) {
             try {
                 ApplianceTelemetryGenerator generator = generatorCatalog.generatorFor(runtime.appliance().type());
-                GeneratedTelemetry reading = runtime.generate(generator, simulationProperties, anomalyInjector);
+                GeneratedTelemetry reading = runtime.generate(generator, simulationProperties, anomalyInjector, simulatedTime);
                 TelemetryEvent event = new TelemetryEvent(
                         UUID.randomUUID(),
                         EVENT_VERSION,
                         EventType.APPLIANCE_TELEMETRY_RECORDED,
-                        clock.instant(),
+                        simulatedTime,
                         runtime.homeId(),
                         runtime.appliance().applianceId(),
                         runtime.appliance().type(),

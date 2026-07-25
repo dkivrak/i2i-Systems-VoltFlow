@@ -25,6 +25,9 @@ public class SimulationProperties {
 
     private long randomSeed = 42;
 
+    @Min(1)
+    private int simulationSpeed = 1;
+
     @Min(100)
     private int processedEventCacheSize = 10_000;
 
@@ -39,6 +42,7 @@ public class SimulationProperties {
             throw new IllegalArgumentException("A simulation profile is required for every ApplianceType");
         }
         profiles.values().forEach(ApplianceProfile::validate);
+        anomaly.setIntervalMs(intervalMs);
         anomaly.validate();
     }
 
@@ -74,6 +78,14 @@ public class SimulationProperties {
         this.randomSeed = randomSeed;
     }
 
+    public int getSimulationSpeed() {
+        return simulationSpeed;
+    }
+
+    public void setSimulationSpeed(int simulationSpeed) {
+        this.simulationSpeed = simulationSpeed;
+    }
+
     public int getProcessedEventCacheSize() {
         return processedEventCacheSize;
     }
@@ -104,7 +116,19 @@ public class SimulationProperties {
 
         @DecimalMin("0.0")
         @DecimalMax("1.0")
-        private double probability = 0.02;
+        private double probability = 0.00001;
+
+        /**
+         * Optional: when positive, takes precedence over {@code probability} and is normalised
+         * to a per-cycle value using the configured {@code intervalMs}.
+         * Bind via {@code TELEMETRY_ANOMALY_RATE_PER_HOUR}.
+         * Example: 1.0 → one fault event per appliance per hour on average.
+         */
+        @DecimalMin("0.0")
+        private double ratePerHour = 0.0;
+
+        /** intervalMs is injected by SimulationProperties so effectiveProbability() can normalise. */
+        private long intervalMs = 1000;
 
         @Min(3)
         private int burstCycles = 3;
@@ -141,12 +165,41 @@ public class SimulationProperties {
             return demoEnabled && demoApplianceIds.contains(applianceId);
         }
 
+        /**
+         * Returns the per-cycle anomaly start probability, normalised for the current telemetry
+         * interval. When {@code ratePerHour > 0} it overrides {@code probability}:
+         * <pre>p = ratePerHour / 3600 * (intervalMs / 1000.0)</pre>
+         * Otherwise the raw {@code probability} value is used as-is.
+         */
+        public double effectiveProbability() {
+            if (ratePerHour > 0) {
+                return Math.min(1.0, ratePerHour / 3600.0 * (intervalMs / 1000.0));
+            }
+            return probability;
+        }
+
         public double getProbability() {
             return probability;
         }
 
         public void setProbability(double probability) {
             this.probability = probability;
+        }
+
+        public double getRatePerHour() {
+            return ratePerHour;
+        }
+
+        public void setRatePerHour(double ratePerHour) {
+            this.ratePerHour = ratePerHour;
+        }
+
+        public long getIntervalMs() {
+            return intervalMs;
+        }
+
+        public void setIntervalMs(long intervalMs) {
+            this.intervalMs = intervalMs;
         }
 
         public int getBurstCycles() {

@@ -90,6 +90,13 @@ public final class DefaultApplianceProfiles {
                 .duration("boot", 2)
                 .duration("high-load", 5));
 
+        profiles.put(ApplianceType.UNKNOWN, new ApplianceProfile()
+                .range("off", 0, 0)
+                .range("standby", 2, 8)
+                .range("active", 100, 300)
+                .probability("start", 0.05)
+                .duration("active", 1800));
+
         return profiles;
     }
 }

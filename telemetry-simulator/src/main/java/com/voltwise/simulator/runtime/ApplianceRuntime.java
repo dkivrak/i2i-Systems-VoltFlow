@@ -8,7 +8,12 @@ import com.voltwise.simulator.generator.GeneratedTelemetry;
 import com.voltwise.simulator.service.AnomalyInjector;
 import java.util.Random;
 
+import java.time.Instant;
+import com.voltwise.simulator.generator.OperationalState;
+
 public final class ApplianceRuntime {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ApplianceRuntime.class);
 
     private final long homeId;
     private final Random random;
@@ -24,12 +29,28 @@ public final class ApplianceRuntime {
     public synchronized GeneratedTelemetry generate(
             ApplianceTelemetryGenerator generator,
             SimulationProperties properties,
-            AnomalyInjector anomalyInjector
+            AnomalyInjector anomalyInjector,
+            Instant now
     ) {
-        GeneratedTelemetry normal = generator.next(state, random, properties.profile(appliance.type()));
+        OperationalState oldState = state.getOperationalState();
+
+        GeneratedTelemetry normal = generator.next(
+                state,
+                random,
+                properties.profile(appliance.type()),
+                now,
+                appliance.safePowerLimitWatts()
+        );
         state.setNominalPowerWatts(normal.powerWatts());
         GeneratedTelemetry result = anomalyInjector.apply(appliance, state, random, normal);
         state.completeCycle(result.powerWatts());
+
+        OperationalState newState = state.getOperationalState();
+        if (oldState != newState) {
+            log.info("Appliance homeId={} applianceId={} type='{}' transitioned from {} to {}",
+                    homeId, appliance.applianceId(), appliance.type(), oldState, newState);
+        }
+
         return result;
     }
 

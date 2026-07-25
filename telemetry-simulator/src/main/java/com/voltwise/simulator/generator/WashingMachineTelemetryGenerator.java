@@ -3,6 +3,8 @@ package com.voltwise.simulator.generator;
 import com.voltwise.simulator.config.ApplianceProfile;
 import com.voltwise.simulator.domain.ApplianceType;
 import com.voltwise.simulator.domain.OperatingState;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.random.RandomGenerator;
 import org.springframework.stereotype.Component;
 
@@ -22,40 +24,84 @@ public class WashingMachineTelemetryGenerator extends GeneratorSupport implement
     }
 
     @Override
-    public GeneratedTelemetry next(ApplianceSimulationState state, RandomGenerator random, ApplianceProfile profile) {
-        state.initializePhase(IDLE);
-        switch (state.getPhase()) {
-            case IDLE -> {
-                if (chance(random, profile.probability("start"))) {
-                    state.transitionTo(FILLING);
-                }
-            }
-            case FILLING -> transitionAfter(state, profile, "filling", WASHING);
-            case WASHING -> transitionAfter(state, profile, "washing", HEATING);
-            case HEATING -> transitionAfter(state, profile, "heating", RINSE);
-            case RINSE -> transitionAfter(state, profile, "rinse", SPINNING);
-            case SPINNING -> transitionAfter(state, profile, "spinning", IDLE);
-            default -> throw new IllegalStateException("Unknown washing machine phase " + state.getPhase());
+    public GeneratedTelemetry next(
+            ApplianceSimulationState state,
+            RandomGenerator random,
+            ApplianceProfile profile,
+            Instant now,
+            BigDecimal safePowerLimitWatts
+    ) {
+        state.initialize(OperationalState.OFF, IDLE, now);
+
+        if (state.getOperationalState() == OperationalState.FAULT) {
+            BigDecimal base = state.getSessionBaseWatts().signum() > 0
+                    ? state.getSessionBaseWatts()
+                    : safePowerLimitWatts.multiply(BigDecimal.valueOf(0.70));
+            return reading(addNoise(base, 0.02, random), OperatingState.HIGH_LOAD);
         }
 
-        return switch (state.getPhase()) {
-            case FILLING -> reading(profile, "filling", OperatingState.ON, random);
-            case WASHING -> reading(profile, "washing", OperatingState.ON, random);
-            case HEATING -> reading(profile, "heating", OperatingState.HIGH_LOAD, random);
-            case RINSE -> reading(profile, "washing", OperatingState.ON, random);
-            case SPINNING -> reading(profile, "spinning", OperatingState.HIGH_LOAD, random);
-            default -> reading(profile, "idle", OperatingState.STANDBY, random);
-        };
-    }
+        // Transitions
+        String currentPhase = state.getPhase();
+        switch (currentPhase) {
+            case IDLE -> {
+                double prob = profile.probability("start");
+                if (prob < 1.0) {
+                    double factor = isDaytime(now) ? 0.0002 : (isMorning(now) || isEvening(now) ? 0.00005 : 0.0);
+                    prob = prob * factor;
+                }
+                if (chance(random, prob)) {
+                    state.transitionTo(OperationalState.STANDBY, FILLING, now);
+                    state.setSessionBaseWatts(safePowerLimitWatts.multiply(BigDecimal.valueOf(0.15)));
+                }
+            }
+            case FILLING -> {
+                if (state.getCyclesInPhase() >= profile.duration("filling")) {
+                    state.transitionTo(OperationalState.ACTIVE, WASHING, now);
+                }
+            }
+            case WASHING -> {
+                if (state.getCyclesInPhase() >= profile.duration("washing")) {
+                    state.transitionTo(OperationalState.TEMPORARY_PEAK, HEATING, now);
+                    state.setSessionBaseWatts(safePowerLimitWatts.multiply(BigDecimal.valueOf(0.90)));
+                }
+            }
+            case HEATING -> {
+                if (state.getCyclesInPhase() >= profile.duration("heating")) {
+                    state.transitionTo(OperationalState.ACTIVE, RINSE, now);
+                    state.setSessionBaseWatts(safePowerLimitWatts.multiply(BigDecimal.valueOf(0.15)));
+                }
+            }
+            case RINSE -> {
+                if (state.getCyclesInPhase() >= profile.duration("rinse")) {
+                    state.transitionTo(OperationalState.ACTIVE, SPINNING, now);
+                    state.setSessionBaseWatts(safePowerLimitWatts.multiply(BigDecimal.valueOf(0.45)));
+                }
+            }
+            case SPINNING -> {
+                if (state.getCyclesInPhase() >= profile.duration("spinning")) {
+                    state.transitionTo(OperationalState.OFF, IDLE, now);
+                }
+            }
+        }
 
-    private void transitionAfter(
-            ApplianceSimulationState state,
-            ApplianceProfile profile,
-            String duration,
-            String nextPhase
-    ) {
-        if (durationReached(state, profile, duration)) {
-            state.transitionTo(nextPhase);
+        // Output based on phase/state
+        switch (state.getPhase()) {
+            case FILLING -> {
+                BigDecimal fillingBase = safePowerLimitWatts.multiply(BigDecimal.valueOf(0.025));
+                return reading(addNoise(fillingBase, 0.05, random), OperatingState.ON);
+            }
+            case WASHING, RINSE -> {
+                return reading(addNoise(state.getSessionBaseWatts(), 0.02, random), OperatingState.ON);
+            }
+            case HEATING -> {
+                return reading(addNoise(state.getSessionBaseWatts(), 0.015, random), OperatingState.HIGH_LOAD);
+            }
+            case SPINNING -> {
+                return reading(addNoise(state.getSessionBaseWatts(), 0.02, random), OperatingState.HIGH_LOAD);
+            }
+            default -> {
+                return reading(BigDecimal.ZERO, OperatingState.OFF);
+            }
         }
     }
 }

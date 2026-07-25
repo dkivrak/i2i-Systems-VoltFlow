@@ -33,9 +33,11 @@ class GeneratorDeterminismTest {
         List<GeneratedTelemetry> firstReadings = new ArrayList<>();
         List<GeneratedTelemetry> secondReadings = new ArrayList<>();
 
+        java.time.Instant now = java.time.Instant.parse("2026-07-25T12:00:00Z");
         for (int cycle = 0; cycle < 100; cycle++) {
-            generateAll(firstRegistry, catalog, firstProperties, firstInjector, firstReadings);
-            generateAll(secondRegistry, catalog, secondProperties, secondInjector, secondReadings);
+            generateAll(firstRegistry, catalog, firstProperties, firstInjector, firstReadings, now);
+            generateAll(secondRegistry, catalog, secondProperties, secondInjector, secondReadings, now);
+            now = now.plusSeconds(1);
         }
 
         assertThat(firstReadings).hasSize(900).isEqualTo(secondReadings);
@@ -55,8 +57,10 @@ class GeneratorDeterminismTest {
         List<GeneratedTelemetry> result = new ArrayList<>();
         GeneratorCatalog catalog = TestFixtures.generatorCatalog();
         AnomalyInjector injector = new AnomalyInjector(properties);
+        java.time.Instant now = java.time.Instant.parse("2026-07-25T12:00:00Z");
         for (int cycle = 0; cycle < 20; cycle++) {
-            generateAll(registry, catalog, properties, injector, result);
+            generateAll(registry, catalog, properties, injector, result, now);
+            now = now.plusSeconds(1);
         }
         return result;
     }
@@ -66,10 +70,11 @@ class GeneratorDeterminismTest {
             GeneratorCatalog catalog,
             SimulationProperties properties,
             AnomalyInjector injector,
-            List<GeneratedTelemetry> target
+            List<GeneratedTelemetry> target,
+            java.time.Instant now
     ) {
         for (ApplianceRuntime runtime : registry.snapshot()) {
-            target.add(runtime.generate(catalog.generatorFor(runtime.appliance().type()), properties, injector));
+            target.add(runtime.generate(catalog.generatorFor(runtime.appliance().type()), properties, injector, now));
         }
     }
 

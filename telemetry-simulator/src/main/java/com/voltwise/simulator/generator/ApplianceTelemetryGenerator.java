@@ -11,6 +11,8 @@ public interface ApplianceTelemetryGenerator {
     GeneratedTelemetry next(
             ApplianceSimulationState state,
             RandomGenerator random,
-            ApplianceProfile profile
+            ApplianceProfile profile,
+            java.time.Instant now,
+            java.math.BigDecimal safePowerLimitWatts
     );
 }

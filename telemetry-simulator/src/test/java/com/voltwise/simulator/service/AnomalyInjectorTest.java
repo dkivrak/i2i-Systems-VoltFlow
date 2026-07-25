@@ -62,6 +62,43 @@ class AnomalyInjectorTest {
                 .isEqualTo(normal);
     }
 
+    @Test
+    void effectiveProbabilityUsesRawProbabilityWhenRatePerHourIsZero() {
+        SimulationProperties properties = new SimulationProperties();
+        properties.getAnomaly().setProbability(0.00001);
+        properties.getAnomaly().setRatePerHour(0.0);   // disabled
+        properties.getAnomaly().setIntervalMs(1000);
+
+        assertThat(properties.getAnomaly().effectiveProbability())
+                .as("raw probability used when ratePerHour=0")
+                .isEqualTo(0.00001);
+    }
+
+    @Test
+    void ratePerHourOverrideNormalizesCorrectlyAcrossIntervals() {
+        SimulationProperties properties = new SimulationProperties();
+        properties.getAnomaly().setProbability(0.0); // overridden by rate
+        properties.getAnomaly().setRatePerHour(3.6); // 3.6 faults/hour
+
+        // At 1000 ms interval: p = 3.6 / 3600 * 1.0 = 0.001
+        properties.getAnomaly().setIntervalMs(1000);
+        assertThat(properties.getAnomaly().effectiveProbability())
+                .as("effective probability at 1 s/cycle")
+                .isEqualTo(0.001, org.assertj.core.data.Offset.offset(1e-9));
+
+        // At 100 ms interval: p = 3.6 / 3600 * 0.1 = 0.0001
+        properties.getAnomaly().setIntervalMs(100);
+        assertThat(properties.getAnomaly().effectiveProbability())
+                .as("effective probability scales down at 100 ms/cycle")
+                .isEqualTo(0.0001, org.assertj.core.data.Offset.offset(1e-9));
+
+        // At 10 000 ms interval: p = 3.6 / 3600 * 10 = 0.01
+        properties.getAnomaly().setIntervalMs(10000);
+        assertThat(properties.getAnomaly().effectiveProbability())
+                .as("effective probability scales up at 10 s/cycle")
+                .isEqualTo(0.01, org.assertj.core.data.Offset.offset(1e-9));
+    }
+
     private GeneratedTelemetry applyAndComplete(
             AnomalyInjector injector,
             RegisteredAppliance appliance,

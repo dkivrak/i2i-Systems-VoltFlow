@@ -1,6 +1,7 @@
 package com.voltwise.simulator.generator;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 public class ApplianceSimulationState {
 
@@ -12,6 +13,37 @@ public class ApplianceSimulationState {
     private int anomalyCyclesRemaining;
     private int anomalyCooldownRemaining;
     private boolean anomalyCycleConsumed;
+
+    // Stateful appliance lifecycle additions:
+    private OperationalState operationalState = OperationalState.OFF;
+    private Instant phaseStartedAt;
+    private Instant faultStartedAt;
+    private Instant lastActiveAt;
+    private BigDecimal sessionBaseWatts = BigDecimal.ZERO;
+
+    public void initialize(OperationalState initialState, String initialPhase, Instant now) {
+        if (this.phase == null || this.phase.isEmpty()) {
+            this.operationalState = initialState;
+            this.phase = initialPhase;
+            this.phaseStartedAt = now;
+            this.cyclesInPhase = 0;
+        }
+    }
+
+    public void transitionTo(OperationalState newState, String newPhase, Instant now) {
+        if (newState == null) {
+            throw new IllegalArgumentException("OperationalState cannot be null");
+        }
+        if (newPhase == null || newPhase.isBlank()) {
+            throw new IllegalArgumentException("Simulation phase cannot be blank");
+        }
+        if (newState != this.operationalState || !newPhase.equals(this.phase)) {
+            this.operationalState = newState;
+            this.phase = newPhase;
+            this.phaseStartedAt = now;
+            this.cyclesInPhase = 0;
+        }
+    }
 
     public void initializePhase(String initialPhase) {
         if (phase.isEmpty()) {
@@ -87,5 +119,46 @@ public class ApplianceSimulationState {
 
     public int getAnomalyCooldownRemaining() {
         return anomalyCooldownRemaining;
+    }
+
+    // Getters and setters for new stateful fields:
+    public OperationalState getOperationalState() {
+        return operationalState;
+    }
+
+    public void setOperationalState(OperationalState operationalState) {
+        this.operationalState = operationalState;
+    }
+
+    public Instant getPhaseStartedAt() {
+        return phaseStartedAt;
+    }
+
+    public void setPhaseStartedAt(Instant phaseStartedAt) {
+        this.phaseStartedAt = phaseStartedAt;
+    }
+
+    public Instant getFaultStartedAt() {
+        return faultStartedAt;
+    }
+
+    public void setFaultStartedAt(Instant faultStartedAt) {
+        this.faultStartedAt = faultStartedAt;
+    }
+
+    public Instant getLastActiveAt() {
+        return lastActiveAt;
+    }
+
+    public void setLastActiveAt(Instant lastActiveAt) {
+        this.lastActiveAt = lastActiveAt;
+    }
+
+    public BigDecimal getSessionBaseWatts() {
+        return sessionBaseWatts;
+    }
+
+    public void setSessionBaseWatts(BigDecimal sessionBaseWatts) {
+        this.sessionBaseWatts = sessionBaseWatts;
     }
 }

@@ -43,7 +43,10 @@ class RegistrationEventConsumerTest {
         assertThat(registry.applianceCount()).isEqualTo(9);
         assertThat(registry.homeName(42L)).isEqualTo("Test Home");
         assertThat(registry.snapshot()).extracting(runtime -> runtime.appliance().type())
-                .containsExactlyInAnyOrder(com.voltwise.simulator.domain.ApplianceType.values());
+                .containsExactlyInAnyOrder(
+                        java.util.Arrays.stream(com.voltwise.simulator.domain.ApplianceType.values())
+                                .filter(t -> t != com.voltwise.simulator.domain.ApplianceType.UNKNOWN)
+                                .toArray(com.voltwise.simulator.domain.ApplianceType[]::new));
     }
 
     @Test

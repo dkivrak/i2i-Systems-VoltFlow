@@ -5,14 +5,18 @@ import com.voltwise.simulator.domain.OperatingState;
 import com.voltwise.simulator.event.RegisteredAppliance;
 import com.voltwise.simulator.generator.ApplianceSimulationState;
 import com.voltwise.simulator.generator.GeneratedTelemetry;
+import com.voltwise.simulator.generator.OperationalState;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.random.RandomGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AnomalyInjector {
 
+    private static final Logger log = LoggerFactory.getLogger(AnomalyInjector.class);
     private final SimulationProperties.Anomaly properties;
 
     public AnomalyInjector(SimulationProperties simulationProperties) {
@@ -27,9 +31,17 @@ public class AnomalyInjector {
     ) {
         if (state.getAnomalyCyclesRemaining() == 0 && shouldStartBurst(appliance, state, random)) {
             state.beginAnomalyBurst(properties.getBurstCycles());
+            state.setOperationalState(OperationalState.FAULT);
+            log.info("Appliance applianceId={} type='{}' entered FAULT state due to simulated anomaly",
+                    appliance.applianceId(), appliance.type());
         }
 
         if (state.getAnomalyCyclesRemaining() == 0) {
+            if (state.getOperationalState() == OperationalState.FAULT) {
+                state.setOperationalState(OperationalState.STANDBY);
+                log.info("Appliance applianceId={} type='{}' recovered from FAULT state",
+                        appliance.applianceId(), appliance.type());
+            }
             return normalReading;
         }
 
@@ -56,8 +68,8 @@ public class AnomalyInjector {
             return true;
         }
         return state.getAnomalyCooldownRemaining() == 0
-                && properties.getProbability() > 0
-                && (properties.getProbability() >= 1 || random.nextDouble() < properties.getProbability());
+                && properties.effectiveProbability() > 0
+                && (properties.effectiveProbability() >= 1 || random.nextDouble() < properties.effectiveProbability());
     }
 
     private boolean isDemoCycle(long applianceId, long cycle) {

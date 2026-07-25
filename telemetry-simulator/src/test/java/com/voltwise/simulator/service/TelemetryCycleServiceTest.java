@@ -47,6 +47,9 @@ class TelemetryCycleServiceTest {
             assertThat(event.operatingState()).isNotNull();
         });
         assertThat(events.getAllValues()).extracting(TelemetryEvent::applianceType)
-                .containsExactlyInAnyOrder(com.voltwise.simulator.domain.ApplianceType.values());
+                .containsExactlyInAnyOrder(
+                        java.util.Arrays.stream(com.voltwise.simulator.domain.ApplianceType.values())
+                                .filter(t -> t != com.voltwise.simulator.domain.ApplianceType.UNKNOWN)
+                                .toArray(com.voltwise.simulator.domain.ApplianceType[]::new));
     }
 }
