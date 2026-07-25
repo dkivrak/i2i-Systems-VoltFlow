@@ -133,4 +133,23 @@ public final class HomeDtos {
             return new PagedResponse<>(all.subList(from, to), page, size, all.size(), pages);
         }
     }
+
+    public record PeakHourAdvice(
+            Long applianceId,
+            String applianceName,
+            ApplianceType applianceType,
+            BigDecimal currentPowerWatts,
+            BigDecimal estimatedSavingsTl,
+            String recommendationMessage
+    ) {}
+
+    public record PeakHourAdvisoryResponse(
+            Long homeId,
+            boolean isPeakHour,
+            String peakWindowText,
+            BigDecimal normalTariffPerKwh,
+            BigDecimal peakTariffPerKwh,
+            BigDecimal estimatedTotalSavingsTl,
+            List<PeakHourAdvice> advisories
+    ) {}
 }

@@ -230,6 +230,14 @@ public class HomeService {
         log.info("Appliance deleted successfully homeId={} applianceId={}", homeId, applianceId);
     }
 
+    @Transactional(readOnly = true)
+    public HomeEntity findOwnedHome(Long homeId) {
+        HomeEntity home = homes.findById(homeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Home not found: " + homeId));
+        requireOwnership(home);
+        return home;
+    }
+
     private void validateAppliancePowerLimits(CreateHomeRequest request) {
         if (request.appliances() == null) return;
 

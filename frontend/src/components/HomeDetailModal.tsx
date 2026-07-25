@@ -39,6 +39,7 @@ import type {
   HistoryPoint,
   HomeEvent,
   HomeStatus,
+  PeakHourAdvisoryResponse,
   Recommendation,
 } from '../types';
 import {
@@ -57,6 +58,7 @@ import { AddApplianceForm } from './home-detail/AddApplianceForm';
 import { ApplianceCharacterGrid } from './home-detail/ApplianceCharacterGrid';
 import { ApplianceTelemetryPanel } from './home-detail/ApplianceTelemetryPanel';
 import { DetailTabs, type HomeDetailTab } from './home-detail/DetailTabs';
+import { PeakHourBanner } from './home-detail/PeakHourBanner';
 
 interface HomeDetailModalProps {
   summary: HomeStatus;
@@ -141,6 +143,8 @@ export function HomeDetailModal({
   });
   const analyticsController = useRef<AbortController | null>(null);
 
+  const [peakHourAdvisory, setPeakHourAdvisory] = useState<PeakHourAdvisoryResponse | null>(null);
+
   useEffect(() => {
     analyticsController.current?.abort();
     const controller = new AbortController();
@@ -156,15 +160,20 @@ export function HomeDetailModal({
       api.getHistory(homeId, controller.signal),
       api.getEvents(homeId, controller.signal),
       api.getRecommendations(homeId, controller.signal),
+      api.getPeakHourAdvisory(homeId, controller.signal),
     ]).then((results) => {
       if (controller.signal.aborted) return;
-      const [historyResult, eventsResult, recommendationsResult] = results;
+      const [historyResult, eventsResult, recommendationsResult, peakHourResult] = results;
       const failedSources: AnalyticsSource[] = [];
       if (historyResult.status === 'rejected') failedSources.push('history');
       if (eventsResult.status === 'rejected') failedSources.push('events');
       if (recommendationsResult.status === 'rejected') {
         failedSources.push('recommendations');
       }
+      if (peakHourResult.status === 'fulfilled') {
+        setPeakHourAdvisory(peakHourResult.value);
+      }
+
       const rejected = results.find((result) => result.status === 'rejected');
 
       setAnalytics({
@@ -562,6 +571,8 @@ export function HomeDetailModal({
               </div>
             </div>
           </section>
+
+          <PeakHourBanner advisory={peakHourAdvisory} loading={analytics.isLoading} />
 
           <div className="home-overview-grid">
             <article className="home-overview-card">

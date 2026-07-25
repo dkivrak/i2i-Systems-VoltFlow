@@ -10,6 +10,7 @@ import type {
   HomeRegistrationRequest,
   HomeStatus,
   OperatingState,
+  PeakHourAdvisoryResponse,
   Recommendation,
   TariffState,
 } from '../types';
@@ -541,6 +542,19 @@ export const api = {
   async getRecommendations(homeId: number, signal?: AbortSignal): Promise<Recommendation[]> {
     const payload = await request<unknown>(`/homes/${homeId}/recommendations?page=0&size=10`, {}, signal);
     return extractItems(payload).map(normalizeRecommendation);
+  },
+
+  async getPeakHourAdvisory(homeId: number, signal?: AbortSignal): Promise<PeakHourAdvisoryResponse> {
+    const payload = await request<PeakHourAdvisoryResponse>(`/homes/${homeId}/peak-hour-advisory`, {}, signal);
+    return payload || {
+      homeId,
+      isPeakHour: false,
+      peakWindowText: '17:00 - 22:00',
+      normalTariffPerKwh: 2.5,
+      peakTariffPerKwh: 3.75,
+      estimatedTotalSavingsTl: 0,
+      advisories: [],
+    };
   },
 
   async registerHome(payload: HomeRegistrationRequest, signal?: AbortSignal): Promise<HomeStatus | null> {

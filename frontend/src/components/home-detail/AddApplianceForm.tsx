@@ -28,26 +28,46 @@ interface FormState {
   safePowerLimitWatts: string;
 }
 
+const safeLimitDefaults: Record<ApplianceType, number> = {
+  REFRIGERATOR: 300,
+  KETTLE: 2400,
+  OVEN: 3000,
+  TELEVISION: 200,
+  WASHING_MACHINE: 2200,
+  AIR_CONDITIONER: 2200,
+  MICROWAVE: 1200,
+  LAMP: 60,
+  COMPUTER: 400,
+};
+
+const safeLimitBounds: Record<ApplianceType, { min: number; max: number; desc: string }> = {
+  REFRIGERATOR: { min: 100, max: 500, desc: '100–500 W' },
+  KETTLE: { min: 1500, max: 3000, desc: '1500–3000 W' },
+  OVEN: { min: 1000, max: 4000, desc: '1000–4000 W' },
+  TELEVISION: { min: 50, max: 600, desc: '50–600 W' },
+  WASHING_MACHINE: { min: 500, max: 3000, desc: '500–3000 W' },
+  AIR_CONDITIONER: { min: 800, max: 4000, desc: '800–4000 W' },
+  MICROWAVE: { min: 600, max: 2000, desc: '600–2000 W' },
+  LAMP: { min: 5, max: 300, desc: '5–300 W' },
+  COMPUTER: { min: 50, max: 1200, desc: '50–1200 W' },
+};
+
 function validate(form: FormState): FieldErrors {
   const errors: FieldErrors = {};
-  if (!form.name.trim()) {
-    errors.name = 'Cihaz adı zorunludur.';
-  } else if (form.name.trim().length > 160) {
+  if (form.name.trim().length > 160) {
     errors.name = 'Cihaz adı en fazla 160 karakter olabilir.';
   }
   if (!APPLIANCE_TYPES.includes(form.type)) {
     errors.type = 'Geçerli bir cihaz türü seçin.';
   }
+  const bounds = safeLimitBounds[form.type];
   const power = Number(form.safePowerLimitWatts);
   if (!form.safePowerLimitWatts.trim()) {
-    errors.safePowerLimitWatts = 'Güvenli güç sınırı zorunludur.';
+    errors.safePowerLimitWatts = 'Güvenli Watt sınırı zorunludur.';
   } else if (!Number.isFinite(power)) {
     errors.safePowerLimitWatts = 'Geçerli bir güç değeri girin.';
-  } else if (power <= 0) {
-    errors.safePowerLimitWatts = 'Güvenli güç sınırı pozitif olmalıdır.';
-  } else if (power > 50_000) {
-    errors.safePowerLimitWatts =
-      'Güvenli güç sınırı en fazla 50.000 W olabilir.';
+  } else if (bounds && (power < bounds.min || power > bounds.max)) {
+    errors.safePowerLimitWatts = `Güvenli Watt sınırı ${bounds.desc} arasında olmalıdır.`;
   }
   return errors;
 }
@@ -60,7 +80,7 @@ export function AddApplianceForm({
   const [form, setForm] = useState<FormState>({
     name: '',
     type: 'REFRIGERATOR',
-    safePowerLimitWatts: '',
+    safePowerLimitWatts: String(safeLimitDefaults.REFRIGERATOR),
   });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState('');
@@ -90,7 +110,14 @@ export function AddApplianceForm({
     field: K,
     value: FormState[K],
   ) => {
-    setForm((current) => ({ ...current, [field]: value }));
+    setForm((current) => {
+      const next = { ...current, [field]: value };
+      if (field === 'type') {
+        const newType = value as ApplianceType;
+        next.safePowerLimitWatts = String(safeLimitDefaults[newType] || '');
+      }
+      return next;
+    });
     setErrors((current) => {
       if (!current[field]) return current;
       const next = { ...current };
@@ -117,11 +144,13 @@ export function AddApplianceForm({
     requestController.current?.abort();
     requestController.current = new AbortController();
 
+    const finalName = form.name.trim() || applianceTypeLabels[form.type];
+
     try {
       const appliance = await api.addAppliance(
         homeId,
         {
-          name: form.name.trim(),
+          name: finalName,
           type: form.type,
           safePowerLimitWatts: Number(form.safePowerLimitWatts),
         },
@@ -175,7 +204,9 @@ export function AddApplianceForm({
         )}
 
         <label className="field">
-          <span>Cihaz adı</span>
+          <span>
+            Özel ad <small style={{ opacity: 0.7, fontWeight: 400 }}>(isteğe bağlı)</small>
+          </span>
           <input
             ref={nameRef}
             type="text"
@@ -185,7 +216,7 @@ export function AddApplianceForm({
             autoComplete="off"
             aria-invalid={Boolean(errors.name)}
             aria-describedby={errors.name ? `${titleId}-name-error` : undefined}
-            placeholder="Örn. Salon televizyonu"
+            placeholder={applianceTypeLabels[form.type]}
           />
           {errors.name && (
             <small className="field-error" id={`${titleId}-name-error`}>
@@ -219,11 +250,13 @@ export function AddApplianceForm({
         </label>
 
         <label className="field">
-          <span>Güvenli maksimum güç (W)</span>
+          <span>
+            Güvenli Watt (İzin: {safeLimitBounds[form.type]?.desc || '100–500 W'})
+          </span>
           <input
             type="text"
             inputMode="decimal"
-            aria-label="Güvenli maksimum güç (W)"
+            aria-label="Güvenli Watt"
             value={form.safePowerLimitWatts}
             onChange={(event) =>
               update('safePowerLimitWatts', event.target.value)
@@ -235,7 +268,7 @@ export function AddApplianceForm({
                 ? `${titleId}-power-error`
                 : `${titleId}-power-help`
             }
-            placeholder="Örn. 450"
+            placeholder={String(safeLimitDefaults[form.type])}
           />
           <small id={`${titleId}-power-help`}>
             Cihaz için güvenli kabul edilen üst güç sınırı.

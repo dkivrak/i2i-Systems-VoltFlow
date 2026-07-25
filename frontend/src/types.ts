@@ -103,4 +103,23 @@ export interface ApplianceRegistrationRequest {
   safePowerLimitWatts: number;
 }
 
+export interface PeakHourAdvice {
+  applianceId: number;
+  applianceName: string;
+  applianceType: ApplianceType;
+  currentPowerWatts: number;
+  estimatedSavingsTl: number;
+  recommendationMessage: string;
+}
+
+export interface PeakHourAdvisoryResponse {
+  homeId: number;
+  isPeakHour: boolean;
+  peakWindowText: string;
+  normalTariffPerKwh: number;
+  peakTariffPerKwh: number;
+  estimatedTotalSavingsTl: number;
+  advisories: PeakHourAdvice[];
+}
+
 export type FieldErrors = Record<string, string>;
