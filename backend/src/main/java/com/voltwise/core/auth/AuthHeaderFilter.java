@@ -47,8 +47,10 @@ public class AuthHeaderFilter implements Filter {
 
     private boolean requiresAuthentication(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/api/v1/")
+        return (path.startsWith("/api/v1/") || path.startsWith("/api/notifications/"))
                 && !path.startsWith("/api/v1/auth/")
+                && !path.startsWith("/api/v1/mailtrap/")
+                && !path.contains("/notifications/inbox")
                 && !"OPTIONS".equalsIgnoreCase(request.getMethod());
     }
 

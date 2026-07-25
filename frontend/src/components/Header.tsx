@@ -1,4 +1,4 @@
-import { HousePlug, LogOut, Plus, Radio, Zap } from 'lucide-react';
+import { HousePlug, LogOut, Mail, Plus, Radio, Zap } from 'lucide-react';
 
 interface HeaderProps {
   isRefreshing: boolean;
@@ -7,6 +7,7 @@ interface HeaderProps {
   homeCount: number;
   onRegister: () => void;
   onLogout: () => void;
+  onOpenMailtrap?: () => void;
 }
 
 export function Header({
@@ -16,6 +17,7 @@ export function Header({
   homeCount,
   onRegister,
   onLogout,
+  onOpenMailtrap,
 }: HeaderProps) {
   const liveLabel = hasConnectionError
     ? 'Bağlantı yeniden kuruluyor'
@@ -56,6 +58,12 @@ export function Header({
             </span>
             <span>{liveLabel}</span>
           </div>
+          {onOpenMailtrap && (
+            <button className="button button--secondary header-mail-button" type="button" onClick={onOpenMailtrap}>
+              <Mail aria-hidden="true" size={17} />
+              <span>📧 Test E-postalarını Görüntüle</span>
+            </button>
+          )}
           <button className="button button--primary header-add-button" type="button" onClick={onRegister}>
             <Plus aria-hidden="true" size={18} />
             <span>Yeni ev ekle</span>

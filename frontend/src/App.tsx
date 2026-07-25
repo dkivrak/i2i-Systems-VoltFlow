@@ -26,6 +26,7 @@ import { LandingPage } from './components/LandingPage';
 import { LoginPage, type AuthMode } from './components/LoginPage';
 import { OverviewStats } from './components/OverviewStats';
 import { Dialog } from './components/Dialog';
+import { CreatedByCapsule } from './components/CreatedByCapsule';
 import {
   DashboardSkeleton,
   EmptyState,
@@ -34,6 +35,7 @@ import {
   StaleDataNotice,
 } from './components/PageStates';
 import { RegistrationModal } from './components/RegistrationModal';
+import { MailtrapInboxModal } from './components/MailtrapInboxModal';
 import { ToastProvider } from './components/ToastProvider';
 import {
   getPollingInterval,
@@ -73,6 +75,7 @@ interface DashboardProps {
 function Dashboard({ onLogout }: DashboardProps) {
   const [selectedHomeId, setSelectedHomeId] = useState<number | null>(null);
   const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [mailtrapOpen, setMailtrapOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [statusAnnouncement, setStatusAnnouncement] = useState('');
@@ -183,6 +186,7 @@ function Dashboard({ onLogout }: DashboardProps) {
         homeCount={homes.length}
         onRegister={() => setRegistrationOpen(true)}
         onLogout={onLogout}
+        onOpenMailtrap={() => setMailtrapOpen(true)}
       />
 
       <main id="main-content" className="main-content" tabIndex={-1}>
@@ -352,6 +356,12 @@ function Dashboard({ onLogout }: DashboardProps) {
           onCreated={homesQuery.retry}
         />
       )}
+
+      {mailtrapOpen && (
+        <MailtrapInboxModal onClose={() => setMailtrapOpen(false)} />
+      )}
+
+      <CreatedByCapsule />
     </div>
   );
 }
@@ -363,6 +373,7 @@ export default function App() {
   const [route, setRoute] = useState<AppRoute>(() =>
     routeFromLocation(Boolean(getStoredToken())),
   );
+  const [landingMailtrapOpen, setLandingMailtrapOpen] = useState(false);
 
   const navigate = useCallback(
     (nextRoute: AppRoute, replace = false) => {

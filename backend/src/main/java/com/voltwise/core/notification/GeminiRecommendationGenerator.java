@@ -59,21 +59,32 @@ public class GeminiRecommendationGenerator implements RecommendationGenerator {
 
     String prompt(RecommendationContext context) {
         String anomalies = context.anomalousAppliances().isEmpty() ? "Yok" : context.anomalousAppliances().stream()
-                .map(a -> "%s: güncel %s W, güvenli sınır %s W".formatted(
+                .map(a -> "%s (Güncel %s W, Güvenli Sınır %s W)".formatted(
                         a.name(), a.currentPowerWatts().toPlainString(), a.safePowerLimitWatts().toPlainString()))
                 .reduce((a, b) -> a + "; " + b).orElse("Yok");
+
+        if (context.triggerType() == com.voltwise.core.domain.TriggerType.APPLIANCE_ANOMALY) {
+            return """
+                    Sen bir akıllı ev enerji uzmanısın. Aşağıdaki cihaz anomalisi durumu için KESİNLİKLE TÜRKÇE, tam olarak 2-3 cümlelik, yapıcı ve cihaz-odaklı bir tasarruf ve güvenlik tavsiyesi yaz.
+                    Ev Adı: %s
+                    Tetikleyici: Cihaz Anomalisi (Üst üste 3+ kez güvenli Watt sınırı aşıldı)
+                    Sorunlu Cihazlar: %s
+                    Aktif Tarife: %s
+                    Lütfen 2-3 cümleyi geçme, net ve kişiselleştirilmiş bir Türkçe tavsiye ver.
+                    """.formatted(context.homeName(), anomalies, context.tariffState());
+        }
+
         return """
-                Türkçe, kısa ve uygulanabilir bir ev enerji tasarrufu önerisi üret.
-                Ev: %s
+                Sen bir akıllı ev enerji uzmanısın. Aşağıdaki bütçe ve tarife durumu için KESİNLİKLE TÜRKÇE, tam olarak 2-3 cümlelik, yapıcı ve kişiselleştirilmiş bir enerji tasarrufu tavsiyesi yaz.
+                Ev Adı: %s
                 Tetikleyici: %s
-                Birikmiş tüketim: %s kWh
-                Güncel maliyet: %s TL
-                Aylık bütçe: %s TL
-                Bütçe kullanım oranı: %s%%
-                Aktif tarife: %s
-                Pik Tarife Saatleri: 17:00 - 22:00 (Yüksek güçlü cihazların 22:00 sonrasına ertelenmesi önerilir)
-                Anormal cihazlar ve sınırlar: %s
-                En fazla 4 madde kullan; ölçümleri açıkla, güvenliği öncele ve uydurma veri ekleme.
+                Birikmiş Tüketim: %s kWh
+                Güncel Maliyet: %s TL
+                Aylık Bütçe: %s TL
+                Bütçe Kullanım Oranı: %s%%
+                Aktif Tarife: %s
+                Anormal Cihazlar: %s
+                Lütfen 2-3 cümleyi geçme, net ve uygulanabilir bir Türkçe tasarruf tavsiyesi ver.
                 """.formatted(context.homeName(), context.triggerType(),
                 context.accumulatedEnergyKwh().toPlainString(), context.currentCost().toPlainString(),
                 context.monthlyBudget().toPlainString(), context.budgetUsagePercent().toPlainString(),

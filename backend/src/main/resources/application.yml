@@ -44,6 +44,17 @@ spring:
         spring.json.value.default.type: com.voltwise.core.event.TelemetryEvent
     listener:
       ack-mode: record
+  mail:
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: ${SERVER_PORT:8080}
@@ -54,6 +65,9 @@ server:
 management:
   endpoints.web.exposure.include: health,info,metrics
   endpoint.health.probes.enabled: true
+  health:
+    mail:
+      enabled: false
 
 springdoc:
   swagger-ui:
@@ -89,6 +103,11 @@ voltwise:
     interval-ms: ${SNAPSHOT_INTERVAL_MS:60000}
   gemini:
     api-key: ${GEMINI_API_KEY:}
-    model: ${GEMINI_MODEL:gemini-2.0-flash}
+    model: ${GEMINI_MODEL:gemini-2.5-flash}
     connect-timeout-ms: ${GEMINI_CONNECT_TIMEOUT_MS:3000}
     read-timeout-ms: ${GEMINI_READ_TIMEOUT_MS:8000}
+  mailtrap:
+    api-token: ${MAILTRAP_API_TOKEN:abde7b41726d706c55734888ca165fb4}
+    account-id: ${MAILTRAP_ACCOUNT_ID:2796288}
+    inbox-id: ${MAILTRAP_INBOX_ID:4813707}
+
