@@ -2,6 +2,7 @@ package com.voltwise.core.registration;
 
 import com.voltwise.core.api.HomeDtos.ApplianceResponse;
 import com.voltwise.core.api.HomeDtos.AddApplianceRequest;
+import com.voltwise.core.api.HomeDtos.UpdateApplianceRequest;
 import com.voltwise.core.api.HomeDtos.CreateHomeRequest;
 import com.voltwise.core.api.HomeDtos.HomeResponse;
 import com.voltwise.core.auth.UserContext;
@@ -228,6 +229,69 @@ public class HomeService {
         });
 
         log.info("Appliance deleted successfully homeId={} applianceId={}", homeId, applianceId);
+    }
+
+    @Transactional
+    public ApplianceResponse updateApplianceName(Long homeId, Long applianceId, UpdateApplianceRequest request) {
+        HomeEntity home = homes.findById(homeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Home not found: " + homeId));
+        requireOwnership(home);
+        ApplianceEntity appliance = appliances.findById(applianceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appliance not found: " + applianceId));
+
+        if (!appliance.getHome().getId().equals(homeId)) {
+            throw new IllegalArgumentException("Appliance " + applianceId + " does not belong to home " + homeId);
+        }
+
+        appliance.setName(request.name().trim());
+        ApplianceEntity saved = appliances.saveAndFlush(appliance);
+
+        liveStateStore.get(homeId).ifPresent(state -> {
+            try {
+                liveStateStore.update(homeId, current -> {
+                    Map<Long, ApplianceLiveState> updated = new HashMap<>(current.appliances());
+                    ApplianceLiveState old = updated.get(applianceId);
+                    if (old != null) {
+                        ApplianceLiveState nextAppliance = new ApplianceLiveState(
+                                old.applianceId(), saved.getName(), old.type(), old.currentPowerWatts(),
+                                old.accumulatedEnergyKwh(), old.accumulatedCost(), old.operatingState(),
+                                old.safePowerLimitWatts(), old.consecutiveBreachCount(), old.healthStatus(),
+                                old.lastUpdatedAt(), old.snapshotWindow()
+                        );
+                        updated.put(applianceId, nextAppliance);
+                    }
+                    return new HomeLiveState(
+                            current.homeId(), current.homeName(), current.currentPowerWatts(),
+                            current.accumulatedEnergyKwh(), current.currentCost(), current.monthlyBudget(),
+                            current.budgetUsagePercent(), current.tariffState(), current.lastUpdatedAt(),
+                            updated, current.snapshotWindow()
+                    );
+                });
+            } catch (Exception ex) {
+                log.warn("Could not update live state after appliance rename homeId={} applianceId={}", homeId, applianceId, ex);
+            }
+        });
+
+        AssetRegistrationEvent event = toEvent(home);
+        registrationOutbox.enqueue(home, event);
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        outboxDispatcher.requestImmediateDispatch(event.eventId());
+                    } catch (Exception ex) {
+                        log.error("Could not schedule immediate dispatch after rename homeId={} applianceId={} eventId={}",
+                                homeId, applianceId, event.eventId(), ex);
+                    }
+                }
+            });
+        } else {
+            outboxDispatcher.requestImmediateDispatch(event.eventId());
+        }
+
+        return toApplianceResponse(saved);
     }
 
     @Transactional(readOnly = true)

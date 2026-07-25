@@ -68,7 +68,7 @@ describe('VoltFlow dashboard', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Moda Evi' });
     expect(dialog).toBeInTheDocument();
-    expect(screen.getByText('Çalışma Bilgisayarı')).toBeInTheDocument();
+    expect(screen.getAllByText('Çalışma Bilgisayarı')[0]).toBeInTheDocument();
     expect(screen.getByText('Yüksek yük')).toBeInTheDocument();
     expect(screen.getByText('Bilgisayarın yüksek yükte çalışan uygulamalarını kontrol edin.')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Aylık bütçe kullanımı' })).toHaveAttribute(

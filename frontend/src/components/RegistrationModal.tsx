@@ -1,4 +1,4 @@
-import { Plus, Save, Trash2, Info, ShieldAlert } from 'lucide-react';
+import { Plus, Save, Trash2, Info, ShieldAlert, Pencil } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ApiError, api, getUserFacingError } from '../api/client';
 import { APPLIANCE_TYPES, type ApplianceType, type FieldErrors, type RegistrationApplianceRow } from '../types';
@@ -54,7 +54,7 @@ function newAppliance(rowId: string, type: ApplianceType = 'REFRIGERATOR'): Regi
     type,
     name: '',
     quantity: 1,
-    safePowerLimitWatts: safeLimitDefaults[type],
+    safePowerLimitWatts: String(safeLimitDefaults[type]),
   };
 }
 
@@ -90,7 +90,10 @@ function validate(form: RegistrationFormState): FieldErrors {
       errors[`appliances.${index}.quantity`] = 'Adet 1–20 arasında olmalıdır.';
     }
     const bounds = safeLimitBounds[appliance.type];
-    if (bounds && (appliance.safePowerLimitWatts < bounds.min || appliance.safePowerLimitWatts > bounds.max)) {
+    const limitVal = typeof appliance.safePowerLimitWatts === 'string' && appliance.safePowerLimitWatts.trim() === ''
+      ? NaN
+      : Number(appliance.safePowerLimitWatts);
+    if (!bounds || isNaN(limitVal) || limitVal < bounds.min || limitVal > bounds.max) {
       errors[`appliances.${index}.safePowerLimitWatts`] = `Güvenli Watt sınırı ${bounds.desc} arasında olmalıdır.`;
     }
   });
@@ -113,6 +116,7 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editableRows, setEditableRows] = useState<Record<string, boolean>>({});
   const { showToast } = useToast();
 
   useEffect(() => () => requestController.current?.abort(), []);
@@ -134,13 +138,23 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
     field: K,
     value: RegistrationApplianceRow[K],
   ) => {
+    if (field === 'type') {
+      const targetAppliance = form.appliances[index];
+      if (targetAppliance) {
+        setEditableRows((prev) => {
+          const next = { ...prev };
+          delete next[targetAppliance.rowId];
+          return next;
+        });
+      }
+    }
     setForm((current) => ({
       ...current,
       appliances: current.appliances.map((appliance, applianceIndex) => {
         if (applianceIndex !== index) return appliance;
         if (field === 'type') {
           const type = value as ApplianceType;
-          return { ...appliance, type, safePowerLimitWatts: safeLimitDefaults[type] };
+          return { ...appliance, type, safePowerLimitWatts: String(safeLimitDefaults[type]) };
         }
         return { ...appliance, [field]: value };
       }),
@@ -204,7 +218,7 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
       return Array.from({ length: appliance.quantity }, (_, index) => ({
         name: appliance.quantity > 1 ? `${baseName} ${index + 1}` : baseName,
         type: appliance.type,
-        safePowerLimitWatts: appliance.safePowerLimitWatts,
+        safePowerLimitWatts: Number(appliance.safePowerLimitWatts),
       }));
     });
 
@@ -455,23 +469,33 @@ export function RegistrationModal({ onClose, onCreated }: RegistrationModalProps
 
                   <label className="field field--limit">
                     <span>Güvenli Watt (İzin: {bounds.desc})</span>
-                    <input
-                      type="number"
-                      min={bounds.min}
-                      max={bounds.max}
-                      step="10"
-                      value={appliance.safePowerLimitWatts}
-                      aria-label={`${index + 1}. cihaz güvenli güç sınırı`}
-                      aria-invalid={Boolean(
-                        errors[`appliances.${index}.safePowerLimitWatts`],
-                      )}
-                      aria-describedby={
-                        errors[`appliances.${index}.safePowerLimitWatts`]
-                          ? errorId(`appliances.${index}.safePowerLimitWatts`)
-                          : undefined
-                      }
-                      onChange={(event) => updateAppliance(index, 'safePowerLimitWatts', Number(event.target.value))}
-                    />
+                    <div className="limit-input-wrapper">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={appliance.safePowerLimitWatts}
+                        aria-label={`${index + 1}. cihaz güvenli güç sınırı`}
+                        aria-invalid={Boolean(
+                          errors[`appliances.${index}.safePowerLimitWatts`],
+                        )}
+                        aria-describedby={
+                          errors[`appliances.${index}.safePowerLimitWatts`]
+                            ? errorId(`appliances.${index}.safePowerLimitWatts`)
+                            : undefined
+                        }
+                        onChange={(event) => updateAppliance(index, 'safePowerLimitWatts', event.target.value)}
+                        readOnly={!editableRows[appliance.rowId]}
+                      />
+                      <button
+                        type="button"
+                        className={`limit-edit-button ${editableRows[appliance.rowId] ? 'is-editing' : ''}`}
+                        onClick={() => setEditableRows((curr) => ({ ...curr, [appliance.rowId]: !curr[appliance.rowId] }))}
+                        title={editableRows[appliance.rowId] ? 'Düzenlemeyi Kilitle' : 'Düzenle'}
+                        aria-label={`${index + 1}. cihaz güvenli güç sınırını düzenle`}
+                      >
+                        <Pencil size={14} />
+                      </button>
+                    </div>
                     {fieldError(`appliances.${index}.safePowerLimitWatts`)}
                   </label>
 

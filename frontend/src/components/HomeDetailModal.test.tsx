@@ -78,7 +78,7 @@ describe('existing-home appliance registration', () => {
 
     await user.click(screen.getByRole('button', { name: 'Cihaz ekle' }));
     expect(screen.getByTestId('add-appliance-form')).toBeInTheDocument();
-    expect(screen.getByLabelText('Cihaz adı')).toHaveFocus();
+    expect(screen.getByLabelText(/özel ad/i)).toHaveFocus();
   });
 
   it('blocks invalid values before making a request', async () => {
@@ -87,13 +87,11 @@ describe('existing-home appliance registration', () => {
     renderModal();
     await openAddForm(user);
 
-    await user.type(
-      screen.getByLabelText('Güvenli maksimum güç (W)'),
-      'geçersiz',
-    );
+    const limitInput = screen.getByLabelText('Güvenli Watt');
+    await user.clear(limitInput);
+    await user.type(limitInput, 'geçersiz');
     await user.click(screen.getByRole('button', { name: 'Cihazı kaydet' }));
 
-    expect(screen.getByText('Cihaz adı zorunludur.')).toBeInTheDocument();
     expect(
       screen.getByText('Geçerli bir güç değeri girin.'),
     ).toBeInTheDocument();
@@ -107,13 +105,15 @@ describe('existing-home appliance registration', () => {
     renderModal({ onChanged });
     await openAddForm(user);
 
-    await user.type(screen.getByLabelText('Cihaz adı'), 'Salon Televizyonu');
+    await user.type(screen.getByLabelText(/özel ad/i), 'Salon Televizyonu');
     await user.selectOptions(screen.getByLabelText('Cihaz türü'), 'TELEVISION');
-    await user.type(screen.getByLabelText('Güvenli maksimum güç (W)'), '450');
+    const limitInput = screen.getByLabelText('Güvenli Watt');
+    await user.clear(limitInput);
+    await user.type(limitInput, '450');
     await user.click(screen.getByRole('button', { name: 'Cihazı kaydet' }));
 
     expect(
-      await screen.findByText('Salon Televizyonu'),
+      await screen.findByRole('heading', { name: 'Salon Televizyonu' }),
     ).toBeInTheDocument();
     expect(screen.getAllByText('Telemetri bekleniyor').length).toBeGreaterThan(0);
     expect(screen.getByText('Cihaz eklendi')).toBeInTheDocument();
@@ -128,8 +128,11 @@ describe('existing-home appliance registration', () => {
     renderModal();
     await openAddForm(user);
 
-    await user.type(screen.getByLabelText('Cihaz adı'), 'Masa Lambası');
-    await user.type(screen.getByLabelText('Güvenli maksimum güç (W)'), '60');
+    await user.type(screen.getByLabelText(/özel ad/i), 'Masa Lambası');
+    await user.selectOptions(screen.getByLabelText('Cihaz türü'), 'LAMP');
+    const limitInput = screen.getByLabelText('Güvenli Watt');
+    await user.clear(limitInput);
+    await user.type(limitInput, '60');
     await user.click(screen.getByRole('button', { name: 'Cihazı kaydet' }));
 
     expect(
@@ -152,8 +155,11 @@ describe('existing-home appliance registration', () => {
     renderModal();
     await openAddForm(user);
 
-    await user.type(screen.getByLabelText('Cihaz adı'), 'Masa Lambası');
-    await user.type(screen.getByLabelText('Güvenli maksimum güç (W)'), '60');
+    await user.type(screen.getByLabelText(/özel ad/i), 'Masa Lambası');
+    await user.selectOptions(screen.getByLabelText('Cihaz türü'), 'LAMP');
+    const limitInput = screen.getByLabelText('Güvenli Watt');
+    await user.clear(limitInput);
+    await user.type(limitInput, '60');
     const form = screen.getByTestId('add-appliance-form').querySelector('form');
     expect(form).not.toBeNull();
     fireEvent.submit(form!);
@@ -166,5 +172,67 @@ describe('existing-home appliance registration', () => {
 
     resolveRequest?.(pendingDevice);
     await waitFor(() => expect(screen.getByText('Cihaz eklendi')).toBeInTheDocument());
+  });
+});
+
+describe('existing-home appliance renaming', () => {
+  it('allows renaming an existing appliance and triggers the api call', async () => {
+    const homeWithDevice: HomeStatus = {
+      ...emptyHome,
+      appliances: [
+        {
+          applianceId: 10,
+          name: 'Eski Cihaz Adı',
+          type: 'REFRIGERATOR',
+          currentPowerWatts: 150,
+          accumulatedEnergyKwh: 1.2,
+          accumulatedCost: 3.5,
+          operatingState: 'STANDBY',
+          safePowerLimitWatts: 300,
+          consecutiveBreachCount: 0,
+          healthStatus: 'NORMAL',
+        },
+      ],
+    };
+
+    vi.spyOn(api, 'getHomeStatus').mockResolvedValue(homeWithDevice);
+    const renameAppliance = vi.spyOn(api, 'renameAppliance').mockResolvedValue({
+      applianceId: 10,
+      name: 'Yeni Cihaz Adı',
+      type: 'REFRIGERATOR',
+      currentPowerWatts: 150,
+      accumulatedEnergyKwh: 1.2,
+      accumulatedCost: 3.5,
+      operatingState: 'STANDBY',
+      safePowerLimitWatts: 300,
+      consecutiveBreachCount: 0,
+      healthStatus: 'NORMAL',
+    });
+
+    const user = userEvent.setup();
+    render(
+      <ToastProvider>
+        <HomeDetailModal
+          summary={homeWithDevice}
+          onClose={vi.fn()}
+        />
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole('tab', { name: 'Cihazlar' }));
+
+    expect(screen.getByRole('heading', { name: 'Eski Cihaz Adı' })).toBeInTheDocument();
+
+    const renameBtn = screen.getByRole('button', { name: 'Cihaz ismini değiştir' });
+    await user.click(renameBtn);
+
+    const nameInput = screen.getByRole('textbox');
+    expect(nameInput).toHaveValue('Eski Cihaz Adı');
+
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Yeni Cihaz Adı');
+    await user.click(screen.getByRole('button', { name: 'Kaydet' }));
+
+    expect(renameAppliance).toHaveBeenCalledWith(42, 10, 'Yeni Cihaz Adı');
   });
 });

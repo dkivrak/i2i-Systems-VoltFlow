@@ -1528,3 +1528,64 @@
 .panel-empty-copy {
   margin: 0;
 }
+
+/* Safe Limit Input lock & edit custom styles */
+.limit-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.limit-input-wrapper input {
+  padding-right: 36px !important;
+}
+
+.limit-input-wrapper input[readonly] {
+  background: var(--color-neutral-soft);
+  border-color: var(--color-border);
+  color: var(--color-ink-soft);
+  cursor: default;
+}
+
+.limit-input-wrapper input[readonly]:hover {
+  border-color: var(--color-border);
+}
+
+.limit-input-wrapper input[readonly]:focus {
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
+.limit-edit-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  transition: all var(--motion-fast) var(--ease-standard);
+  padding: 0;
+}
+
+.limit-edit-button:hover {
+  color: var(--color-brand);
+  border-color: var(--color-brand-strong);
+  background: var(--color-brand-soft);
+}
+
+.limit-edit-button.is-editing {
+  color: var(--color-brand-strong);
+  border-color: var(--color-brand-strong);
+  background: var(--color-brand-soft);
+  box-shadow: 0 0 0 2px rgb(108 71 255 / 15%);
+}
+

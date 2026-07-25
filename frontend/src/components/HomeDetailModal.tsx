@@ -361,6 +361,20 @@ export function HomeDetailModal({
     }
   };
 
+  const handleRenameAppliance = useCallback(
+    async (applianceId: number, newName: string) => {
+      setMutationError('');
+      try {
+        await api.renameAppliance(homeId, applianceId, newName);
+        retryLive();
+      } catch (error) {
+        setMutationError(getUserFacingError(error));
+        throw error;
+      }
+    },
+    [homeId, retryLive],
+  );
+
   const selectAppliance = useCallback((applianceId: number) => {
     setSelectedApplianceId(applianceId);
   }, []);
@@ -754,6 +768,7 @@ export function HomeDetailModal({
                   deletingApplianceId !== null
                 }
                 onDelete={requestDeleteAppliance}
+                onRename={handleRenameAppliance}
               />
             </div>
           ) : null}

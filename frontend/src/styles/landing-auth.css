@@ -1,6 +1,8 @@
 .auth-page {
   display: grid;
-  min-height: 100svh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
   background: var(--color-canvas);
 }
@@ -9,7 +11,7 @@
   position: relative;
   isolation: isolate;
   display: flex;
-  min-height: 100svh;
+  height: 100%;
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
@@ -204,8 +206,9 @@
 
 .auth-panel {
   display: grid;
-  min-height: 100svh;
+  height: 100%;
   place-items: center;
+  overflow-y: auto;
   padding: clamp(1.5rem, 5vw, 4rem);
   background:
     linear-gradient(rgb(247 245 239 / 91%), rgb(247 245 239 / 97%)),
@@ -215,6 +218,14 @@
 
 .auth-panel__inner {
   width: min(100%, 470px);
+}
+
+.auth-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: var(--space-8);
 }
 
 .auth-back,
@@ -231,7 +242,7 @@
 
 .auth-back {
   min-height: var(--touch-target);
-  margin: 0 0 var(--space-8);
+  margin: 0;
   padding: 0;
 }
 
@@ -244,7 +255,7 @@
   display: inline-grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-1);
-  margin-bottom: var(--space-10);
+  margin: 0;
   padding: var(--space-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
@@ -413,7 +424,7 @@
 .auth-input input {
   width: 100%;
   min-height: 54px;
-  padding: 0.78rem 3rem;
+  padding: 0.78rem 3rem !important;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-sm);
   outline: 0;
@@ -514,7 +525,7 @@
 /* Public landing */
 .landing-page {
   min-height: 100vh;
-  overflow: hidden;
+  overflow: visible;
   background:
     radial-gradient(circle at 86% 8%, rgb(118 216 255 / 16%), transparent 27rem),
     var(--color-canvas);
@@ -991,42 +1002,200 @@
   font-weight: 900;
 }
 
-.landing-how {
-  padding-top: clamp(2rem, 5vw, 5rem);
+/* Scroll-Driven Horizontal Section */
+.scroll-horizontal-container {
+  position: relative;
+  height: 350vh; /* Scrub length */
+  background: var(--color-canvas);
+  margin-top: clamp(2rem, 5vw, 5rem);
 }
 
-.landing-steps {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-5);
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  counter-reset: none;
-}
-
-.landing-steps li {
+.sticky-wrapper {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
-  gap: var(--space-5);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.scroll-horizontal-header {
+  text-align: center;
+  margin-bottom: var(--space-4);
+  flex-shrink: 0;
+}
+
+.scroll-horizontal-header h2 {
+  font-size: clamp(2rem, 4.5vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  margin: var(--space-1) 0 0;
+  color: var(--color-ink-strong);
+}
+
+.scroll-driven-navbar {
+  display: inline-flex;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 6px;
+  border-radius: 100px;
+  border: 2px solid var(--color-ink);
+  backdrop-filter: blur(10px);
+  margin-bottom: var(--space-6);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.scroll-driven-nav-btn {
+  border: none;
+  background: none;
+  font-size: var(--font-size-sm);
+  font-weight: 750;
+  color: var(--color-ink);
+  padding: 8px 20px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.scroll-driven-nav-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.scroll-driven-nav-btn.is-active {
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+
+.horizontal-carousel-wrapper {
+  width: 100%;
+  overflow: visible;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.horizontal-track {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  will-change: transform;
+}
+
+.horizontal-card {
+  width: min(840px, 85vw);
+  background: var(--color-surface);
+  border: 2px solid var(--color-ink);
+  border-radius: 28px;
+  box-shadow: 6px 6px 0 var(--color-ink);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease, box-shadow 0.4s ease;
+  opacity: 0.35;
+  transform: scale(0.96);
+}
+
+.horizontal-card.is-active {
+  opacity: 1;
+  transform: scale(1.02);
+  box-shadow: 10px 10px 0 var(--color-ink);
+}
+
+.card-video-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  border-bottom: 2px solid var(--color-ink);
+  background: #000;
+}
+
+.card-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-body {
   padding: var(--space-6);
-  border-top: 3px solid var(--color-ink);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.landing-steps li > span {
+.card-step-num {
+  font-size: var(--font-size-xs);
   color: var(--color-brand);
-  font-size: var(--font-size-xl);
-  font-variant-numeric: tabular-nums;
-  font-weight: 950;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.landing-steps h3 {
-  margin: 0 0 var(--space-3);
+.horizontal-card h3 {
+  margin: 0;
   font-size: var(--font-size-lg);
+  font-weight: 850;
+  color: var(--color-ink-strong);
 }
 
-.landing-steps p {
+.horizontal-card p {
   margin: 0;
   font-size: var(--font-size-sm);
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+}
+
+@media (max-width: 991px) {
+  .scroll-horizontal-container {
+    height: auto !important;
+    margin-top: clamp(2rem, 5vw, 5rem);
+  }
+  .sticky-wrapper {
+    position: static !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: var(--space-6) var(--space-4) !important;
+    gap: var(--space-8) !important;
+  }
+  .scroll-driven-navbar {
+    display: none !important;
+  }
+  .scroll-horizontal-header {
+    width: 100% !important;
+    text-align: left !important;
+  }
+  .scroll-horizontal-header h2 {
+    font-size: clamp(2.2rem, 6vw, 3.2rem) !important;
+  }
+  .horizontal-carousel-wrapper {
+    width: 100% !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  .horizontal-track {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--space-6) !important;
+    transform: none !important;
+  }
+  .horizontal-card {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    opacity: 1 !important;
+    transform: none !important;
+    box-shadow: 6px 6px 0 var(--color-ink) !important;
+  }
 }
 
 .landing-final-cta {
@@ -1086,3 +1255,89 @@
   font-size: var(--font-size-xs);
   font-weight: 700;
 }
+
+/* Custom Auth Page Divider & Test Login Button Styles */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: var(--space-4) 0;
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: var(--color-border);
+}
+
+.auth-divider span {
+  padding: 0 var(--space-3);
+}
+
+.auth-test-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 52px;
+  padding: 0.68rem 1.1rem;
+  border: 2px dashed var(--color-brand);
+  border-radius: var(--radius-sm);
+  background: var(--color-brand-soft);
+  color: var(--color-brand-strong);
+  font-size: var(--font-size-sm);
+  font-weight: 850;
+  cursor: pointer;
+  transition: all var(--motion-fast) var(--ease-standard);
+}
+
+.auth-test-login:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: var(--color-brand);
+  color: #fff;
+  border-style: solid;
+  border-color: var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+}
+
+.auth-test-login:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+}
+
+.auth-test-login:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Reveal on Scroll */
+.landing-feature-card.scroll-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition:
+    opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow var(--motion-medium) var(--ease-standard);
+  will-change: opacity, transform;
+}
+
+.landing-feature-card.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-feature-card.scroll-reveal.is-visible:hover {
+  box-shadow: 9px 9px 0 var(--color-ink);
+  transform: translate(-3px, -3px) rotate(-0.5deg);
+  transition:
+    transform var(--motion-medium) var(--ease-bounce),
+    box-shadow var(--motion-medium) var(--ease-standard);
+}
+
+

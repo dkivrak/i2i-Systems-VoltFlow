@@ -230,6 +230,35 @@ class HomeApiIntegrationTest {
                 .andExpect(jsonPath("$.error").value("Validation Failed"));
     }
 
+    @Test
+    void updatesApplianceNameInOwnedHome() throws Exception {
+        String created = mvc.perform(authorized(post("/api/v1/homes"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validRequest()))
+                .andReturn().getResponse().getContentAsString();
+        long homeId = objectMapper.readTree(created).get("id").asLong();
+        long applianceId = objectMapper.readTree(created).get("appliances").get(0).get("id").asLong();
+
+        mvc.perform(authorized(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/homes/{homeId}/appliances/{applianceId}", homeId, applianceId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Yeni Cihaz Adı"}
+                                """)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Yeni Cihaz Adı"))
+                .andExpect(jsonPath("$.id").value(applianceId));
+
+        mvc.perform(authorizedAs(
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/homes/{homeId}/appliances/{applianceId}", homeId, applianceId),
+                        "intruder@example.com")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Yetkisiz Ad"}
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Bu ev üzerinde işlem yapma yetkiniz yok."));
+    }
+
     private String validRequest() {
         return """
                 {"name":"Kadikoy Home","contactEmail":"Owner@Example.com","monthlyBudget":100,
