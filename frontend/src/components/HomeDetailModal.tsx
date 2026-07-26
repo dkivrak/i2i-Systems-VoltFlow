@@ -103,7 +103,54 @@ function connectionLabel(
   return 'Canlı bağlantı güncel';
 }
 
+function extractDeviceName(rawText: string): string | null {
+  if (!rawText) return null;
+  const lower = rawText.toLowerCase();
+  if (lower.includes('çamaşır')) return 'Çamaşır makinesi';
+  if (lower.includes('buzdolab')) return 'Buzdolabı';
+  if (lower.includes('çaydanlık') || lower.includes('kettle') || lower.includes('ısıtıcı')) return 'Çaydanlık';
+  if (lower.includes('fırın')) return 'Fırın';
+  if (lower.includes('televizyon') || lower.includes('tv')) return 'Televizyon';
+  if (lower.includes('klima')) return 'Klima';
+  if (lower.includes('mikrodalga')) return 'Mikrodalga';
+  if (lower.includes('lamba') || lower.includes('aydınlatma') || lower.includes('avize')) return 'Aydınlatma';
+  if (lower.includes('bilgisayar')) return 'Bilgisayar';
+  return null;
+}
+
+function cleanRecommendationText(rawText: string): string {
+  if (!rawText) return 'Cihaz: Tüketim değerlerini ve elektrik bağlantılarını düzenli olarak kontrol ediniz.';
+
+  const deviceName = extractDeviceName(rawText);
+
+  const match = rawText.match(/(?:🔍\s*)?Öneri:\s*([\s\S]+?)(?:\n\n|\nBu bildirim|$)/i);
+  let adviceText = '';
+  if (match && match[1]?.trim()) {
+    adviceText = match[1].trim();
+  } else {
+    adviceText = rawText
+      .replace(/^Merhaba,\s*/i, '')
+      .replace(/VoltFlow AI sistemi[^\n]*\n?/gi, '')
+      .replace(/📊[^\n]*\n?/g, '')
+      .replace(/⚠️[^\n]*\n?/g, '')
+      .replace(/Bu bildirim VoltFlow[^\n]*/gi, '')
+      .trim();
+  }
+
+  if (adviceText.includes('Enerji kullanımınız tanımlanan sınıra ulaşmış') || adviceText.includes('olağan dışı tüketim')) {
+    adviceText = 'Yüksek güçlü cihazlarınızı aynı hatta çalıştırmaktan kaçının ve düzenli filtre/bakım kontrollerini gerçekleştirin.';
+  }
+
+  if (deviceName) {
+    if (adviceText.startsWith(deviceName)) return adviceText;
+    return `${deviceName}: ${adviceText}`;
+  }
+
+  return adviceText || rawText;
+}
+
 export function HomeDetailModal({
+
   summary,
   onClose,
   onDeleted,
@@ -884,7 +931,7 @@ export function HomeDetailModal({
                       <div className="recommendation" key={recommendation.id}>
                         <Lightbulb aria-hidden="true" size={17} />
                         <div>
-                          <p>{recommendation.text}</p>
+                          <p>{cleanRecommendationText(recommendation.text)}</p>
                           <span>
                             {formatDateTime(recommendation.createdAt)}
                             {recommendation.fallbackUsed
