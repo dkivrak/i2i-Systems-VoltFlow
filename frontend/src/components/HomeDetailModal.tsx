@@ -1000,6 +1000,29 @@ export function HomeDetailModal({
                     .slice(eventPage * 4, (eventPage + 1) * 4)
                     .map((event) => {
                       const Icon = eventIcons[event.type];
+                      let displayTitle = event.title;
+                      let displayDesc = event.description;
+
+                      if (event.type === 'ANOMALY') {
+                        let appName = '';
+                        if (event.applianceId) {
+                          const app = home.appliances.find((a) => a.applianceId === event.applianceId);
+                          if (app) {
+                            appName = app.name.replace(/\s*\([^)]*\)/, '').replace(/\b(mutfak|salon|ofis)\b\s*/gi, '').trim();
+                          }
+                        }
+                        if (!appName && event.description.includes(':')) {
+                          const match = event.description.match(/^([^:]+):/);
+                          if (match) appName = match[1].trim();
+                        }
+                        if (appName) {
+                          displayTitle = `Olağan dışı tüketim: ${appName}`;
+                          if (!displayDesc.startsWith(appName)) {
+                            displayDesc = `${appName}: ${displayDesc}`;
+                          }
+                        }
+                      }
+
                       return (
                         <li key={`${event.type}-${event.id}`}>
                           <span
@@ -1010,13 +1033,13 @@ export function HomeDetailModal({
                           </span>
                           <div>
                             <div>
-                              <strong>{event.title}</strong>
+                              <strong>{displayTitle}</strong>
                               <time dateTime={event.occurredAt}>
                                 <Clock3 aria-hidden="true" size={12} />{' '}
                                 {formatDateTime(event.occurredAt)}
                               </time>
                             </div>
-                            <p>{event.description}</p>
+                            <p>{displayDesc}</p>
                             {event.resolvedAt && (
                               <span className="resolved-label">
                                 Çözüldü · {formatDateTime(event.resolvedAt)}

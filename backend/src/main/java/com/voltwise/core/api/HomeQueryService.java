@@ -219,9 +219,12 @@ public class HomeQueryService {
                 e.getUsagePercent(), null, null, "Maliyet %s / bütçe %s".formatted(e.getCurrentCost(), e.getMonthlyBudget()));
     }
     private HomeEventResponse map(AnomalyEventEntity e) {
+        String applianceName = e.getAppliance() != null ? cleanApplianceName(e.getAppliance().getName()) : "Cihaz";
+        long safeLimit = e.getSafePowerLimitWatts() != null ? e.getSafePowerLimitWatts().longValue() : 0;
+        String details = "%s: Güvenli limit %d W; ardışık ihlal %d".formatted(applianceName, safeLimit, e.getConsecutiveBreachCount());
         return new HomeEventResponse("ANOMALY_EVENT", e.getId(), e.getDetectedAt(), e.getStatus().name(),
-                null, e.getMeasuredPowerWatts(), e.getAppliance().getId(),
-                "Güvenli limit %s W; ardışık ihlal %d".formatted(e.getSafePowerLimitWatts(), e.getConsecutiveBreachCount()));
+                null, e.getMeasuredPowerWatts(), e.getAppliance() != null ? e.getAppliance().getId() : null,
+                details);
     }
     private HomeEventResponse map(TariffChangeEventEntity e) {
         return new HomeEventResponse("TARIFF_CHANGE_EVENT", e.getId(), e.getChangedAt(), e.getNewTariff().name(),
