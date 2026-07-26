@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ArrowUpRight, Clock3, Gauge, House, Radio, Zap } from 'lucide-react';
 import { ApplianceCharacter, type CharacterState } from '../characters';
 import type { ApplianceStatus, HomeStatus } from '../types';
@@ -101,10 +101,19 @@ export const HomeCard = memo(function HomeCard({ home, onSelect }: HomeCardProps
     return () => window.clearInterval(interval);
   }, [freshness]);
 
+  const lastSelectTime = useRef<number>(0);
+
+  const triggerSelect = useCallback(() => {
+    const now = Date.now();
+    if (now - lastSelectTime.current < 450) return;
+    lastSelectTime.current = now;
+    onSelect(home);
+  }, [home, onSelect]);
+
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      onSelect(home);
+      triggerSelect();
     }
   };
 
@@ -113,7 +122,8 @@ export const HomeCard = memo(function HomeCard({ home, onSelect }: HomeCardProps
       className={cardClasses}
       data-quota-state={quotaTone}
       data-anomaly={home.anomalyCount > 0}
-      onClick={() => onSelect(home)}
+      onClick={triggerSelect}
+      onTouchEnd={triggerSelect}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
