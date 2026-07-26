@@ -1883,3 +1883,60 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ─── Demo / Test Login Button ─────────────────────────────────────────────── */
+
+.auth-demo-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block: var(--space-2);
+  color: var(--color-ink-soft);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.auth-demo-divider::before,
+.auth-demo-divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+  content: '';
+}
+
+.button--demo-login {
+  width: 100%;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  background: var(--color-brand);
+  color: #fff;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+  box-shadow: 4px 4px 0 var(--color-ink);
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
+}
+
+.button--demo-login:hover:not(:disabled) {
+  background: var(--color-brand-strong);
+  box-shadow: 6px 6px 0 var(--color-ink);
+  transform: translateY(-2px);
+}
+
+.button--demo-login:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+  box-shadow: 2px 2px 0 var(--color-ink);
+}
+
+.button--demo-login:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+

@@ -18,7 +18,8 @@ import {
   useState,
   type FormEvent,
 } from 'react';
-import { ApiError, api, getUserFacingError } from '../api/client';
+import { ApiError, api, ensureDemoAccount, getUserFacingError } from '../api/client';
+
 import {
   ApplianceCharacter,
   CharacterGroup,
@@ -241,19 +242,12 @@ export function LoginPage({
     setLoading(true);
     setError('');
     setFieldErrors({});
-    setSuccessMessage('');
-
-    const testEmail = `test-${Date.now()}@voltflow.test`;
-    const testPassword = 'TestPassword123!';
+    setSuccessMessage('Demo hesabı hazırlanıyor, lütfen bekleyin...');
 
     try {
-      const response = await api.register(
-        testEmail,
-        testPassword,
-        controller.signal,
-      );
+      const response = await ensureDemoAccount(controller.signal);
       if (controller.signal.aborted) return;
-      setSuccessMessage('Test hesabı oluşturuldu, yönlendiriliyorsunuz...');
+      setSuccessMessage('Demo hesabına giriş yapılıyor...');
       showReaction('success');
       setLoading(false);
       successTimer.current = window.setTimeout(
@@ -268,10 +262,12 @@ export function LoginPage({
         return;
       }
       setError(getUserFacingError(requestError));
+      setSuccessMessage('');
       showReaction('error', 780);
       setLoading(false);
     }
   };
+
 
   const changeMode = (nextMode: AuthMode) => {
     if (loading || nextMode === activeMode) return;
@@ -627,7 +623,33 @@ export function LoginPage({
                 </>
               )}
             </button>
+
+            <div className="auth-demo-divider" aria-hidden="true">
+              <span>ya da</span>
+            </div>
+
+            <button
+              id="demo-login-btn"
+              className="button button--demo-login button--large"
+              type="button"
+              disabled={loading}
+              onClick={handleTestLogin}
+              aria-label="Demo hesabı ile tek tıkla giriş yapın. 6 ev ve canlı telemetri verisi içerir."
+            >
+              {loading ? (
+                <>
+                  <span className="spinner" aria-hidden="true" />
+                  Demo hazırlanıyor
+                </>
+              ) : (
+                <>
+                  <Zap aria-hidden="true" size={18} />
+                  Test Girişi
+                </>
+              )}
+            </button>
           </form>
+
 
 
 

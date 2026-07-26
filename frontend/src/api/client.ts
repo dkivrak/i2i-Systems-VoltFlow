@@ -606,6 +606,130 @@ export const api = {
   },
 };
 
+// ─── Demo Account ────────────────────────────────────────────────────────────
+
+const DEMO_EMAIL = 'demo@voltflow.test';
+const DEMO_PASSWORD = 'DemoVoltFlow2026!';
+
+const DEMO_HOMES: Array<{
+  name: string;
+  city: string;
+  appliances: Array<{ name: string; type: string; safePowerLimitWatts: number }>;
+}> = [
+  {
+    name: 'Kadıköy Dairesi',
+    city: 'İstanbul',
+    appliances: [
+      { name: 'Mutfak Buzdolabı', type: 'REFRIGERATOR', safePowerLimitWatts: 300 },
+      { name: 'Çamaşır Makinesi', type: 'WASHING_MACHINE', safePowerLimitWatts: 2500 },
+      { name: 'Klima', type: 'AIR_CONDITIONER', safePowerLimitWatts: 2000 },
+    ],
+  },
+  {
+    name: 'Beşiktaş Ofisi',
+    city: 'İstanbul',
+    appliances: [
+      { name: 'Bilgisayar', type: 'COMPUTER', safePowerLimitWatts: 600 },
+      { name: 'Ofis Lambası', type: 'LAMP', safePowerLimitWatts: 100 },
+      { name: 'Çaydanlık', type: 'KETTLE', safePowerLimitWatts: 2200 },
+    ],
+  },
+  {
+    name: 'Ankara Evi',
+    city: 'Ankara',
+    appliances: [
+      { name: 'Salon TV', type: 'TELEVISION', safePowerLimitWatts: 200 },
+      { name: 'Fırın', type: 'OVEN', safePowerLimitWatts: 3500 },
+      { name: 'Microdalga', type: 'MICROWAVE', safePowerLimitWatts: 1500 },
+    ],
+  },
+  {
+    name: 'İzmir Yazlık',
+    city: 'İzmir',
+    appliances: [
+      { name: 'Klima (Yatak Odası)', type: 'AIR_CONDITIONER', safePowerLimitWatts: 1800 },
+      { name: 'Avize', type: 'LAMP', safePowerLimitWatts: 150 },
+      { name: 'Buzdolabı', type: 'REFRIGERATOR', safePowerLimitWatts: 350 },
+    ],
+  },
+  {
+    name: 'Bursa Dairesi',
+    city: 'Bursa',
+    appliances: [
+      { name: 'Çamaşır Makinesi', type: 'WASHING_MACHINE', safePowerLimitWatts: 2200 },
+      { name: 'TV', type: 'TELEVISION', safePowerLimitWatts: 180 },
+      { name: 'Çaydanlık', type: 'KETTLE', safePowerLimitWatts: 2000 },
+    ],
+  },
+  {
+    name: 'Antalya Tatil Evi',
+    city: 'Antalya',
+    appliances: [
+      { name: 'Klima', type: 'AIR_CONDITIONER', safePowerLimitWatts: 2200 },
+      { name: 'Bilgisayar', type: 'COMPUTER', safePowerLimitWatts: 500 },
+      { name: 'Fırın', type: 'OVEN', safePowerLimitWatts: 3000 },
+    ],
+  },
+];
+
+/**
+ * Ensures the fixed demo account exists and is authenticated.
+ * If the account doesn't exist it registers it; if it already exists it logs in.
+ * After authentication, seeds exactly 6 homes via the real backend API so
+ * live telemetry flows through the simulator without any mocked data.
+ *
+ * IMPORTANT: This function does NOT touch the normal login/register flow.
+ * All state changes happen through the same setStoredToken path used by login.
+ */
+export async function ensureDemoAccount(signal?: AbortSignal): Promise<AuthResponse> {
+  let authResponse: AuthResponse;
+
+  try {
+    // Try to register first
+    authResponse = await api.register(DEMO_EMAIL, DEMO_PASSWORD, signal);
+    // New account: seed 6 homes
+    const seedSignal = createLinkedSignal(signal);
+    try {
+      for (const home of DEMO_HOMES) {
+        if (signal?.aborted) break;
+        await request<unknown>(
+          '/homes',
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              name: home.name,
+              city: home.city,
+              contactEmail: DEMO_EMAIL,
+              monthlyBudget: 1000.0,
+              normalTariffPerKwh: 2.5,
+              penaltyMultiplier: 1.5,
+              appliances: home.appliances,
+            }),
+          },
+          undefined,
+          seedSignal,
+        );
+      }
+    } finally {
+      seedSignal.dispose();
+    }
+  } catch (registerError) {
+    // If the account already exists (409 Conflict or similar), log in instead
+    if (
+      registerError instanceof ApiError &&
+      (registerError.status === 409 || registerError.status === 400)
+    ) {
+      authResponse = await api.login(DEMO_EMAIL, DEMO_PASSWORD, signal);
+    } else {
+      throw registerError;
+    }
+  }
+
+  return authResponse;
+}
+
+// ─── End Demo Account ─────────────────────────────────────────────────────────
+
 export function getUserFacingError(error: unknown): string {
   if (error instanceof ApiError) return error.message;
   return 'Beklenmeyen bir sorun oluştu. Lütfen yeniden deneyin.';
