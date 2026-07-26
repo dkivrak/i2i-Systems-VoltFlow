@@ -118,7 +118,13 @@ export const HomeCard = memo(function HomeCard({ home, onSelect }: HomeCardProps
       tabIndex={0}
       role="button"
       aria-label={`${home.homeName} detaylarını göster`}
-      style={{ cursor: 'pointer' }}
+      style={{
+        cursor: 'pointer',
+        touchAction: 'manipulation',
+        WebkitTapHighlightColor: 'transparent',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+      }}
     >
       <div className="home-card__accent" aria-hidden="true" />
       <div className="home-card__header">
