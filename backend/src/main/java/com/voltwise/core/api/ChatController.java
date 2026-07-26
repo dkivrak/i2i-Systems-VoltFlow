@@ -143,20 +143,71 @@ public class ChatController {
 
     private ChatResponse generateSmartFallback(String userMsg, String email, String liveContext) {
         if (!StringUtils.hasText(liveContext) || liveContext.contains("bulunmuyor")) {
-            return new ChatResponse("Merhaba! VoltFlow hesabınızda henüz canlı ev bulunmuyor. Yeni bir ev ekleyerek anlık güç, bütçe ve cihaz durumlarınızı takip edebilirsiniz.");
+            return new ChatResponse("Merhaba! VoltFlow hesabınızda henüz canlı ev bulunmuyor. Yeni bir ev ekleyerek anlık güç, bütçe ve cihaz durumlarınızı buradan takip edebilirsiniz.");
         }
 
-        String lower = userMsg.toLowerCase(java.util.Locale.ROOT);
-        String prefix = "VoltFlow AI Canlı Ev Analizi:\n\n";
-        if (lower.contains("maliyet") || lower.contains("tl") || lower.contains("bütçe") || lower.contains("fatura") || lower.contains("para") || lower.contains("çanakkale")) {
-            prefix = "Canlı maliyet ve bütçe verileriniz aşağıdadır:\n\n";
-        } else if (lower.contains("cihaz") || lower.contains("sağlık") || lower.contains("anomali") || lower.contains("durum")) {
-            prefix = "Canlı cihaz ve sağlık durumlarınız aşağıdadır:\n\n";
-        } else if (lower.contains("güç") || lower.contains("kw") || lower.contains("watt") || lower.contains("tüketim")) {
-            prefix = "Canlı güç ve tüketim verileriniz aşağıdadır:\n\n";
+        List<Long> homeIds = homeRepository.findIdsByOwnerEmail(email);
+        Set<Long> ownedSet = Set.copyOf(homeIds);
+        List<HomeLiveState> userStates = liveStateStore.getAll().stream()
+                .filter(s -> s != null && s.homeId() != null && ownedSet.contains(s.homeId()))
+                .toList();
+
+        // Filter userStates if userMsg mentions a specific home name
+        String lowerMsg = userMsg != null ? userMsg.toLowerCase(java.util.Locale.ROOT) : "";
+        List<HomeLiveState> targetStates = userStates;
+        if (StringUtils.hasText(lowerMsg)) {
+            List<HomeLiveState> matched = userStates.stream()
+                    .filter(s -> s.homeName() != null && lowerMsg.contains(s.homeName().toLowerCase(java.util.Locale.ROOT)))
+                    .toList();
+            if (!matched.isEmpty()) {
+                targetStates = matched;
+            }
         }
 
-        return new ChatResponse(cleanMarkdown(prefix + liveContext.strip()));
+        if (targetStates.isEmpty()) {
+            targetStates = userStates;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        if (targetStates.size() == 1) {
+            HomeLiveState s = targetStates.get(0);
+            BigDecimal kw = (s.currentPowerWatts() != null ? s.currentPowerWatts() : BigDecimal.ZERO)
+                    .divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
+            BigDecimal cost = s.currentCost() != null ? s.currentCost() : BigDecimal.ZERO;
+            BigDecimal budget = s.monthlyBudget() != null ? s.monthlyBudget() : BigDecimal.ZERO;
+            BigDecimal percent = s.budgetUsagePercent() != null ? s.budgetUsagePercent() : BigDecimal.ZERO;
+            String name = s.homeName() != null ? s.homeName() : "Evinizin";
+
+            sb.append(name).append(" evinizin güncel enerji durumu:\n\n");
+            sb.append("• Güncel Tüketim Maliyeti: ₺").append(cost.toPlainString()).append("\n");
+            sb.append("• Anlık Toplam Güç: ").append(kw.toPlainString()).append(" kW (").append(s.currentPowerWatts() != null ? s.currentPowerWatts().toPlainString() : "0").append(" Watt)\n");
+            sb.append("• Aylık Bütçe Kullanımı: %").append(percent.toPlainString()).append(" (₺").append(budget.toPlainString()).append(" bütçeden)\n");
+
+            if (s.appliances() != null && !s.appliances().isEmpty()) {
+                long anomalyCount = s.appliances().values().stream()
+                        .filter(a -> a != null && a.healthStatus() == ApplianceHealthStatus.ANOMALOUS)
+                        .count();
+                if (anomalyCount > 0) {
+                    sb.append("• Cihaz Sağlığı: ⚠️ ").append(anomalyCount).append(" cihazda yüksek güç anomalisi algılandı!\n");
+                } else {
+                    sb.append("• Cihaz Sağlığı: 🟢 ").append(s.appliances().size()).append(" cihazınız aktif ve sorunsuz çalışıyor.\n");
+                }
+            } else {
+                sb.append("• Cihazlar: Henüz bağlı cihaz yok.\n");
+            }
+        } else {
+            sb.append("Kayıtlı evlerinizin canlı durumları:\n\n");
+            for (HomeLiveState s : targetStates) {
+                if (s == null) continue;
+                BigDecimal kw = (s.currentPowerWatts() != null ? s.currentPowerWatts() : BigDecimal.ZERO)
+                        .divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
+                BigDecimal cost = s.currentCost() != null ? s.currentCost() : BigDecimal.ZERO;
+                sb.append("🏠 ").append(s.homeName()).append(": Anlık ").append(kw.toPlainString())
+                        .append(" kW güç | Bu Dönem Maliyet: ₺").append(cost.toPlainString()).append("\n");
+            }
+        }
+
+        return new ChatResponse(cleanMarkdown(sb.toString()));
     }
 
     private static String cleanMarkdown(String input) {
