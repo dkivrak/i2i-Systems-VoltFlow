@@ -94,7 +94,7 @@ export function Dialog({
   };
 
   return createPortal(
-    <div className="dialog-backdrop" onMouseDown={closeOnBackdrop}>
+    <div className="dialog-backdrop" onClick={closeOnBackdrop}>
       <div
         className={`dialog${wide ? ' dialog--wide' : ''}`}
         role="dialog"

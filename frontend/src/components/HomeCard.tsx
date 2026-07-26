@@ -254,7 +254,10 @@ export const HomeCard = memo(function HomeCard({ home, onSelect }: HomeCardProps
           className="home-card__details"
           type="button"
           aria-label={`${home.homeName} detaylarını aç`}
-          onClick={() => onSelect(home)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onSelect(home);
+          }}
         >
           Detaylar <ArrowUpRight aria-hidden="true" size={16} />
         </button>

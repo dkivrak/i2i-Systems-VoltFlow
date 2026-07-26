@@ -773,3 +773,100 @@
   }
 }
 
+/* ── Mobile Touch & Dashboard Modal Responsive Enhancements ── */
+@media (max-width: 991px) {
+  /* Ev Kartları Dokunma Duyarlılığı */
+  .home-card {
+    min-height: auto !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    cursor: pointer !important;
+  }
+
+  .home-card__details {
+    width: 100% !important;
+    min-height: 48px !important;
+    touch-action: manipulation !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    border-radius: var(--radius-sm) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: var(--space-2) !important;
+  }
+
+  /* Modal ve Pop-up Dokunmatik ve Mobil Uyum Kuralları */
+  .dialog-backdrop {
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    z-index: 99999 !important;
+    background: rgba(15, 12, 29, 0.75) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
+
+  .dialog,
+  .dialog--wide {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh !important;
+    border-radius: 24px 24px 0 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 1.25rem 1rem 2.5rem !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border-bottom: 0 !important;
+  }
+
+  .dialog__header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+    background: var(--color-surface) !important;
+    padding-bottom: 0.75rem !important;
+    margin-bottom: 1rem !important;
+    border-bottom: 1px solid var(--color-border) !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+  }
+
+  .dialog__header .icon-button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    background: var(--color-canvas) !important;
+    border: 1px solid var(--color-border) !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .detail-tabs {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 1.25rem !important;
+    scrollbar-width: none !important;
+  }
+
+  .detail-tab {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    min-height: 44px !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+}
+
+
