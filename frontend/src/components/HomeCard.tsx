@@ -101,19 +101,10 @@ export const HomeCard = memo(function HomeCard({ home, onSelect }: HomeCardProps
     return () => window.clearInterval(interval);
   }, [freshness]);
 
-  const lastSelectTime = useRef<number>(0);
-
-  const triggerSelect = useCallback(() => {
-    const now = Date.now();
-    if (now - lastSelectTime.current < 450) return;
-    lastSelectTime.current = now;
-    onSelect(home);
-  }, [home, onSelect]);
-
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      triggerSelect();
+      onSelect(home);
     }
   };
 
@@ -122,8 +113,7 @@ export const HomeCard = memo(function HomeCard({ home, onSelect }: HomeCardProps
       className={cardClasses}
       data-quota-state={quotaTone}
       data-anomaly={home.anomalyCount > 0}
-      onClick={triggerSelect}
-      onTouchEnd={triggerSelect}
+      onClick={() => onSelect(home)}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"

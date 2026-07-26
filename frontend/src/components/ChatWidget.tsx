@@ -101,23 +101,13 @@ export function ChatWidget() {
     }
   };
 
-  const lastToggleTime = useRef<number>(0);
-
-  const triggerToggle = () => {
-    const now = Date.now();
-    if (now - lastToggleTime.current < 450) return;
-    lastToggleTime.current = now;
-    setIsOpen((prev) => !prev);
-  };
-
   return (
     <>
       {/* Floating Toggle Button */}
       <button
         type="button"
         className="chat-widget-toggle"
-        onClick={triggerToggle}
-        onTouchEnd={triggerToggle}
+        onClick={() => setIsOpen((prev) => !prev)}
         aria-label="VoltFlow AI Asistanını Aç/Kapat"
         style={{
           position: 'fixed',

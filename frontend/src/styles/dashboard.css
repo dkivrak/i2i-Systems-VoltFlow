@@ -1241,9 +1241,11 @@
   width: min(390px, calc(100vw - 2rem));
   flex-direction: column;
   gap: var(--space-2);
+  pointer-events: none;
 }
 
 .toast {
+  pointer-events: auto;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: start;

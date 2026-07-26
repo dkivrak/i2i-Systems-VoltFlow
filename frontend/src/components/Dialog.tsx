@@ -89,7 +89,14 @@ export function Dialog({
     };
   }, []);
 
+  const mountTimeRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    mountTimeRef.current = Date.now();
+  }, []);
+
   const closeOnBackdrop = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (Date.now() - mountTimeRef.current < 350) return;
     if (event.target === event.currentTarget && !closeDisabled) onClose();
   };
 
