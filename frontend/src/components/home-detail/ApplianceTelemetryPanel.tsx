@@ -1,9 +1,9 @@
 import { memo, useState, useEffect } from 'react';
 import {
   AlertTriangle,
+  Banknote,
   Check,
   CheckCircle2,
-  CircleDollarSign,
   Clock3,
   Gauge,
   Pencil,
@@ -222,7 +222,7 @@ export const ApplianceTelemetryPanel = memo(function ApplianceTelemetryPanel({
         </div>
         <div className="telemetry-metric">
           <dt>
-            <CircleDollarSign aria-hidden="true" size={14} /> Tahmini maliyet
+            <Banknote aria-hidden="true" size={14} /> Tahmini maliyet
           </dt>
           <dd>{formatMoney(appliance.accumulatedCost)}</dd>
         </div>

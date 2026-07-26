@@ -15,9 +15,9 @@ export function CreatedByCapsule({
   const [isHovered, setIsHovered] = useState(false);
 
   const members = [
-    { name: 'Zeliha Ezer', link: zelihaLink },
     { name: 'Devrim Mert Kıvrak', link: devrimLink },
     { name: 'Onur Tezel', link: onurLink },
+    { name: 'Zeliha Ezer', link: zelihaLink },
   ];
 
   return (
@@ -25,9 +25,6 @@ export function CreatedByCapsule({
       className={`created-by-capsule ${isHovered ? 'created-by-capsule--expanded' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onFocus={() => setIsHovered(true)}
-      onBlur={() => setIsHovered(false)}
-      tabIndex={0}
       role="region"
       aria-label="Created by overDOZ"
     >
@@ -50,7 +47,6 @@ export function CreatedByCapsule({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="created-by-capsule__link"
-                title={`${member.name} - LinkedIn Profilini Gör`}
               >
                 <Linkedin size={14} className="created-by-capsule__icon" />
                 <span className="created-by-capsule__name">{member.name}</span>

@@ -29,6 +29,14 @@ public final class AuthDtos {
 
     public record AuthUserResponse(Long id, String email) {}
 
+    public record ChangePasswordRequest(
+            @NotBlank(message = "Mevcut şifre boş bırakılamaz")
+            String currentPassword,
+            @NotBlank(message = "Yeni şifre boş bırakılamaz")
+            @Size(min = 8, max = 72, message = "Yeni şifre 8 ile 72 karakter arasında olmalıdır")
+            String newPassword
+    ) {}
+
     public record AuthResponse(
             String token,
             AuthUserResponse user,

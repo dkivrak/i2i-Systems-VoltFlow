@@ -1,9 +1,11 @@
 import {
   Activity,
   AlertTriangle,
+  Banknote,
   BellRing,
   CheckCircle2,
-  CircleDollarSign,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   Gauge,
   House,
@@ -85,7 +87,8 @@ type DeleteTarget =
 const eventIcons = {
   QUOTA: Gauge,
   ANOMALY: AlertTriangle,
-  TARIFF: CircleDollarSign,
+  TARIFF: Banknote,
+  SYSTEM: ShieldCheck,
   UNKNOWN: BellRing,
 } as const;
 
@@ -196,6 +199,8 @@ export function HomeDetailModal({
   }, [analyticsVersion, homeId]);
 
   const [activeTab, setActiveTab] = useState<HomeDetailTab>('overview');
+  const [recommendationPage, setRecommendationPage] = useState(0);
+  const [eventPage, setEventPage] = useState(0);
   const [selectedApplianceId, setSelectedApplianceId] = useState<number | null>(
     summary.appliances[0]?.applianceId ?? null,
   );
@@ -543,7 +548,7 @@ export function HomeDetailModal({
               </div>
               <div>
                 <span>
-                  <CircleDollarSign aria-hidden="true" size={15} /> Güncel
+                  <Banknote aria-hidden="true" size={15} /> Güncel
                   maliyet
                 </span>
                 <strong>{formatMoney(home.currentCost)}</strong>
@@ -828,14 +833,41 @@ export function HomeDetailModal({
 
           <section className="insights-grid" aria-label="Öneriler ve olaylar">
             <article className="recommendations-panel">
-              <header>
-                <span aria-hidden="true">
-                  <Sparkles size={18} />
-                </span>
-                <div>
-                  <p className="eyebrow">VoltFlow önerisi</p>
-                  <h3>Akıllı tasarruf notları</h3>
+              <header className="panel-header-with-pagination">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                  <span aria-hidden="true">
+                    <Sparkles size={18} />
+                  </span>
+                  <div>
+                    <p className="eyebrow">VoltFlow önerisi</p>
+                    <h3>Akıllı tasarruf notları</h3>
+                  </div>
                 </div>
+                {analytics.recommendations.length > 4 && (
+                  <div className="panel-pagination-controls">
+                    <button
+                      type="button"
+                      className="icon-button icon-button--small"
+                      disabled={recommendationPage === 0}
+                      onClick={() => setRecommendationPage((p) => Math.max(p - 1, 0))}
+                      title="Önceki öneriler"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span className="pagination-indicator">
+                      {recommendationPage + 1} / {Math.ceil(analytics.recommendations.length / 4)}
+                    </span>
+                    <button
+                      type="button"
+                      className="icon-button icon-button--small"
+                      disabled={(recommendationPage + 1) * 4 >= analytics.recommendations.length}
+                      onClick={() => setRecommendationPage((p) => p + 1)}
+                      title="Sonraki öneriler"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
               </header>
               {analytics.isLoading ? (
                 <InlineSpinner label="Öneriler yükleniyor" />
@@ -846,20 +878,22 @@ export function HomeDetailModal({
                 </div>
               ) : analytics.recommendations.length ? (
                 <div className="recommendation-list">
-                  {analytics.recommendations.slice(0, 3).map((recommendation) => (
-                    <div className="recommendation" key={recommendation.id}>
-                      <Lightbulb aria-hidden="true" size={17} />
-                      <div>
-                        <p>{recommendation.text}</p>
-                        <span>
-                          {formatDateTime(recommendation.createdAt)}
-                          {recommendation.fallbackUsed
-                            ? ' · Güvenli öneri'
-                            : ' · AI önerisi'}
-                        </span>
+                  {analytics.recommendations
+                    .slice(recommendationPage * 4, (recommendationPage + 1) * 4)
+                    .map((recommendation) => (
+                      <div className="recommendation" key={recommendation.id}>
+                        <Lightbulb aria-hidden="true" size={17} />
+                        <div>
+                          <p>{recommendation.text}</p>
+                          <span>
+                            {formatDateTime(recommendation.createdAt)}
+                            {recommendation.fallbackUsed
+                              ? ' · Güvenli öneri'
+                              : ' · AI önerisi'}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               ) : (
                 <p className="panel-empty-copy">
@@ -870,14 +904,41 @@ export function HomeDetailModal({
             </article>
 
             <article className="events-panel">
-              <header>
-                <span aria-hidden="true">
-                  <Activity size={18} />
-                </span>
-                <div>
-                  <p className="eyebrow">Denetim kaydı</p>
-                  <h3>Son olaylar</h3>
+              <header className="panel-header-with-pagination">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                  <span aria-hidden="true">
+                    <Activity size={18} />
+                  </span>
+                  <div>
+                    <p className="eyebrow">Denetim kaydı</p>
+                    <h3>Son olaylar</h3>
+                  </div>
                 </div>
+                {analytics.events.length > 4 && (
+                  <div className="panel-pagination-controls">
+                    <button
+                      type="button"
+                      className="icon-button icon-button--small"
+                      disabled={eventPage === 0}
+                      onClick={() => setEventPage((p) => Math.max(p - 1, 0))}
+                      title="Önceki olaylar"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span className="pagination-indicator">
+                      {eventPage + 1} / {Math.ceil(analytics.events.length / 4)}
+                    </span>
+                    <button
+                      type="button"
+                      className="icon-button icon-button--small"
+                      disabled={(eventPage + 1) * 4 >= analytics.events.length}
+                      onClick={() => setEventPage((p) => p + 1)}
+                      title="Sonraki olaylar"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
               </header>
               {analytics.isLoading ? (
                 <InlineSpinner label="Olaylar yükleniyor" />
@@ -888,34 +949,36 @@ export function HomeDetailModal({
                 </div>
               ) : analytics.events.length ? (
                 <ol className="event-list">
-                  {analytics.events.slice(0, 6).map((event) => {
-                    const Icon = eventIcons[event.type];
-                    return (
-                      <li key={`${event.type}-${event.id}`}>
-                        <span
-                          className={`event-list__icon event-list__icon--${event.type.toLowerCase()}`}
-                          aria-hidden="true"
-                        >
-                          <Icon size={15} />
-                        </span>
-                        <div>
+                  {analytics.events
+                    .slice(eventPage * 4, (eventPage + 1) * 4)
+                    .map((event) => {
+                      const Icon = eventIcons[event.type];
+                      return (
+                        <li key={`${event.type}-${event.id}`}>
+                          <span
+                            className={`event-list__icon event-list__icon--${event.type.toLowerCase()}`}
+                            aria-hidden="true"
+                          >
+                            <Icon size={15} />
+                          </span>
                           <div>
-                            <strong>{event.title}</strong>
-                            <time dateTime={event.occurredAt}>
-                              <Clock3 aria-hidden="true" size={12} />{' '}
-                              {formatDateTime(event.occurredAt)}
-                            </time>
+                            <div>
+                              <strong>{event.title}</strong>
+                              <time dateTime={event.occurredAt}>
+                                <Clock3 aria-hidden="true" size={12} />{' '}
+                                {formatDateTime(event.occurredAt)}
+                              </time>
+                            </div>
+                            <p>{event.description}</p>
+                            {event.resolvedAt && (
+                              <span className="resolved-label">
+                                Çözüldü · {formatDateTime(event.resolvedAt)}
+                              </span>
+                            )}
                           </div>
-                          <p>{event.description}</p>
-                          {event.resolvedAt && (
-                            <span className="resolved-label">
-                              Çözüldü · {formatDateTime(event.resolvedAt)}
-                            </span>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
+                        </li>
+                      );
+                    })}
                 </ol>
               ) : (
                 <p className="panel-empty-copy">

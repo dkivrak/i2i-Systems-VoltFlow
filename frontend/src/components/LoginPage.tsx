@@ -20,6 +20,8 @@ import {
 } from 'react';
 import { ApiError, api, getUserFacingError } from '../api/client';
 import {
+  ApplianceCharacter,
+  CharacterGroup,
   type CharacterState,
 } from '../characters';
 
@@ -340,8 +342,40 @@ export function LoginPage({
           </p>
         </div>
 
-
-
+        <CharacterGroup
+          className="auth-character-stage"
+          gazeEnabled
+          trackViewport
+          gazeLimit={8}
+          gazeStrength={0.85}
+          orbitAnimation={false}
+          aria-hidden="true"
+        >
+          <div className="auth-character auth-character--fridge">
+            <ApplianceCharacter
+              type="REFRIGERATOR"
+              state={characterState}
+            />
+          </div>
+          <div className="auth-character auth-character--washer">
+            <ApplianceCharacter
+              type="WASHING_MACHINE"
+              state={characterState === 'privacy' ? 'privacy' : (activeMode === 'SIGNUP' ? 'active' : 'idle')}
+            />
+          </div>
+          <div className="auth-character auth-character--tv">
+            <ApplianceCharacter
+              type="TELEVISION"
+              state={characterState === 'privacy' ? 'privacy' : 'observing'}
+            />
+          </div>
+          <div className="auth-character auth-character--kettle">
+            <ApplianceCharacter
+              type="KETTLE"
+              state={characterState === 'privacy' ? 'privacy' : 'happy'}
+            />
+          </div>
+        </CharacterGroup>
       </section>
 
       <section className="auth-panel">
@@ -595,27 +629,7 @@ export function LoginPage({
             </button>
           </form>
 
-          <div className="auth-divider">
-            <span>veya</span>
-          </div>
-          <button
-            className="auth-test-login"
-            type="button"
-            onClick={handleTestLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="spinner" aria-hidden="true" />
-                Test hesabı oluşturuluyor
-              </>
-            ) : (
-              <>
-                <Zap aria-hidden="true" size={18} />
-                Test Girişi
-              </>
-            )}
-          </button>
+
 
           <div className="auth-mode-prompt">
             <span>

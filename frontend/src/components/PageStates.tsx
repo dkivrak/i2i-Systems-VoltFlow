@@ -67,7 +67,7 @@ export function EmptyState({ onRegister }: EmptyStateProps) {
     <div className="state-panel state-panel--empty">
       <div className="state-panel__character-group" aria-hidden="true">
         <span className="state-panel__house"><HousePlus size={31} /></span>
-        <ApplianceCharacter type="REFRIGERATOR" state="observing" size="md" />
+        <ApplianceCharacter type="REFRIGERATOR" state="sleeping" size="md" />
         <ApplianceCharacter type="LAMP" state="sleeping" size="sm" />
       </div>
       <div>

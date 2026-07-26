@@ -4,16 +4,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Service;
+
+import java.util.Properties;
 
 @Service
 public class EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
-    private final JavaMailSender mailSender;
+    private final JavaMailSenderImpl mailSender;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public EmailService() {
+        this.mailSender = new JavaMailSenderImpl();
+        this.mailSender.setHost("sandbox.smtp.mailtrap.io");
+        this.mailSender.setPort(2525);
+        this.mailSender.setUsername("72503ef112ca2a");
+        this.mailSender.setPassword("0de7818d58ec0f");
+
+        Properties props = this.mailSender.getJavaMailProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.starttls.required", "false");
+        props.put("mail.smtp.ssl.trust", "sandbox.smtp.mailtrap.io");
     }
 
     /**

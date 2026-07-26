@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Activity, CircleDollarSign, HousePlug, TriangleAlert } from 'lucide-react';
+import { Activity, Banknote, HousePlug, TriangleAlert } from 'lucide-react';
 import { summarizeHomeAttention } from '../presentation/homePresentation';
 import type { HomeStatus } from '../types';
 import { formatMoney, formatPower } from '../utils/format';
@@ -37,7 +37,7 @@ export const OverviewStats = memo(function OverviewStats({
       value: formatMoney(totalCost),
       note: `${homes.length} evin toplamı`,
       status: budgetRiskHomes ? `${budgetRiskHomes} bütçe uyarısı` : 'Bütçe dengede',
-      icon: CircleDollarSign,
+      icon: Banknote,
       tone: budgetRiskHomes ? 'orange' : 'green',
     },
     {

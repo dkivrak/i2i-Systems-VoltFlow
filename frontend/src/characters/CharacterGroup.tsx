@@ -153,17 +153,18 @@ const CharacterGroupComponent = forwardRef<HTMLDivElement, CharacterGroupProps>(
         
         const angle = Math.atan2(dy, dx);
         
-        // Göz bebeğinin kayabileceği max px değeri (eski resolvedLimit = 4, maxOffset ~ 3px)
-        const maxOffset = resolvedLimit * 1.5; 
-        const dist = Math.min(Math.hypot(dx, dy) * resolvedStrength * 0.02, maxOffset);
+        // Göz beyazının yarıçapına göre güvenli maksimum kayma sınırı (göz yuvasından çıkmaması için)
+        const eyeRadius = Math.min(eyeRect.width, eyeRect.height) / 2;
+        const maxOffset = Math.min(eyeRadius * 0.42, resolvedLimit * 0.7); 
+        const dist = Math.min(Math.hypot(dx, dy) * resolvedStrength * 0.015, maxOffset);
         
         const offsetX = Math.cos(angle) * dist;
         const offsetY = Math.sin(angle) * dist;
         
         const pupil = eye.querySelector<HTMLElement>('.vw-character__pupil');
         if (pupil) {
-          pupil.style.setProperty('--vw-character-gaze-x', `${offsetX}px`);
-          pupil.style.setProperty('--vw-character-gaze-y', `${offsetY}px`);
+          pupil.style.setProperty('--vw-character-gaze-x', `${offsetX.toFixed(2)}px`);
+          pupil.style.setProperty('--vw-character-gaze-y', `${offsetY.toFixed(2)}px`);
         }
       });
     }, [
@@ -309,6 +310,40 @@ const CharacterGroupComponent = forwardRef<HTMLDivElement, CharacterGroupProps>(
             p.c.el.style.transform = `scaleY(${squash})`;
             p.c.el.style.transformOrigin = 'bottom center';
           });
+
+          // SVG dinamik çizgi güncellemesi (Eğer SVG bağlantıları varsa 0..100 yüzdelik alana dönüştür)
+          const svgLines = root.querySelectorAll<SVGLineElement>('.character-scene__connections line');
+          if (svgLines.length > 0 && positions.length > 0) {
+            const pctPositions = positions.map((p) => ({
+              x: (p.x / bounds.width) * 100,
+              y: (p.y / bounds.height) * 100,
+            }));
+
+            // Merkez noktası (50, 50)
+            const cxPct = 50;
+            const cyPct = 50;
+
+            // Merkeze giden çizgiler (ilk N çizgi, N = karakter sayısı)
+            pctPositions.forEach((pos, idx) => {
+              const centerLine = root.querySelector<SVGLineElement>(`.scene-connect-line-${idx}`);
+              if (centerLine) {
+                centerLine.setAttribute('x1', `${cxPct}`);
+                centerLine.setAttribute('y1', `${cyPct}`);
+                centerLine.setAttribute('x2', `${pos.x.toFixed(2)}`);
+                centerLine.setAttribute('y2', `${pos.y.toFixed(2)}`);
+              }
+
+              // Komşu karakterler arasındaki ağ çizgisi
+              const nextPos = pctPositions[(idx + 1) % pctPositions.length];
+              const meshLine = root.querySelector<SVGLineElement>(`.scene-connect-mesh-${idx}`);
+              if (meshLine) {
+                meshLine.setAttribute('x1', `${pos.x.toFixed(2)}`);
+                meshLine.setAttribute('y1', `${pos.y.toFixed(2)}`);
+                meshLine.setAttribute('x2', `${nextPos.x.toFixed(2)}`);
+                meshLine.setAttribute('y2', `${nextPos.y.toFixed(2)}`);
+              }
+            });
+          }
         }
         orbitFrameRef.current = requestAnimationFrame(tickOrbit);
       };

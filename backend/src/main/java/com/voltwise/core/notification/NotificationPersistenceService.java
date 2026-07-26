@@ -50,12 +50,27 @@ public class NotificationPersistenceService {
         notification.setHome(home);
         notification.setRecommendation(recommendation);
         notification.setChannel(NotificationChannel.EMAIL);
-        notification.setRecipient(home.getContactEmail());
+        String recipient = (home.getOwnerEmail() != null && !home.getOwnerEmail().isBlank())
+                ? home.getOwnerEmail()
+                : home.getContactEmail();
+        notification.setRecipient(recipient);
         notification.setSubject(subject);
         notification.setStatus(NotificationStatus.PENDING);
         notification.setCreatedAt(Instant.now());
         notification = notifications.save(notification);
-        return Optional.of(new PendingDelivery(notification.getId(), home.getContactEmail(), subject, generated.text()));
+
+        // Auto-prune old notifications beyond 25 per recipient to prevent infinite DB growth
+        try {
+            var existing = notifications.findByRecipientIgnoreCaseOrderByIdDesc(recipient);
+            if (existing.size() > 25) {
+                var toRemove = existing.subList(25, existing.size());
+                notifications.deleteAll(toRemove);
+            }
+        } catch (Exception ignored) {
+            // Keep notification flow uninterrupted
+        }
+
+        return Optional.of(new PendingDelivery(notification.getId(), recipient, subject, generated.text()));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -72,8 +87,7 @@ public class NotificationPersistenceService {
         NotificationEntity notification = notifications.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found: " + notificationId));
         notification.setStatus(NotificationStatus.FAILED);
-        String safe = reason == null ? "Unknown delivery failure" : reason;
-        notification.setFailureReason(safe.length() > 1000 ? safe.substring(0, 1000) : safe);
+        notification.setFailureReason(reason);
     }
 
     public record PendingDelivery(Long notificationId, String recipient, String subject, String body) {}

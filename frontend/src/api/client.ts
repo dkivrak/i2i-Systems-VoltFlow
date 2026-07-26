@@ -38,6 +38,7 @@ export function setStoredToken(token: string | null): void {
     localStorage.setItem(TOKEN_KEY, token);
   } else {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem('voltflow_user_email');
   }
 }
 
@@ -281,6 +282,9 @@ function normalizeAuthResponse(payload: unknown): AuthResponse {
     message: safeServerMessage(asString(body.message)) || 'İşlem başarılı.',
   };
   setStoredToken(token);
+  if (email) {
+    localStorage.setItem('voltflow_user_email', email.trim().toLowerCase());
+  }
   return response;
 }
 

@@ -34,4 +34,19 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/profile")
+    @Operation(summary = "Get current logged in user profile")
+    public ResponseEntity<AuthDtos.AuthUserResponse> getProfile() {
+        String email = UserContext.getCurrentUserEmail();
+        return ResponseEntity.ok(authService.getProfile(email));
+    }
+
+    @PostMapping("/change-password")
+    @Operation(summary = "Change password for logged in user")
+    public ResponseEntity<java.util.Map<String, String>> changePassword(@Valid @RequestBody AuthDtos.ChangePasswordRequest request) {
+        String email = UserContext.getCurrentUserEmail();
+        authService.changePassword(email, request);
+        return ResponseEntity.ok(java.util.Map.of("message", "Şifreniz başarıyla değiştirildi."));
+    }
 }
