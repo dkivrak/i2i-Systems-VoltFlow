@@ -124,18 +124,31 @@
 .live-indicator__dot {
   position: relative;
   display: inline-block;
-  width: 7px;
-  height: 7px;
-  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  box-sizing: border-box;
   border: 1px solid var(--color-ink);
   border-radius: 50%;
   background: var(--color-success);
+  color: var(--color-success);
 }
 
-.live-indicator.is-refreshing:not(.is-disconnected) .live-indicator__dot {
+.live-indicator.is-refreshing:not(.is-disconnected) .live-indicator__dot,
+.live-indicator__dot.is-refreshing {
   background: var(--color-sky);
+  color: var(--color-sky);
 }
 
+.live-indicator.is-disconnected .live-indicator__dot {
+  background: var(--color-critical);
+  color: var(--color-critical);
+}
+
+.live-indicator.is-stale:not(.is-disconnected) .live-indicator__dot {
+  background: var(--color-warning);
+  color: var(--color-warning);
+}
 .live-indicator__signal .live-indicator__dot {
   position: absolute;
   right: 2px;
@@ -144,23 +157,14 @@
 
 .live-indicator__dot::after {
   position: absolute;
-  inset: -5px;
-  border: 1px solid currentColor;
+  inset: -1px;
+  border: 1.5px solid currentColor;
   border-radius: inherit;
   content: '';
-  animation: signal-pulse 1.8s ease-out infinite;
-}
-
-.live-indicator__dot.is-refreshing {
-  background: var(--color-sky);
-}
-
-.live-indicator.is-disconnected .live-indicator__dot {
-  background: var(--color-critical);
-}
-
-.live-indicator.is-stale:not(.is-disconnected) .live-indicator__dot {
-  background: var(--color-warning);
+  pointer-events: none;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  animation: signal-pulse 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
 
 .header-logout-button {
