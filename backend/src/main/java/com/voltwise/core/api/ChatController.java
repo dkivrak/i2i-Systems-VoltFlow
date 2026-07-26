@@ -117,9 +117,9 @@ public class ChatController {
                     )
             );
 
-            JsonNode response = restClient.post()
-                    .uri("/v1beta/models/{model}:generateContent?key={apiKey}", model, apiKey)
-                    .header("x-goog-api-key", apiKey)
+            String targetUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+            JsonNode response = RestClient.create().post()
+                    .uri(java.net.URI.create(targetUrl))
                     .header("Content-Type", "application/json")
                     .body(body)
                     .retrieve()
@@ -205,6 +205,36 @@ public class ChatController {
                 if (s != null && s.appliances() != null) totalApp += s.appliances().size();
             }
             return new ChatResponse("Kayıtlı evlerinizde bağlı ve anlık izlenen toplam " + totalApp + " adet akıllı cihaz bulunmaktadır.");
+        }
+
+        // 4. En çok yakan cihaz / En yüksek tüketim soruları
+        if (lowerMsg.contains("en çok") || lowerMsg.contains("en fazla") || lowerMsg.contains("en yüksek") || lowerMsg.contains("hangi cihaz")) {
+            ApplianceLiveState maxApp = null;
+            HomeLiveState maxHome = null;
+            BigDecimal maxWatts = BigDecimal.ZERO;
+
+            for (HomeLiveState s : targetStates) {
+                if (s != null && s.appliances() != null) {
+                    for (ApplianceLiveState app : s.appliances().values()) {
+                        if (app != null && app.currentPowerWatts() != null) {
+                            if (app.currentPowerWatts().compareTo(maxWatts) > 0) {
+                                maxWatts = app.currentPowerWatts();
+                                maxApp = app;
+                                maxHome = s;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (maxApp != null && maxHome != null && maxWatts.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal kw = maxWatts.divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
+                return new ChatResponse(cleanMarkdown(
+                    "Şu anda en yüksek güç tüketen cihazınız " + maxHome.homeName() + " evinizdeki " +
+                    maxApp.name() + " cihazıdır. Anlık olarak " + kw.toPlainString() + " kW (" +
+                    maxWatts.setScale(0, RoundingMode.HALF_UP).toPlainString() + " Watt) güç çekmektedir."
+                ));
+            }
         }
 
         // 2. Özel "Toplam" Sorusu (Toplam maliyet, toplam güç vb.)
