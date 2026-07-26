@@ -66,10 +66,10 @@ public class ChatController {
             email = "onur@gmail.com";
         }
 
-        // Build live context for the user's homes
+        // Build live context for the user's homes (filtering by specifically mentioned home if any)
         String liveContext = "";
         try {
-            liveContext = buildUserLiveContext(email);
+            liveContext = buildUserLiveContext(email, userMsg);
         } catch (Exception ex) {
             log.warn("Failed to build user live context for chat: {}", ex.getMessage());
             liveContext = "Kullanıcının canlı ev verileri okunamadı.";
@@ -91,6 +91,7 @@ public class ChatController {
                 Kurallar:
                 - Her zaman Türkçe cevap ver.
                 - Yanıtlarda KESİNLİKLE Markdown veya HTML biçimlendirme karakterleri (yıldız **, *, kare #, alt çizgi _, backtick ` vb.) KULLANMA. Sadece sade ve düz metin (plain text) olarak yaz.
+                - EĞER KULLANICI BELİRLİ BİR EV VEYA CİHAZ SORDUYSA (örneğin "Çanakkale" veya "Buzdolabı"), SADECE O EVE VEYA CİHAZA AİT BİLGİLERİ AÇIKLA. Diğer evleri yanıtına dahil etme!
                 - Kullanıcının "Bu dönem maliyet", "Anlık toplam güç", "Sağlıklı evler", "Cihaz durumu" gibi sorularına yukarıdaki GERÇEK CANLI VERİLERİ kullanarak 2-4 cümlelik net ve yapıcı cevaplar ver.
                 - Rakamları panelde göründüğü gibi (örneğin "₺0,15" veya "2,77 kW") tam doğrulukla ifade et.
                 - Enerji tasarrufu ipuçları ver ve samimi bir üslup kullan.
@@ -168,7 +169,7 @@ public class ChatController {
                     .strip();
     }
 
-    private String buildUserLiveContext(String email) {
+    private String buildUserLiveContext(String email, String userMsg) {
         List<Long> homeIds = homeRepository.findIdsByOwnerEmail(email);
         if (homeIds.isEmpty()) {
             return "Kullanıcının henüz kayıtlı bir evi bulunmuyor.";
@@ -201,7 +202,19 @@ public class ChatController {
             return "Toplam Kayıtlı Ev Sayısı: " + homeIds.size() + " (Canlı durum bekleniyor)";
         }
 
-        for (HomeLiveState state : userStates) {
+        // Eğer kullanıcı belirli bir evin adını sorduysa (örn: "Çanakkale", "İstanbul", "Yazlık"), sadece o evi filtrele!
+        String lowerMsg = StringUtils.hasText(userMsg) ? userMsg.toLowerCase(java.util.Locale.ROOT) : "";
+        List<HomeLiveState> targetStates = userStates;
+        if (StringUtils.hasText(lowerMsg)) {
+            List<HomeLiveState> matched = userStates.stream()
+                    .filter(s -> s.homeName() != null && lowerMsg.contains(s.homeName().toLowerCase(java.util.Locale.ROOT)))
+                    .toList();
+            if (!matched.isEmpty()) {
+                targetStates = matched;
+            }
+        }
+
+        for (HomeLiveState state : targetStates) {
             if (state == null) continue;
             BigDecimal watts = state.currentPowerWatts() != null ? state.currentPowerWatts() : BigDecimal.ZERO;
             BigDecimal cost = state.currentCost() != null ? state.currentCost() : BigDecimal.ZERO;
