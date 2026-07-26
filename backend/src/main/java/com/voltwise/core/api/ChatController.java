@@ -67,7 +67,13 @@ public class ChatController {
         }
 
         // Build live context for the user's homes
-        String liveContext = buildUserLiveContext(email);
+        String liveContext = "";
+        try {
+            liveContext = buildUserLiveContext(email);
+        } catch (Exception ex) {
+            log.warn("Failed to build user live context for chat: {}", ex.getMessage());
+            liveContext = "Kullanıcının canlı ev verileri okunamadı.";
+        }
 
         String systemInstruction = """
                 Sen VoltFlow akıllı ev enerji yönetim sisteminin yapay zeka asistanısın.
@@ -126,12 +132,30 @@ public class ChatController {
             }
 
             log.warn("Gemini chat returned empty text, response={}", response);
-            return new ChatResponse("Üzgünüm, şu anda yanıt oluşturamadım. Lütfen tekrar deneyin.");
+            return generateSmartFallback(userMsg, email, liveContext);
 
         } catch (Exception ex) {
             log.warn("Gemini chat API error (type={}): {}", ex.getClass().getSimpleName(), ex.getMessage());
-            return new ChatResponse("VoltFlow AI geçici olarak meşgul. Lütfen birkaç saniye sonra tekrar sorunuzu iletin.");
+            return generateSmartFallback(userMsg, email, liveContext);
         }
+    }
+
+    private ChatResponse generateSmartFallback(String userMsg, String email, String liveContext) {
+        if (!StringUtils.hasText(liveContext) || liveContext.contains("bulunmuyor")) {
+            return new ChatResponse("Merhaba! VoltFlow hesabınızda henüz canlı ev bulunmuyor. Yeni bir ev ekleyerek anlık güç, bütçe ve cihaz durumlarınızı takip edebilirsiniz.");
+        }
+
+        String lower = userMsg.toLowerCase(java.util.Locale.ROOT);
+        String prefix = "VoltFlow AI Canlı Ev Analizi:\n\n";
+        if (lower.contains("maliyet") || lower.contains("tl") || lower.contains("bütçe") || lower.contains("fatura") || lower.contains("para") || lower.contains("çanakkale")) {
+            prefix = "Canlı maliyet ve bütçe verileriniz aşağıdadır:\n\n";
+        } else if (lower.contains("cihaz") || lower.contains("sağlık") || lower.contains("anomali") || lower.contains("durum")) {
+            prefix = "Canlı cihaz ve sağlık durumlarınız aşağıdadır:\n\n";
+        } else if (lower.contains("güç") || lower.contains("kw") || lower.contains("watt") || lower.contains("tüketim")) {
+            prefix = "Canlı güç ve tüketim verileriniz aşağıdadır:\n\n";
+        }
+
+        return new ChatResponse(cleanMarkdown(prefix + liveContext.strip()));
     }
 
     private static String cleanMarkdown(String input) {
@@ -154,7 +178,7 @@ public class ChatController {
         Set<Long> ownedSet = Set.copyOf(homeIds);
 
         List<HomeLiveState> userStates = liveStateStore.getAll().stream()
-                .filter(s -> ownedSet.contains(s.homeId()))
+                .filter(s -> s != null && s.homeId() != null && ownedSet.contains(s.homeId()))
                 .toList();
 
         if (userStates.isEmpty()) {
@@ -168,7 +192,7 @@ public class ChatController {
             }
             if (userStates.isEmpty()) {
                 userStates = liveStateStore.getAll().stream()
-                        .filter(s -> ownedSet.contains(s.homeId()))
+                        .filter(s -> s != null && s.homeId() != null && ownedSet.contains(s.homeId()))
                         .toList();
             }
         }
@@ -178,25 +202,37 @@ public class ChatController {
         }
 
         for (HomeLiveState state : userStates) {
-            BigDecimal kwPower = state.currentPowerWatts().divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
-            sb.append("Ev Adı: ").append(state.homeName())
+            if (state == null) continue;
+            BigDecimal watts = state.currentPowerWatts() != null ? state.currentPowerWatts() : BigDecimal.ZERO;
+            BigDecimal cost = state.currentCost() != null ? state.currentCost() : BigDecimal.ZERO;
+            BigDecimal energy = state.accumulatedEnergyKwh() != null ? state.accumulatedEnergyKwh() : BigDecimal.ZERO;
+            BigDecimal budget = state.monthlyBudget() != null ? state.monthlyBudget() : BigDecimal.ZERO;
+            BigDecimal budgetPercent = state.budgetUsagePercent() != null ? state.budgetUsagePercent() : BigDecimal.ZERO;
+            String tariff = state.tariffState() != null ? state.tariffState().name() : "NORMAL";
+
+            BigDecimal kwPower = watts.divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
+            sb.append("Ev Adı: ").append(state.homeName() != null ? state.homeName() : "Ev")
                     .append(" (ID: ").append(state.homeId()).append(")\n")
-                    .append("  - Anlık Toplam Güç: ").append(kwPower.toPlainString()).append(" kW (").append(state.currentPowerWatts().toPlainString()).append(" Watt)\n")
-                    .append("  - Bu Dönem Maliyet: ₺").append(state.currentCost().toPlainString()).append("\n")
-                    .append("  - Birikmiş Enerji: ").append(state.accumulatedEnergyKwh().toPlainString()).append(" kWh\n")
-                    .append("  - Aylık Bütçe: ₺").append(state.monthlyBudget().toPlainString()).append("\n")
-                    .append("  - Bütçe Kullanım Oranı: %").append(state.budgetUsagePercent().toPlainString()).append("\n")
-                    .append("  - Aktif Tarife Durumu: ").append(state.tariffState()).append("\n");
+                    .append("  - Anlık Toplam Güç: ").append(kwPower.toPlainString()).append(" kW (").append(watts.toPlainString()).append(" Watt)\n")
+                    .append("  - Bu Dönem Maliyet: ₺").append(cost.toPlainString()).append("\n")
+                    .append("  - Birikmiş Enerji: ").append(energy.toPlainString()).append(" kWh\n")
+                    .append("  - Aylık Bütçe: ₺").append(budget.toPlainString()).append("\n")
+                    .append("  - Bütçe Kullanım Oranı: %").append(budgetPercent.toPlainString()).append("\n")
+                    .append("  - Aktif Tarife Durumu: ").append(tariff).append("\n");
 
             if (state.appliances() != null && !state.appliances().isEmpty()) {
                 sb.append("  - Bağlı Cihazlar:\n");
                 for (ApplianceLiveState app : state.appliances().values()) {
-                    sb.append("    * ").append(app.name()).append(" (").append(app.type()).append("): ")
-                            .append("Güç: ").append(app.currentPowerWatts().toPlainString()).append(" W, ")
-                            .append("Durum: ").append(app.operatingState()).append(", ")
-                            .append("Sağlık: ").append(app.healthStatus());
+                    if (app == null) continue;
+                    BigDecimal appWatts = app.currentPowerWatts() != null ? app.currentPowerWatts() : BigDecimal.ZERO;
+                    BigDecimal safeWatts = app.safePowerLimitWatts() != null ? app.safePowerLimitWatts() : BigDecimal.ZERO;
+                    sb.append("    * ").append(app.name() != null ? app.name() : "Cihaz")
+                            .append(" (").append(app.type() != null ? app.type() : "CİHAZ").append("): ")
+                            .append("Güç: ").append(appWatts.toPlainString()).append(" W, ")
+                            .append("Durum: ").append(app.operatingState() != null ? app.operatingState() : "STANDBY").append(", ")
+                            .append("Sağlık: ").append(app.healthStatus() != null ? app.healthStatus() : "NORMAL");
                     if (app.healthStatus() == ApplianceHealthStatus.ANOMALOUS) {
-                        sb.append(" [ANOMALİ! Güvenli Sınır: ").append(app.safePowerLimitWatts().toPlainString()).append(" W]");
+                        sb.append(" [ANOMALİ! Güvenli Sınır: ").append(safeWatts.toPlainString()).append(" W]");
                     }
                     sb.append("\n");
                 }
