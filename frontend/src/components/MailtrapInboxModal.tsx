@@ -75,6 +75,14 @@ export function MailtrapInboxModal({ onClose }: MailtrapInboxModalProps) {
     void fetchMessages();
   }, []);
 
+  const handleMessageClick = (msgId: number) => {
+    if (selectedMessage?.id === msgId) {
+      setSelectedMessage(null);
+      return;
+    }
+    void fetchMessageBody(msgId);
+  };
+
   const fetchMessageBody = async (msgId: number) => {
     setLoadingDetail(true);
     try {
@@ -160,7 +168,7 @@ export function MailtrapInboxModal({ onClose }: MailtrapInboxModalProps) {
                   cursor: 'pointer',
                   transition: 'background 0.2s',
                 }}
-                onClick={() => void fetchMessageBody(msg.id)}
+                onClick={() => handleMessageClick(msg.id)}
               >
                 <div
                   style={{
