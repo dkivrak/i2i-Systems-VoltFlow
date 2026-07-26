@@ -157,7 +157,20 @@ public class ChatController {
         List<HomeLiveState> targetStates = userStates;
         if (StringUtils.hasText(lowerMsg)) {
             List<HomeLiveState> matched = userStates.stream()
-                    .filter(s -> s.homeName() != null && lowerMsg.contains(s.homeName().toLowerCase(java.util.Locale.ROOT)))
+                    .filter(s -> {
+                        if (s == null) return false;
+                        if (s.homeName() != null) {
+                            String nameLower = s.homeName().toLowerCase(java.util.Locale.ROOT);
+                            if (lowerMsg.contains(nameLower)) return true;
+                            String[] words = nameLower.split("\\s+");
+                            for (String w : words) {
+                                if (w.length() >= 3 && !w.equals("ev") && lowerMsg.contains(w)) {
+                                    return true;
+                                }
+                            }
+                        }
+                        return false;
+                    })
                     .toList();
             if (!matched.isEmpty()) {
                 targetStates = matched;
