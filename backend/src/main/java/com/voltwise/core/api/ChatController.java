@@ -168,12 +168,46 @@ public class ChatController {
             targetStates = userStates;
         }
 
+        // Calculate Grand Totals across target states
+        BigDecimal totalCost = BigDecimal.ZERO;
+        BigDecimal totalWatts = BigDecimal.ZERO;
+        BigDecimal totalBudget = BigDecimal.ZERO;
+        for (HomeLiveState s : targetStates) {
+            if (s == null) continue;
+            if (s.currentCost() != null) totalCost = totalCost.add(s.currentCost());
+            if (s.currentPowerWatts() != null) totalWatts = totalWatts.add(s.currentPowerWatts());
+            if (s.monthlyBudget() != null) totalBudget = totalBudget.add(s.monthlyBudget());
+        }
+        BigDecimal totalKw = totalWatts.divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
+
         // 1. Selamlaşma veya Genel Yetenek Soruları
         if (lowerMsg.contains("merhaba") || lowerMsg.contains("selam") || lowerMsg.contains("kimsin") || lowerMsg.contains("yardım") || lowerMsg.contains("ne yapabilir")) {
             return new ChatResponse("Merhaba! Ben VoltFlow AI canlı enerji danışmanınız. Evlerinizin anlık güç tüketimini, maliyet ve bütçe durumunu, cihaz sağlıklarını takip edebilir ve tasarruf tavsiyeleri verebilirim. Nasıl yardımcı olabilirim?");
         }
 
-        // 2. Belirli bir Cihaz Sorusu (Buzdolabı, Çamaşır Makinesi, Klima, Kettle vb.)
+        // 2. Özel "Toplam" Sorusu (Toplam maliyet, toplam güç vb.)
+        if (lowerMsg.contains("toplam") || lowerMsg.contains("hepsi") || lowerMsg.contains("genel toplam")) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("📊 Kayıtlı evlerinizin GENEL TOPLAM durumu:\n\n");
+            sb.append("• 💰 Toplam Birikmiş Tüketim Maliyeti: ₺").append(formatMoneyTurkish(totalCost)).append("\n");
+            sb.append("• ⚡ Toplam Anlık Güç Tüketimi: ").append(formatPercentTurkish(totalKw)).append(" kW (").append(totalWatts.setScale(0, RoundingMode.HALF_UP).toPlainString()).append(" Watt)\n");
+            if (totalBudget.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal totalPercent = totalCost.multiply(new BigDecimal("100")).divide(totalBudget, 2, RoundingMode.HALF_UP);
+                sb.append("• 📈 Toplam Bütçe Kullanımı: %").append(formatPercentTurkish(totalPercent)).append(" (₺").append(formatMoneyTurkish(totalBudget)).append(" bütçeden)\n");
+            }
+            sb.append("\nEv bazlı detaylı dağılım:\n");
+            for (HomeLiveState s : targetStates) {
+                if (s == null) continue;
+                BigDecimal cost = s.currentCost() != null ? s.currentCost() : BigDecimal.ZERO;
+                BigDecimal watts = s.currentPowerWatts() != null ? s.currentPowerWatts() : BigDecimal.ZERO;
+                BigDecimal kw = watts.divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
+                sb.append("• 🏠 ").append(s.homeName()).append(": ₺").append(formatMoneyTurkish(cost))
+                  .append(" maliyet | Anlık ").append(formatPercentTurkish(kw)).append(" kW\n");
+            }
+            return new ChatResponse(cleanMarkdown(sb.toString().strip()));
+        }
+
+        // 3. Belirli bir Cihaz Sorusu (Buzdolabı, Çamaşır Makinesi, Klima, Kettle vb.)
         for (HomeLiveState state : targetStates) {
             if (state != null && state.appliances() != null) {
                 for (ApplianceLiveState app : state.appliances().values()) {
@@ -197,7 +231,7 @@ public class ChatController {
             }
         }
 
-        // 3. Tasarruf ve Öneri Sorusu
+        // 4. Tasarruf ve Öneri Sorusu
         if (lowerMsg.contains("tasarruf") || lowerMsg.contains("tavsiye") || lowerMsg.contains("ipucu") || lowerMsg.contains("nasıl düşür") || lowerMsg.contains("öneri")) {
             StringBuilder advice = new StringBuilder();
             HomeLiveState first = targetStates.get(0);
@@ -208,11 +242,12 @@ public class ChatController {
             return new ChatResponse(cleanMarkdown(advice.toString()));
         }
 
-        // 4. Maliyet, Fatura, TL veya Bütçe Sorusu
+        // 5. Maliyet, Fatura, TL veya Bütçe Sorusu
         if (lowerMsg.contains("maliyet") || lowerMsg.contains("tl") || lowerMsg.contains("bütçe") || lowerMsg.contains("fatura") || lowerMsg.contains("para") || lowerMsg.contains("borç") || lowerMsg.contains("ne kadar")) {
             StringBuilder costReply = new StringBuilder();
             if (targetStates.size() > 1) {
-                costReply.append("Kayıtlı evlerinizin bu dönemki tüketim maliyetleri ve bütçe durumları:\n\n");
+                costReply.append("💰 Tüm evlerinizin TOPLAM dönem maliyeti: ₺").append(formatMoneyTurkish(totalCost)).append("\n\n");
+                costReply.append("Ev bazlı tüketim maliyetleri:\n");
             }
             for (HomeLiveState s : targetStates) {
                 if (s == null) continue;
@@ -241,11 +276,12 @@ public class ChatController {
             return new ChatResponse(cleanMarkdown(costReply.toString().strip()));
         }
 
-        // 5. Anlık Güç, Watt veya Tüketim Sorusu
+        // 6. Anlık Güç, Watt veya Tüketim Sorusu
         if (lowerMsg.contains("güç") || lowerMsg.contains("kw") || lowerMsg.contains("watt") || lowerMsg.contains("tüketim") || lowerMsg.contains("harcama")) {
             StringBuilder powerReply = new StringBuilder();
             if (targetStates.size() > 1) {
-                powerReply.append("Kayıtlı evlerinizin anlık güç tüketim durumları:\n\n");
+                powerReply.append("⚡ Tüm evlerinizin TOPLAM anlık gücü: ").append(formatPercentTurkish(totalKw)).append(" kW (").append(totalWatts.setScale(0, RoundingMode.HALF_UP).toPlainString()).append(" W)\n\n");
+                powerReply.append("Ev bazlı anlık tüketim durumları:\n");
             }
             for (HomeLiveState s : targetStates) {
                 if (s == null) continue;
@@ -268,7 +304,7 @@ public class ChatController {
             return new ChatResponse(cleanMarkdown(powerReply.toString().strip()));
         }
 
-        // 6. Genel Canlı Durum Özeti
+        // 7. Genel Canlı Durum Özeti
         if (targetStates.size() == 1) {
             HomeLiveState s = targetStates.get(0);
             BigDecimal kw = (s.currentPowerWatts() != null ? s.currentPowerWatts() : BigDecimal.ZERO)
@@ -283,7 +319,8 @@ public class ChatController {
             ));
         } else {
             StringBuilder general = new StringBuilder();
-            general.append("Kayıtlı evlerinizin canlı özet verileri:\n\n");
+            general.append("⚡ Tüm evlerinizin TOPLAM anlık gücü: ").append(formatPercentTurkish(totalKw)).append(" kW | TOPLAM maliyeti: ₺").append(formatMoneyTurkish(totalCost)).append("\n\n");
+            general.append("Kayıtlı evlerinizin canlı özet verileri:\n");
             for (HomeLiveState s : targetStates) {
                 if (s == null) continue;
                 BigDecimal kw = (s.currentPowerWatts() != null ? s.currentPowerWatts() : BigDecimal.ZERO)
