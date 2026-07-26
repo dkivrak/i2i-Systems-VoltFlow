@@ -957,15 +957,6 @@ docker compose config --quiet
 
 ---
 
-## 👥 Team
-
-| Contributor | Role |
-|---|---|
-| **Deniz Kıvrak** | Core Backend, Kafka Integration, Telemetry Processing |
-| **Onur Tezel** | Frontend, Simulator, DevOps & Operations |
-
----
-
 <p align="center">
-  <sub>Built with ⚡ by the VoltWise team — Real-time energy intelligence for smarter homes</sub>
+  <sub>Built with ⚡ by the VoltWise team - Real-time energy intelligence for smarter homes</sub>
 </p>
