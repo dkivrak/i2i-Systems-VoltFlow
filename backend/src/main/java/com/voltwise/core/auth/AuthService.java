@@ -62,6 +62,24 @@ public class AuthService {
     }
 
     @Transactional
+    public AuthResponse loginDemo() {
+        String email = "voltflow@gmail.com";
+        UserEntity user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            user = new UserEntity();
+            user.setEmail(email);
+            user.setPasswordHash(passwordEncoder.encode("VoltFlow123!"));
+            user.setEnabled(true);
+            try {
+                user = userRepository.saveAndFlush(user);
+            } catch (DataIntegrityViolationException ignored) {
+                user = userRepository.findByEmail(email).orElseThrow();
+            }
+        }
+        return responseFor(user, "Giriş başarılı.");
+    }
+
+    @Transactional
     public void changePassword(String email, AuthDtos.ChangePasswordRequest request) {
         if (email == null || email.isBlank()) {
             throw new InvalidCredentialsException();

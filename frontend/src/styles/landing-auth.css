@@ -501,29 +501,38 @@
 .auth-demo-button {
   width: 100%;
   margin-top: var(--space-3);
-  min-height: 44px;
-  background: var(--color-surface);
-  border: 2px dashed var(--color-brand);
+  min-height: 48px;
+  background: var(--color-energy);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-sm);
-  color: var(--color-brand-strong);
-  font-size: var(--font-size-xs);
-  font-weight: 800;
+  color: var(--color-ink);
+  font-size: 0.88rem;
+  font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   cursor: pointer;
-  transition: all var(--motion-fast) var(--ease-standard);
+  box-shadow: 3px 3px 0 var(--color-ink);
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    background var(--motion-fast) var(--ease-standard);
 }
 
 .auth-demo-button:hover:not(:disabled) {
-  background: var(--color-brand-soft);
-  border-style: solid;
-  transform: translateY(-1px);
+  background: #ffdb1a;
+  box-shadow: 5px 5px 0 var(--color-ink);
+  transform: translateY(-2px);
+}
+
+.auth-demo-button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 2px 2px 0 var(--color-ink);
 }
 
 .auth-demo-button:disabled {
-  opacity: 0.6;
+  opacity: 0.65;
   cursor: not-allowed;
 }
 

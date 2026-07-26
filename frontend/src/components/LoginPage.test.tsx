@@ -176,7 +176,7 @@ describe('LoginPage email and password authentication', () => {
       user: { id: 1, email: 'voltflow@gmail.com' },
       message: 'Giriş başarılı.',
     };
-    const login = vi.spyOn(api, 'login').mockImplementation(async () => demoResponse);
+    const demoLogin = vi.spyOn(api, 'demoLogin').mockImplementation(async () => demoResponse);
     const onLoginSuccess = vi.fn();
     const user = userEvent.setup();
 
@@ -188,9 +188,7 @@ describe('LoginPage email and password authentication', () => {
     await user.click(demoButton);
 
     await waitFor(() =>
-      expect(login).toHaveBeenCalledWith(
-        'voltflow@gmail.com',
-        'VoltFlow123!',
+      expect(demoLogin).toHaveBeenCalledWith(
         expect.any(AbortSignal),
       ),
     );

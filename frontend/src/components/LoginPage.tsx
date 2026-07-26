@@ -254,21 +254,8 @@ export function LoginPage({
     setError('');
     setSuccessMessage('');
 
-    const testEmail = 'voltflow@gmail.com';
-    const testPassword = 'VoltFlow123!';
-
     try {
-      let response;
-      try {
-        response = await api.login(testEmail, testPassword, controller.signal);
-      } catch (loginErr) {
-        if (controller.signal.aborted) return;
-        response = await api.register(
-          testEmail,
-          testPassword,
-          controller.signal,
-        );
-      }
+      const response = await api.demoLogin(controller.signal);
       if (controller.signal.aborted) return;
       setSuccessMessage('Hızlı demo girişi yapılıyor...');
       showReaction('success');
@@ -285,7 +272,6 @@ export function LoginPage({
         return;
       }
       setError(getUserFacingError(requestError));
-      setSuccessMessage('');
       showReaction('error', 780);
       setLoading(false);
     }

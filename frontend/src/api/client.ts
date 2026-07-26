@@ -464,6 +464,13 @@ export const api = {
     return normalizeAuthResponse(payload);
   },
 
+  async demoLogin(signal?: AbortSignal): Promise<AuthResponse> {
+    const payload = await request<unknown>('/auth/demo', {
+      method: 'POST',
+    }, signal);
+    return normalizeAuthResponse(payload);
+  },
+
   async register(
     email: string,
     password: string,

@@ -35,6 +35,12 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @PostMapping("/demo")
+    @Operation(summary = "Log in directly as demo user voltflow@gmail.com")
+    public ResponseEntity<AuthResponse> loginDemo() {
+        return ResponseEntity.ok(authService.loginDemo());
+    }
+
     @org.springframework.web.bind.annotation.GetMapping("/profile")
     @Operation(summary = "Get current logged in user profile")
     public ResponseEntity<AuthDtos.AuthUserResponse> getProfile() {
