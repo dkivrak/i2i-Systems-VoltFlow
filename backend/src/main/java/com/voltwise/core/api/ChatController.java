@@ -185,6 +185,28 @@ public class ChatController {
             return new ChatResponse("Merhaba! Ben VoltFlow AI canlı enerji danışmanınız. Evlerinizin anlık güç tüketimini, maliyet ve bütçe durumunu, cihaz sağlıklarını takip edebilir ve tasarruf tavsiyeleri verebilirim. Nasıl yardımcı olabilirim?");
         }
 
+        // 2. Ev Sayısı veya Ev Listesi Soruları (Kaç evim var, hangi evler var vb.)
+        if ((lowerMsg.contains("kaç") && (lowerMsg.contains("ev") || lowerMsg.contains("mülk") || lowerMsg.contains("konut"))) || lowerMsg.contains("evlerim") || lowerMsg.contains("ev sayısı") || lowerMsg.contains("hangi evler")) {
+            StringBuilder countReply = new StringBuilder();
+            countReply.append("VoltFlow hesabınıza tanımlı toplam ").append(targetStates.size()).append(" adet canlı ev bulunmaktadır:\n\n");
+            for (int i = 0; i < targetStates.size(); i++) {
+                HomeLiveState s = targetStates.get(i);
+                if (s != null) {
+                    countReply.append(i + 1).append(". 🏠 ").append(s.homeName()).append("\n");
+                }
+            }
+            return new ChatResponse(cleanMarkdown(countReply.toString().strip()));
+        }
+
+        // 3. Cihaz Sayısı Soruları (Kaç cihazım var vb.)
+        if (lowerMsg.contains("kaç") && (lowerMsg.contains("cihaz") || lowerMsg.contains("alet"))) {
+            int totalApp = 0;
+            for (HomeLiveState s : targetStates) {
+                if (s != null && s.appliances() != null) totalApp += s.appliances().size();
+            }
+            return new ChatResponse("Kayıtlı evlerinizde bağlı ve anlık izlenen toplam " + totalApp + " adet akıllı cihaz bulunmaktadır.");
+        }
+
         // 2. Özel "Toplam" Sorusu (Toplam maliyet, toplam güç vb.)
         if (lowerMsg.contains("toplam") || lowerMsg.contains("hepsi") || lowerMsg.contains("genel toplam")) {
             StringBuilder sb = new StringBuilder();
