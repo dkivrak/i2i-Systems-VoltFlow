@@ -188,8 +188,8 @@ public class ChatController {
                                 : "🟢 Normal ve sağlıklı.";
 
                         return new ChatResponse(cleanMarkdown(
-                            state.homeName() + " evinizdeki " + app.name() + " cihazının anlık güç tüketimi " +
-                            watts.toPlainString() + " Watt seviyesindedir. Çalışma durumu " + app.operatingState() +
+                            cleanHomeName(state.homeName()) + " " + app.name() + " cihazının anlık güç tüketimi " +
+                            watts.setScale(0, RoundingMode.HALF_UP).toPlainString() + " Watt seviyesindedir. Çalışma durumu " + app.operatingState() +
                             ", sağlık durumu ise " + statusStr
                         ));
                     }
@@ -201,29 +201,42 @@ public class ChatController {
         if (lowerMsg.contains("tasarruf") || lowerMsg.contains("tavsiye") || lowerMsg.contains("ipucu") || lowerMsg.contains("nasıl düşür") || lowerMsg.contains("öneri")) {
             StringBuilder advice = new StringBuilder();
             HomeLiveState first = targetStates.get(0);
-            advice.append(first.homeName()).append(" evinizde enerji maliyetlerini düşürmek için:\n\n");
-            advice.append("1. Yüksek güç çeken cihazları (Kettle, Çamaşır Makinesi vb.) ceza tarifesi saatlerinde kullanmaktan kaçının.\n");
-            advice.append("2. Bekleme (standby) modunda güç tüketen cihazların fişini çekerek %10-15 tasarruf sağlayabilirsiniz.\n");
-            advice.append("3. Güncel bütçe kullanım oranınız %").append(first.budgetUsagePercent() != null ? first.budgetUsagePercent().toPlainString() : "0").append(" seviyesindedir.");
+            advice.append(cleanHomeName(first.homeName())).append(" enerji maliyetlerini düşürmek için öneriler:\n\n");
+            advice.append("• Yüksek güç çeken cihazları (Kettle, Çamaşır Makinesi vb.) ceza tarifesi saatlerinde kullanmaktan kaçının.\n");
+            advice.append("• Bekleme (standby) modunda güç tüketen cihazların fişini çekerek %10-15 tasarruf sağlayabilirsiniz.\n");
+            advice.append("• Güncel bütçe kullanım oranınız %").append(formatPercentTurkish(first.budgetUsagePercent())).append(" seviyesindedir.");
             return new ChatResponse(cleanMarkdown(advice.toString()));
         }
 
         // 4. Maliyet, Fatura, TL veya Bütçe Sorusu
         if (lowerMsg.contains("maliyet") || lowerMsg.contains("tl") || lowerMsg.contains("bütçe") || lowerMsg.contains("fatura") || lowerMsg.contains("para") || lowerMsg.contains("borç") || lowerMsg.contains("ne kadar")) {
             StringBuilder costReply = new StringBuilder();
+            if (targetStates.size() > 1) {
+                costReply.append("Kayıtlı evlerinizin bu dönemki tüketim maliyetleri ve bütçe durumları:\n\n");
+            }
             for (HomeLiveState s : targetStates) {
                 if (s == null) continue;
                 BigDecimal cost = s.currentCost() != null ? s.currentCost() : BigDecimal.ZERO;
                 BigDecimal budget = s.monthlyBudget() != null ? s.monthlyBudget() : BigDecimal.ZERO;
                 BigDecimal percent = s.budgetUsagePercent() != null ? s.budgetUsagePercent() : BigDecimal.ZERO;
-                costReply.append(s.homeName()).append(" evinizin bu dönemki birikmiş tüketim maliyeti ₺").append(cost.toPlainString()).append("'dir. ");
-                costReply.append("Aylık ₺").append(budget.toPlainString()).append(" bütçenizden %").append(percent.toPlainString()).append(" kullanılmıştır. ");
-                if (percent.compareTo(new BigDecimal("80")) >= 0) {
-                    costReply.append("⚠️ Bütçe sınırınıza yaklaşılmaktadır, dikkat etmenizi öneririz.");
+
+                String costStr = formatMoneyTurkish(cost);
+                String budgetStr = formatMoneyTurkish(budget);
+                String percentStr = formatPercentTurkish(percent);
+
+                if (targetStates.size() == 1) {
+                    costReply.append(cleanHomeName(s.homeName())).append(" bu dönemki birikmiş tüketim maliyeti ₺").append(costStr).append("'dir.\n");
+                    costReply.append("Aylık ₺").append(budgetStr).append(" bütçenizden %").append(percentStr).append(" kullanılmıştır. ");
+                    if (percent.compareTo(new BigDecimal("80")) >= 0) {
+                        costReply.append("⚠️ Bütçe sınırınıza yaklaşılmaktadır.");
+                    } else {
+                        costReply.append("Bütçe durumunuz oldukça güvendedir.");
+                    }
                 } else {
-                    costReply.append("Bütçe durumunuz oldukça güvendedir.");
+                    costReply.append("• 🏠 ").append(s.homeName()).append(": ₺").append(costStr)
+                             .append(" maliyet | Bütçe: ₺").append(budgetStr)
+                             .append(" (%").append(percentStr).append(" kullanım)\n");
                 }
-                costReply.append("\n\n");
             }
             return new ChatResponse(cleanMarkdown(costReply.toString().strip()));
         }
@@ -231,13 +244,26 @@ public class ChatController {
         // 5. Anlık Güç, Watt veya Tüketim Sorusu
         if (lowerMsg.contains("güç") || lowerMsg.contains("kw") || lowerMsg.contains("watt") || lowerMsg.contains("tüketim") || lowerMsg.contains("harcama")) {
             StringBuilder powerReply = new StringBuilder();
+            if (targetStates.size() > 1) {
+                powerReply.append("Kayıtlı evlerinizin anlık güç tüketim durumları:\n\n");
+            }
             for (HomeLiveState s : targetStates) {
                 if (s == null) continue;
                 BigDecimal watts = s.currentPowerWatts() != null ? s.currentPowerWatts() : BigDecimal.ZERO;
                 BigDecimal kw = watts.divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
                 BigDecimal energy = s.accumulatedEnergyKwh() != null ? s.accumulatedEnergyKwh() : BigDecimal.ZERO;
-                powerReply.append(s.homeName()).append(" evinizde anlık toplam ").append(kw.toPlainString()).append(" kW (").append(watts.toPlainString()).append(" Watt) güç çekilmektedir. ");
-                powerReply.append("Bu dönem biriken toplam enerji tüketimi ").append(energy.toPlainString()).append(" kWh olarak ölçülmüştür.\n\n");
+
+                String kwStr = formatPercentTurkish(kw);
+                String energyStr = formatPercentTurkish(energy);
+                String wattsStr = watts.setScale(0, RoundingMode.HALF_UP).toPlainString();
+
+                if (targetStates.size() == 1) {
+                    powerReply.append(cleanHomeName(s.homeName())).append(" anlık toplam ").append(kwStr).append(" kW (").append(wattsStr).append(" Watt) güç çekilmektedir. ");
+                    powerReply.append("Bu dönem biriken toplam enerji tüketimi ").append(energyStr).append(" kWh olarak ölçülmüştür.");
+                } else {
+                    powerReply.append("• 🏠 ").append(s.homeName()).append(": Anlık ").append(kwStr)
+                              .append(" kW (").append(wattsStr).append(" W) | Toplam Enerji: ").append(energyStr).append(" kWh\n");
+                }
             }
             return new ChatResponse(cleanMarkdown(powerReply.toString().strip()));
         }
@@ -251,9 +277,9 @@ public class ChatController {
             BigDecimal percent = s.budgetUsagePercent() != null ? s.budgetUsagePercent() : BigDecimal.ZERO;
 
             return new ChatResponse(cleanMarkdown(
-                s.homeName() + " evinizin canlı durumu: Anlık çekilen güç " + kw.toPlainString() +
-                " kW, bu dönemki maliyet ₺" + cost.toPlainString() + " ve bütçe kullanım oranı %" +
-                percent.toPlainString() + "'dir. Tüm cihazlarınız sağlıklı çalışmaktadır."
+                cleanHomeName(s.homeName()) + " canlı durumu: Anlık çekilen güç " + formatPercentTurkish(kw) +
+                " kW, bu dönemki maliyet ₺" + formatMoneyTurkish(cost) + " ve bütçe kullanım oranı %" +
+                formatPercentTurkish(percent) + "'dir. Tüm cihazlarınız sağlıklı çalışmaktadır."
             ));
         } else {
             StringBuilder general = new StringBuilder();
@@ -263,8 +289,8 @@ public class ChatController {
                 BigDecimal kw = (s.currentPowerWatts() != null ? s.currentPowerWatts() : BigDecimal.ZERO)
                         .divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
                 BigDecimal cost = s.currentCost() != null ? s.currentCost() : BigDecimal.ZERO;
-                general.append("• ").append(s.homeName()).append(": Anlık ").append(kw.toPlainString())
-                        .append(" kW | Maliyet: ₺").append(cost.toPlainString()).append("\n");
+                general.append("• 🏠 ").append(s.homeName()).append(": Anlık ").append(formatPercentTurkish(kw))
+                        .append(" kW | Maliyet: ₺").append(formatMoneyTurkish(cost)).append("\n");
             }
             return new ChatResponse(cleanMarkdown(general.toString()));
         }
@@ -278,6 +304,28 @@ public class ChatController {
                     .replaceAll("#+\\s*", "")
                     .replaceAll("_", "")
                     .strip();
+    }
+
+    private static String cleanHomeName(String homeName) {
+        if (!StringUtils.hasText(homeName)) return "Evinizin";
+        String trimmed = homeName.strip();
+        String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
+        if (lower.endsWith(" ev") || lower.endsWith(" evi")) {
+            return trimmed + "'nizin";
+        }
+        return trimmed + " evinizin";
+    }
+
+    private static String formatMoneyTurkish(BigDecimal val) {
+        if (val == null) return "0,00";
+        BigDecimal rounded = val.setScale(2, RoundingMode.HALF_UP);
+        return String.format(new java.util.Locale("tr", "TR"), "%,.2f", rounded);
+    }
+
+    private static String formatPercentTurkish(BigDecimal val) {
+        if (val == null) return "0,00";
+        BigDecimal rounded = val.setScale(2, RoundingMode.HALF_UP);
+        return String.format(new java.util.Locale("tr", "TR"), "%,.2f", rounded);
     }
 
     private String buildUserLiveContext(String email, String userMsg) {
