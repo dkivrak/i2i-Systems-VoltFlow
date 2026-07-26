@@ -33,7 +33,9 @@ public class GeminiRecommendationGenerator implements RecommendationGenerator {
 
     @Override
     public GeneratedRecommendation generate(RecommendationContext context) {
-        String model = "gemini-3.1-flash-lite";
+        String model = StringUtils.hasText(properties.getGemini().getModel())
+                ? properties.getGemini().getModel()
+                : "gemini-3.1-flash-lite";
         if (!StringUtils.hasText(properties.getGemini().getApiKey())) {
             return fallback(model);
         }

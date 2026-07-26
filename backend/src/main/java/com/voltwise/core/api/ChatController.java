@@ -90,8 +90,12 @@ public class ChatController {
                 - Enerji tasarrufu ipuçları ver ve samimi bir üslup kullan.
                 """.formatted(email, liveContext);
 
-        String model = "gemini-3.1-flash-lite";
-        String apiKey = StringUtils.hasText(properties.getGemini().getApiKey()) ? properties.getGemini().getApiKey() : "AQ.Ab8RN6L68aFulUrQGBMo1Imkayr2CY3IDFe-GWNaJVFyxDxNyQ";
+        String model = StringUtils.hasText(properties.getGemini().getModel())
+                ? properties.getGemini().getModel()
+                : "gemini-3.1-flash-lite";
+        String apiKey = StringUtils.hasText(properties.getGemini().getApiKey())
+                ? properties.getGemini().getApiKey()
+                : "AQ.Ab8RN6L68aFulUrQGBMo1Imkayr2CY3IDFe-GWNaJVFyxDxNyQ";
 
         try {
             Map<String, Object> body = Map.of(

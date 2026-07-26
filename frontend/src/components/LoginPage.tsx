@@ -58,9 +58,20 @@ export function LoginPage({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [successMessage, setSuccessMessage] = useState('');
   const [reaction, setReaction] = useState<CharacterState>('idle');
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth <= 991,
+  );
   const requestController = useRef<AbortController | null>(null);
   const reactionTimer = useRef<number | undefined>();
   const successTimer = useRef<number | undefined>();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 991);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const normalizedEmail = email.trim().toLowerCase();
   const emailIsValid =
@@ -241,13 +252,25 @@ export function LoginPage({
     requestController.current = controller;
     setLoading(true);
     setError('');
-    setFieldErrors({});
-    setSuccessMessage('Demo hesabı hazırlanıyor, lütfen bekleyin...');
+    setSuccessMessage('');
+
+    const testEmail = 'voltflow@gmail.com';
+    const testPassword = 'VoltFlow123!';
 
     try {
-      const response = await ensureDemoAccount(controller.signal);
+      let response;
+      try {
+        response = await api.login(testEmail, testPassword, controller.signal);
+      } catch (loginErr) {
+        if (controller.signal.aborted) return;
+        response = await api.register(
+          testEmail,
+          testPassword,
+          controller.signal,
+        );
+      }
       if (controller.signal.aborted) return;
-      setSuccessMessage('Demo hesabına giriş yapılıyor...');
+      setSuccessMessage('Hızlı demo girişi yapılıyor...');
       showReaction('success');
       setLoading(false);
       successTimer.current = window.setTimeout(
@@ -304,78 +327,99 @@ export function LoginPage({
         {activeMode === 'LOGIN' ? 'Giriş formuna geç' : 'Kayıt formuna geç'}
       </a>
 
-      <section className="auth-visual" aria-labelledby="auth-visual-title">
-        <div className="auth-visual__topline">
-          <a
-            className="brand brand--light"
-            href="/"
-            onClick={(event) => {
-              if (!onBack) return;
-              event.preventDefault();
-              onBack();
-            }}
+      {!isMobile && (
+        <section className="auth-visual" aria-labelledby="auth-visual-title">
+          <div className="auth-visual__topline">
+            <a
+              className="brand brand--light"
+              href="/"
+              onClick={(event) => {
+                if (!onBack) return;
+                event.preventDefault();
+                onBack();
+              }}
+            >
+              <span className="brand__mark" aria-hidden="true">
+                <Zap size={21} strokeWidth={2.6} />
+              </span>
+              <span className="brand__wordmark">
+                Volt<span>Flow</span>
+              </span>
+            </a>
+            <span className="auth-visual__badge">
+              <Sparkles aria-hidden="true" size={14} /> Eviniz için enerji zekâsı
+            </span>
+          </div>
+
+          <div className="auth-visual__copy">
+            <p className="eyebrow eyebrow--light">Akıllı ev ekibi hazır</p>
+            <h1 id="auth-visual-title">
+              Enerjinizin <span>karakterini</span> tanıyın.
+            </h1>
+            <p>
+              Cihazlarınız tüketimi anlatır, VoltFlow bütçenizi korur ve olağan
+              dışı davranışları büyümeden haber verir.
+            </p>
+          </div>
+
+          <CharacterGroup
+            className="auth-character-stage"
+            gazeEnabled
+            trackViewport
+            gazeLimit={8}
+            gazeStrength={0.85}
+            orbitAnimation={false}
+            aria-hidden="true"
           >
-            <span className="brand__mark" aria-hidden="true">
-              <Zap size={21} strokeWidth={2.6} />
-            </span>
-            <span className="brand__wordmark">
-              Volt<span>Flow</span>
-            </span>
-          </a>
-          <span className="auth-visual__badge">
-            <Sparkles aria-hidden="true" size={14} /> Eviniz için enerji zekâsı
-          </span>
-        </div>
-
-        <div className="auth-visual__copy">
-          <p className="eyebrow eyebrow--light">Akıllı ev ekibi hazır</p>
-          <h1 id="auth-visual-title">
-            Enerjinizin <span>karakterini</span> tanıyın.
-          </h1>
-          <p>
-            Cihazlarınız tüketimi anlatır, VoltFlow bütçenizi korur ve olağan
-            dışı davranışları büyümeden haber verir.
-          </p>
-        </div>
-
-        <CharacterGroup
-          className="auth-character-stage"
-          gazeEnabled
-          trackViewport
-          gazeLimit={8}
-          gazeStrength={0.85}
-          orbitAnimation={false}
-          aria-hidden="true"
-        >
-          <div className="auth-character auth-character--fridge">
-            <ApplianceCharacter
-              type="REFRIGERATOR"
-              state={characterState}
-            />
-          </div>
-          <div className="auth-character auth-character--washer">
-            <ApplianceCharacter
-              type="WASHING_MACHINE"
-              state={characterState === 'privacy' ? 'privacy' : (activeMode === 'SIGNUP' ? 'active' : 'idle')}
-            />
-          </div>
-          <div className="auth-character auth-character--tv">
-            <ApplianceCharacter
-              type="TELEVISION"
-              state={characterState === 'privacy' ? 'privacy' : 'observing'}
-            />
-          </div>
-          <div className="auth-character auth-character--kettle">
-            <ApplianceCharacter
-              type="KETTLE"
-              state={characterState === 'privacy' ? 'privacy' : 'happy'}
-            />
-          </div>
-        </CharacterGroup>
-      </section>
+            <div className="auth-character auth-character--fridge">
+              <ApplianceCharacter
+                type="REFRIGERATOR"
+                state={characterState}
+              />
+            </div>
+            <div className="auth-character auth-character--washer">
+              <ApplianceCharacter
+                type="WASHING_MACHINE"
+                state={characterState === 'privacy' ? 'privacy' : (activeMode === 'SIGNUP' ? 'active' : 'idle')}
+              />
+            </div>
+            <div className="auth-character auth-character--tv">
+              <ApplianceCharacter
+                type="TELEVISION"
+                state={characterState === 'privacy' ? 'privacy' : 'observing'}
+              />
+            </div>
+            <div className="auth-character auth-character--kettle">
+              <ApplianceCharacter
+                type="KETTLE"
+                state={characterState === 'privacy' ? 'privacy' : 'happy'}
+              />
+            </div>
+          </CharacterGroup>
+        </section>
+      )}
 
       <section className="auth-panel">
         <div className="auth-panel__inner">
+          <div className="auth-mobile-brand">
+            <a
+              className="brand brand--dark"
+              href="/"
+              onClick={(event) => {
+                if (!onBack) return;
+                event.preventDefault();
+                onBack();
+              }}
+            >
+              <span className="brand__mark" aria-hidden="true">
+                <Zap size={21} strokeWidth={2.6} />
+              </span>
+              <span className="brand__wordmark">
+                Volt<span>Flow</span>
+              </span>
+            </a>
+          </div>
+
           <div className="auth-nav-header">
             {onBack ? (
               <button className="auth-back" type="button" onClick={onBack}>
@@ -624,29 +668,14 @@ export function LoginPage({
               )}
             </button>
 
-            <div className="auth-demo-divider" aria-hidden="true">
-              <span>ya da</span>
-            </div>
-
             <button
-              id="demo-login-btn"
-              className="button button--demo-login button--large"
+              className="auth-demo-button"
               type="button"
-              disabled={loading}
               onClick={handleTestLogin}
-              aria-label="Demo hesabı ile tek tıkla giriş yapın. 6 ev ve canlı telemetri verisi içerir."
+              disabled={loading}
             >
-              {loading ? (
-                <>
-                  <span className="spinner" aria-hidden="true" />
-                  Demo hazırlanıyor
-                </>
-              ) : (
-                <>
-                  <Zap aria-hidden="true" size={18} />
-                  Test Girişi
-                </>
-              )}
+              <Sparkles aria-hidden="true" size={16} />
+              Hızlı Demo Girişi (voltflow@gmail.com)
             </button>
           </form>
 

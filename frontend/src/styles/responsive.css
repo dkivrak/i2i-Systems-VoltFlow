@@ -62,11 +62,14 @@
 
 @media (max-width: 940px) {
   .auth-page {
-    grid-template-columns: minmax(0, 0.9fr) minmax(390px, 1.1fr);
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100dvh !important;
   }
 
   .auth-visual {
-    padding: clamp(1.5rem, 3vw, 2.5rem);
+    display: none !important;
   }
 
   .auth-visual__copy h1 {
@@ -240,25 +243,7 @@
   }
 
   .auth-visual {
-    min-height: 460px;
-    padding: 1.5rem;
-  }
-
-  .auth-visual__copy {
-    margin-top: var(--space-8);
-  }
-
-  .auth-visual__copy h1 {
-    font-size: clamp(2.8rem, 15vw, 4.7rem);
-  }
-
-  .auth-character-stage {
-    height: 220px;
-    min-height: 220px;
-  }
-
-  .auth-visual__metrics {
-    display: none;
+    display: none !important;
   }
 
   .landing-header {
@@ -620,12 +605,7 @@
   }
 
   .auth-visual {
-    min-height: 400px;
-  }
-
-  .auth-character-stage {
-    height: 190px;
-    min-height: 190px;
+    display: none !important;
   }
 
   .auth-visual__topline .auth-visual__badge {

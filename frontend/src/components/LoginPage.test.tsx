@@ -169,4 +169,33 @@ describe('LoginPage email and password authentication', () => {
       expect(onLoginSuccess).toHaveBeenCalledWith('owner@example.com'),
     );
   });
+
+  it('executes quick demo login for voltflow@gmail.com when demo button is clicked', async () => {
+    const demoResponse = {
+      token: 'header.payload.signature',
+      user: { id: 1, email: 'voltflow@gmail.com' },
+      message: 'Giriş başarılı.',
+    };
+    const login = vi.spyOn(api, 'login').mockImplementation(async () => demoResponse);
+    const onLoginSuccess = vi.fn();
+    const user = userEvent.setup();
+
+    render(<LoginPage onLoginSuccess={onLoginSuccess} />);
+
+    const demoButton = screen.getByRole('button', {
+      name: /Hızlı Demo Girişi/i,
+    });
+    await user.click(demoButton);
+
+    await waitFor(() =>
+      expect(login).toHaveBeenCalledWith(
+        'voltflow@gmail.com',
+        'VoltFlow123!',
+        expect.any(AbortSignal),
+      ),
+    );
+    await waitFor(() =>
+      expect(onLoginSuccess).toHaveBeenCalledWith('voltflow@gmail.com'),
+    );
+  });
 });
