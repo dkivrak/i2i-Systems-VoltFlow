@@ -199,7 +199,7 @@ public class ChatController {
         }
 
         // 2. Ev Sayısı veya Ev Listesi Soruları (Kaç evim var, hangi evler var vb.)
-        if ((lowerMsg.contains("kaç") && (lowerMsg.contains("ev") || lowerMsg.contains("mülk") || lowerMsg.contains("konut"))) || lowerMsg.contains("evlerim") || lowerMsg.contains("ev sayısı") || lowerMsg.contains("hangi evler")) {
+        if ((lowerMsg.contains("kaç") && (lowerMsg.contains("ev") || lowerMsg.contains("mülk") || lowerMsg.contains("konut"))) || lowerMsg.contains("ev sayısı") || lowerMsg.contains("hangi evler var") || lowerMsg.contains("evlerimin listesi")) {
             StringBuilder countReply = new StringBuilder();
             countReply.append("VoltFlow hesabınıza tanımlı toplam ").append(targetStates.size()).append(" adet canlı ev bulunmaktadır:\n\n");
             for (int i = 0; i < targetStates.size(); i++) {
