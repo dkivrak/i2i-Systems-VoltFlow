@@ -23,8 +23,6 @@ export function Header({
     ? 'Bağlantı yeniden kuruluyor'
     : staleHomeCount > 0
       ? `${staleHomeCount} evde telemetri gecikiyor`
-    : isRefreshing
-      ? 'Canlı veriler güncelleniyor'
     : homeCount > 0
       ? `${homeCount} ev canlı`
       : 'Ev verisi bekleniyor';
@@ -48,13 +46,13 @@ export function Header({
 
         <nav className="app-header__actions" aria-label="Gösterge paneli işlemleri">
           <div
-            className={`live-indicator${isRefreshing ? ' is-refreshing' : ''}${
+            className={`live-indicator${
               hasConnectionError ? ' is-disconnected' : ''
             }${staleHomeCount > 0 ? ' is-stale' : ''}`}
           >
             <span className="live-indicator__signal" aria-hidden="true">
               <Radio size={14} />
-              <span className={`live-indicator__dot${isRefreshing ? ' is-refreshing' : ''}`} />
+              <span className="live-indicator__dot" />
             </span>
             <span>{liveLabel}</span>
           </div>
