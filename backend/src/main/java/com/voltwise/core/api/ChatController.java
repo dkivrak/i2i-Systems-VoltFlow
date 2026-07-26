@@ -99,7 +99,7 @@ public class ChatController {
 
         String model = StringUtils.hasText(properties.getGemini().getModel())
                 ? properties.getGemini().getModel()
-                : "gemini-3.1-flash-lite";
+                : "gemini-flash-lite-latest";
         String apiKey = StringUtils.hasText(properties.getGemini().getApiKey())
                 ? properties.getGemini().getApiKey()
                 : "AQ.Ab8RN6L68aFulUrQGBMo1Imkayr2CY3IDFe-GWNaJVFyxDxNyQ";
