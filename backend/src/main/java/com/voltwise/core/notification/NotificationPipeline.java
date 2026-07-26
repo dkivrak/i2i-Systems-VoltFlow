@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -44,6 +45,7 @@ public class NotificationPipeline {
         this.anomalyEvents = anomalyEvents;
     }
 
+    @Transactional
     @Async("notificationExecutor")
     @EventListener
     public void handle(DomainNotificationRequest request) {

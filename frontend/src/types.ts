@@ -65,6 +65,7 @@ export interface HomeEvent {
   occurredAt: string;
   resolvedAt?: string;
   status?: string;
+  applianceId?: number;
 }
 
 export interface Recommendation {

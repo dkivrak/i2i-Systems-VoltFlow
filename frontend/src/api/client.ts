@@ -406,6 +406,7 @@ function normalizeEvent(value: unknown, index: number, typeHint?: HomeEventType)
     occurredAt: asString(firstDefined(raw, ['occurredAt', 'detectedAt', 'changedAt', 'createdAt'])),
     resolvedAt: asString(raw.resolvedAt) || undefined,
     status: asString(raw.status) || undefined,
+    applianceId: raw.applianceId === undefined ? undefined : asNumber(raw.applianceId),
   };
 }
 
