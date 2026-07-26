@@ -118,7 +118,7 @@ public class ChatController {
             );
 
             JsonNode response = restClient.post()
-                    .uri("/v1beta/models/{model}:generateContent", model)
+                    .uri("/v1beta/models/{model}:generateContent?key={apiKey}", model, apiKey)
                     .header("x-goog-api-key", apiKey)
                     .header("Content-Type", "application/json")
                     .body(body)
