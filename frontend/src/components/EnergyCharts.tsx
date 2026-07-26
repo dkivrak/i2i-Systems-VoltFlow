@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import {
+  Banknote,
   BarChart3,
-  CircleDollarSign,
   Gauge,
   PieChart as PieChartIcon,
   Zap,
@@ -63,21 +63,25 @@ interface PowerPoint {
 }
 
 const distributionColors = [
-  '#43e6a4',
-  '#55c6ec',
-  '#a78bfa',
-  '#f7bd63',
-  '#ff7d72',
-  '#6ce0d5',
-  '#93c5fd',
+  '#6C47FF',
+  '#00D284',
+  '#FFB800',
+  '#00C2FF',
+  '#FF4757',
+  '#FF8500',
+  '#9B51E0',
 ];
-const axisStyle = { fill: '#83958f', fontSize: 11 };
+
+const axisStyle = { fill: '#494459', fontSize: 11, fontWeight: 700 };
+
 const tooltipStyle = {
-  background: '#10201c',
-  border: '1px solid #294139',
-  borderRadius: 10,
-  color: '#edf8f3',
-  boxShadow: '0 12px 30px rgb(0 0 0 / 30%)',
+  background: '#211D34',
+  border: '2px solid #211D34',
+  borderRadius: 12,
+  color: '#FFFFFF',
+  boxShadow: '4px 4px 0 #211D34',
+  padding: '10px 14px',
+  fontWeight: 700,
 };
 
 const EmptyChart = memo(function EmptyChart({ message }: { message: string }) {
@@ -136,14 +140,14 @@ const HistoricalChartPanels = memo(function HistoricalChartPanels({
         <div className="chart-card__canvas" aria-hidden="true">
           {timelineData.length ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={timelineData} margin={{ top: 12, right: 8, bottom: 2, left: -18 }}>
+              <AreaChart data={timelineData} margin={{ top: 12, right: 8, bottom: 2, left: -10 }}>
                 <defs>
                   <linearGradient id="energyGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#43e6a4" stopOpacity={0.38} />
-                    <stop offset="95%" stopColor="#43e6a4" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#6C47FF" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#6C47FF" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="#223a32" vertical={false} strokeDasharray="3 4" />
+                <CartesianGrid stroke="#E2DDED" vertical={false} strokeDasharray="3 4" />
                 <XAxis
                   dataKey="label"
                   tick={axisStyle}
@@ -151,19 +155,19 @@ const HistoricalChartPanels = memo(function HistoricalChartPanels({
                   tickLine={false}
                   minTickGap={32}
                 />
-                <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
+                <YAxis tick={axisStyle} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} kWh`} />
                 <Tooltip
                   contentStyle={tooltipStyle}
                   formatter={(value) => [formatEnergy(Number(value ?? 0)), 'Enerji']}
-                  labelStyle={{ color: '#9aada6', marginBottom: 5 }}
+                  labelStyle={{ color: '#FFD600', marginBottom: 4, fontWeight: 800 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="energyKwh"
-                  stroke="#43e6a4"
-                  strokeWidth={2.2}
+                  stroke="#6C47FF"
+                  strokeWidth={3}
                   fill="url(#energyGradient)"
-                  activeDot={{ r: 4, fill: '#43e6a4', stroke: '#071411', strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: '#6C47FF', stroke: '#211D34', strokeWidth: 2 }}
                   isAnimationActive={false}
                 />
               </AreaChart>
@@ -175,13 +179,13 @@ const HistoricalChartPanels = memo(function HistoricalChartPanels({
       </article>
 
       <article className="chart-card" aria-label="Zamana göre enerji maliyeti grafiği">
-        <ChartHeading icon={CircleDollarSign} title="Maliyet eğrisi" detail="Dönem içindeki değişim" />
+        <ChartHeading icon={Banknote} title="Maliyet eğrisi" detail="Dönem içindeki değişim" />
         <p className="sr-only">{historySummary}</p>
         <div className="chart-card__canvas" aria-hidden="true">
           {timelineData.length ? (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={timelineData} margin={{ top: 12, right: 8, bottom: 2, left: -16 }}>
-                <CartesianGrid stroke="#223a32" vertical={false} strokeDasharray="3 4" />
+              <LineChart data={timelineData} margin={{ top: 12, right: 8, bottom: 2, left: -10 }}>
+                <CartesianGrid stroke="#E2DDED" vertical={false} strokeDasharray="3 4" />
                 <XAxis
                   dataKey="label"
                   tick={axisStyle}
@@ -189,19 +193,19 @@ const HistoricalChartPanels = memo(function HistoricalChartPanels({
                   tickLine={false}
                   minTickGap={32}
                 />
-                <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
+                <YAxis tick={axisStyle} axisLine={false} tickLine={false} tickFormatter={(v) => `₺${v}`} />
                 <Tooltip
                   contentStyle={tooltipStyle}
                   formatter={(value) => [formatMoney(Number(value ?? 0)), 'Maliyet']}
-                  labelStyle={{ color: '#9aada6', marginBottom: 5 }}
+                  labelStyle={{ color: '#FFD600', marginBottom: 4, fontWeight: 800 }}
                 />
                 <Line
                   type="monotone"
                   dataKey="cost"
-                  stroke="#55c6ec"
-                  strokeWidth={2.2}
+                  stroke="#00C2FF"
+                  strokeWidth={3}
                   dot={false}
-                  activeDot={{ r: 4, fill: '#55c6ec', stroke: '#071411', strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: '#00C2FF', stroke: '#211D34', strokeWidth: 2 }}
                   isAnimationActive={false}
                 />
               </LineChart>
@@ -291,32 +295,33 @@ const ApplianceChartPanels = memo(function ApplianceChartPanels({
         <div className="chart-card__canvas" aria-hidden="true">
           {powerData.length ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={powerData} margin={{ top: 12, right: 5, bottom: 2, left: -14 }}>
-                <CartesianGrid stroke="#223a32" vertical={false} strokeDasharray="3 4" />
+              <BarChart data={powerData} margin={{ top: 12, right: 5, bottom: 2, left: -10 }}>
+                <CartesianGrid stroke="#E2DDED" vertical={false} strokeDasharray="3 4" />
                 <XAxis dataKey="name" tick={axisStyle} axisLine={false} tickLine={false} />
-                <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
+                <YAxis tick={axisStyle} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}W`} />
                 <Tooltip
                   contentStyle={tooltipStyle}
                   formatter={(value, name) => [
                     formatPower(Number(value ?? 0)),
                     name === 'power' ? 'Anlık güç' : 'Güvenli sınır',
                   ]}
+                  labelStyle={{ color: '#FFD600', marginBottom: 4, fontWeight: 800 }}
                 />
                 <Legend
                   formatter={(value) =>
                     value === 'power' ? 'Anlık güç' : 'Güvenli sınır'
                   }
-                  wrapperStyle={{ fontSize: 11 }}
+                  wrapperStyle={{ fontSize: 11, fontWeight: 700 }}
                 />
                 <Bar
                   dataKey="power"
-                  fill="#43e6a4"
+                  fill="#00D284"
                   radius={[5, 5, 0, 0]}
                   isAnimationActive={false}
                 />
                 <Bar
                   dataKey="limit"
-                  fill="#40564f"
+                  fill="#6C47FF"
                   radius={[5, 5, 0, 0]}
                   isAnimationActive={false}
                 />

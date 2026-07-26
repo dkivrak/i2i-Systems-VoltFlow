@@ -33,7 +33,7 @@ public class GeminiRecommendationGenerator implements RecommendationGenerator {
 
     @Override
     public GeneratedRecommendation generate(RecommendationContext context) {
-        String model = properties.getGemini().getModel();
+        String model = "gemini-3.1-flash-lite";
         if (!StringUtils.hasText(properties.getGemini().getApiKey())) {
             return fallback(model);
         }
@@ -48,13 +48,23 @@ public class GeminiRecommendationGenerator implements RecommendationGenerator {
                     .body(JsonNode.class);
             String text = response == null ? null : response.at("/candidates/0/content/parts/0/text").asText(null);
             if (!StringUtils.hasText(text)) throw new IllegalStateException("Gemini returned no recommendation text");
-            return new GeneratedRecommendation(text.strip(), model, false);
+            return new GeneratedRecommendation(cleanMarkdown(text), model, false);
         } catch (Exception ex) {
             // Do not log response/request text: transport exceptions may embed credentials or prompt content.
             log.warn("Gemini recommendation unavailable; deterministic fallback selected (failureType={})",
                     ex.getClass().getSimpleName());
             return fallback(model);
         }
+    }
+
+    private static String cleanMarkdown(String input) {
+        if (input == null) return "";
+        return input.replaceAll("\\*\\*", "")
+                    .replaceAll("\\*", "")
+                    .replaceAll("`", "")
+                    .replaceAll("#+\\s*", "")
+                    .replaceAll("_", "")
+                    .strip();
     }
 
     String prompt(RecommendationContext context) {

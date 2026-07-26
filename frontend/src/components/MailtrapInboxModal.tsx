@@ -41,9 +41,27 @@ export function MailtrapInboxModal({ onClose }: MailtrapInboxModalProps) {
 
       if (proxyRes.ok) {
         const data = (await proxyRes.json()) as MailtrapMessage[];
-        // Sadece başarılı yanıtta listeyi güncelle —
-        // hata durumunda (429, 401, 500 vb.) mevcut liste bozulmaz.
-        setMessages(Array.isArray(data) ? data : []);
+        let currentUserEmail = localStorage.getItem('voltflow_user_email');
+        if (!currentUserEmail) {
+          try {
+            const token = localStorage.getItem('voltflow_jwt_token');
+            if (token) {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              if (payload && payload.sub) currentUserEmail = payload.sub;
+            }
+          } catch {
+            // silent
+          }
+        }
+        const activeEmail = (currentUserEmail || 'voltflow@gmail.com').toLowerCase();
+        const filtered = Array.isArray(data)
+          ? data.filter(
+              (m) =>
+                !m.to_email ||
+                m.to_email.toLowerCase() === activeEmail
+            )
+          : [];
+        setMessages(filtered);
       }
       // Hata HTTP kodlarında sessizce devam et, setError yok.
     } catch {
@@ -87,8 +105,8 @@ export function MailtrapInboxModal({ onClose }: MailtrapInboxModalProps) {
 
   return (
     <Dialog
-      title="📧 Mailtrap Test Gelen Kutusu"
-      description="Uygulamadan gönderilen son bildirim ve uyarı e-postaları"
+      title="Gelen Kutusu"
+      description="Hesabınıza gönderilen son bildirim ve uyarı e-postaları"
       onClose={onClose}
       wide
     >
@@ -97,7 +115,7 @@ export function MailtrapInboxModal({ onClose }: MailtrapInboxModalProps) {
           display: 'flex',
           justifyContent: 'flex-end',
           alignItems: 'center',
-          marginBottom: '0.75rem',
+          padding: '0.85rem 1.2rem 0.25rem',
         }}
       >
         <button
@@ -110,10 +128,7 @@ export function MailtrapInboxModal({ onClose }: MailtrapInboxModalProps) {
         </button>
       </div>
 
-      <div
-        className="dialog__body"
-        style={{ maxHeight: '70vh', overflowY: 'auto', padding: '1rem' }}
-      >
+      <div style={{ padding: '0.5rem 1.2rem 1.5rem' }}>
         {loading ? (
           <InlineSpinner label="E-postalar yükleniyor..." />
         ) : messages.length === 0 ? (

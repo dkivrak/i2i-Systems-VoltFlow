@@ -45,10 +45,10 @@ spring:
     listener:
       ack-mode: record
   mail:
-    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    host: sandbox.smtp.mailtrap.io
+    port: 587
+    username: 72503ef112ca2a
+    password: 0de7818d58ec0f
     properties:
       mail:
         smtp:
@@ -102,8 +102,8 @@ voltwise:
   snapshots:
     interval-ms: ${SNAPSHOT_INTERVAL_MS:60000}
   gemini:
-    api-key: ${GEMINI_API_KEY:}
-    model: ${GEMINI_MODEL:gemini-2.5-flash}
+    api-key: ${GEMINI_API_KEY:AQ.Ab8RN6L68aFulUrQGBMo1Imkayr2CY3IDFe-GWNaJVFyxDxNyQ}
+    model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
     connect-timeout-ms: ${GEMINI_CONNECT_TIMEOUT_MS:3000}
     read-timeout-ms: ${GEMINI_READ_TIMEOUT_MS:8000}
   mailtrap:

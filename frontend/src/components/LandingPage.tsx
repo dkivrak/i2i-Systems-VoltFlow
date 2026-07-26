@@ -177,8 +177,8 @@ const ScrollDrivenSection: React.FC = () => {
     };
   }, []);
 
-  const cardWidth = Math.min(840, windowWidth * 0.85);
-  const gap = 32;
+  const cardWidth = Math.min(680, windowWidth * 0.76);
+  const gap = 40;
   const initialOffset = (windowWidth - cardWidth) / 2;
   const translateX = initialOffset - (progress * 2) * (cardWidth + gap);
 
@@ -327,6 +327,37 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               <span className="character-scene__energy-badge">
                 <Zap size={15} /> Canlı enerji akışı
               </span>
+
+              {/* Dönen Hatlar & Merkez Hub Konteyneri (Karakterlerin yörünge hareketiyle tam senkronize dönmesi için) */}
+              <div className="character-scene__rotator">
+                {/* Ortadaki Şimşek / Elektrik Hub Simgesi */}
+                <div className="character-scene__center-hub">
+                  <div className="character-scene__center-icon">
+                    <Zap size={28} />
+                  </div>
+                </div>
+
+              {/* Karakterlere Tam Sabitlenmiş Dinamik Çizgiler */}
+              <svg className="character-scene__connections" viewBox="0 0 100 100" preserveAspectRatio="none">
+                {/* Dış Çevre Bağlantı Çemberi */}
+                <circle cx="50" cy="50" r="36" className="scene-connect-ring" />
+                
+                {/* Merkezdeki Şimşekten Karakterlere Giden Dinamik Hatlar */}
+                <line className="scene-connect-line scene-connect-line-0" />
+                <line className="scene-connect-line scene-connect-line-1" />
+                <line className="scene-connect-line scene-connect-line-2" />
+                <line className="scene-connect-line scene-connect-line-3" />
+                <line className="scene-connect-line scene-connect-line-4" />
+
+                {/* Karakterler Arasındaki Ağ Çizgileri */}
+                <line className="scene-connect-mesh scene-connect-mesh-0" />
+                <line className="scene-connect-mesh scene-connect-mesh-1" />
+                <line className="scene-connect-mesh scene-connect-mesh-2" />
+                <line className="scene-connect-mesh scene-connect-mesh-3" />
+                <line className="scene-connect-mesh scene-connect-mesh-4" />
+              </svg>
+              </div>
+
               <div className="character-scene__item character-scene__item--fridge">
                 <ApplianceCharacter type="REFRIGERATOR" state="happy" />
               </div>
@@ -346,28 +377,26 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
           </div>
         </section>
 
-        <section className="landing-signal-strip" aria-label="VoltFlow enerji özeti örneği">
-          <p className="landing-signal-strip__label">Örnek enerji özeti</p>
-          <article>
-            <Activity aria-hidden="true" size={19} />
-            <span>Şu an</span>
-            <strong>2,4 kW</strong>
-          </article>
-          <article>
-            <CircleDollarSign aria-hidden="true" size={19} />
-            <span>Bu dönem</span>
-            <strong>284,50 ₺</strong>
-          </article>
-          <article>
-            <Gauge aria-hidden="true" size={19} />
-            <span>Bütçe kullanımı</span>
-            <strong>%28</strong>
-          </article>
-          <article>
-            <HousePlug aria-hidden="true" size={19} />
-            <span>Bağlı cihaz</span>
-            <strong>9</strong>
-          </article>
+
+
+        {/* 1. Rakamlarla Güven (Social Proof / Stats Strip) */}
+        <section className="landing-stats-strip" aria-label="VoltFlow platform istatistikleri">
+          <div className="landing-stats-strip__item">
+            <span className="landing-stats-strip__number">1.200+</span>
+            <span className="landing-stats-strip__label">Aktif Konut / Ev</span>
+          </div>
+          <div className="landing-stats-strip__item">
+            <span className="landing-stats-strip__number">9.400+</span>
+            <span className="landing-stats-strip__label">İzlenen Cihaz</span>
+          </div>
+          <div className="landing-stats-strip__item">
+            <span className="landing-stats-strip__number">%23</span>
+            <span className="landing-stats-strip__label">Ort. Aylık Tasarruf</span>
+          </div>
+          <div className="landing-stats-strip__item">
+            <span className="landing-stats-strip__number">&lt; 1 sn</span>
+            <span className="landing-stats-strip__label">Anomali Algılama</span>
+          </div>
         </section>
 
         <section className="landing-section landing-benefits" aria-labelledby="benefits-title">
@@ -386,6 +415,34 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
                 tone={tone}
                 index={index}
               />
+            ))}
+          </div>
+        </section>
+
+        {/* 2. Desteklenen Cihazlar Şeridi */}
+        <section className="landing-devices" aria-labelledby="devices-title">
+          <div className="landing-devices__heading">
+            <p className="eyebrow">Tam Ekosistem Desteği</p>
+            <h2 id="devices-title">Evinizdeki her cihazın kendi dili var.</h2>
+            <p>VoltFlow 9 farklı cihaz türünü anlık akıllı karakterlerle izler ve anormallikleri anında bildirir.</p>
+          </div>
+          <div className="landing-devices__grid">
+            {[
+              { type: 'REFRIGERATOR', name: 'Buzdolabı', desc: 'Gece ve gündüz sürekli yük takibi' },
+              { type: 'WASHING_MACHINE', name: 'Çamaşır M.', desc: 'Yüksek güç döngüsü optimizasyonu' },
+              { type: 'TELEVISION', name: 'Televizyon', desc: 'Bekleme (standby) modu kaçağı tespiti' },
+              { type: 'KETTLE', name: 'Su Isıtıcısı', desc: 'Ani pik çekim uyarısı' },
+              { type: 'AIR_CONDITIONER', name: 'Klima', desc: 'Sürekli yüksek yük ve ceza sınırı kontrolü' },
+              { type: 'OVEN', name: 'Fırın', desc: 'Bütçe aşım riski uyarısı' },
+              { type: 'MICROWAVE', name: 'Mikrodalga', desc: 'Kısa süreli akım kontrolü' },
+              { type: 'LAMP', name: 'Aydınlatma', desc: 'Arka plan tüketim analizi' },
+              { type: 'COMPUTER', name: 'Bilgisayar', desc: 'Çalışma saati enerji maliyeti' },
+            ].map((item) => (
+              <div key={item.type} className="landing-device-card">
+                <ApplianceCharacter type={item.type as any} state="idle" />
+                <span className="landing-device-card__name">{item.name}</span>
+                <div className="landing-device-card__tooltip">{item.desc}</div>
+              </div>
             ))}
           </div>
         </section>
@@ -415,7 +472,100 @@ export function LandingPage({ onLogin, onRegister }: LandingPageProps) {
           </div>
         </section>
 
+        {/* 3. Tarife Karşılaştırma / Fiyatlandırma */}
+        <section className="landing-tariff" aria-labelledby="tariff-title">
+          <div className="landing-tariff__inner">
+            <div className="landing-tariff__copy">
+              <p className="eyebrow">Dinamik Tarife Koruması</p>
+              <h2 id="tariff-title">Ceza tarifesine geçmeden müdahale edin.</h2>
+              <p>
+                Aylık bütçe kotanız %100 aşılınca elektrik birim fiyatınız ceza kademesine yükselir.
+                VoltFlow %80 seviyesinde yapay zeka uyarısı vererek ekstra fatura maliyetini engeller.
+              </p>
+              <div className="landing-tariff__savings">
+                <strong>%23&apos;e varan</strong>
+                <span>Fatura tasarrufu ile ceza kademesinden korunun</span>
+              </div>
+            </div>
+
+            <div className="landing-tariff__chart">
+              <div className="tariff-bar">
+                <span className="tariff-bar__label">Normal Tarife</span>
+                <div className="tariff-bar__track">
+                  <div className="tariff-bar__fill tariff-bar__fill--normal" style={{ width: '45%' }} />
+                </div>
+                <span className="tariff-bar__value tariff-bar__value--normal">2,07 ₺/kWh</span>
+              </div>
+
+              <div className="tariff-bar">
+                <span className="tariff-bar__label">Ceza Tarifesi</span>
+                <div className="tariff-bar__track">
+                  <div className="tariff-bar__fill tariff-bar__fill--penalty" style={{ width: '90%' }} />
+                </div>
+                <span className="tariff-bar__value tariff-bar__value--penalty">3,11 ₺/kWh</span>
+              </div>
+
+              <div className="tariff-bar">
+                <span className="tariff-bar__label">VoltFlow ile</span>
+                <div className="tariff-bar__track">
+                  <div className="tariff-bar__fill tariff-bar__fill--savings" style={{ width: '40%' }} />
+                </div>
+                <span className="tariff-bar__value tariff-bar__value--savings">Tasarruflu</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <ScrollDrivenSection />
+
+        {/* 4. Kullanıcı Yorumları (Testimonials) */}
+        <section className="landing-testimonials" aria-labelledby="testimonials-title">
+          <div className="landing-testimonials__heading">
+            <p className="eyebrow">Kullanıcı Deneyimleri</p>
+            <h2 id="testimonials-title">Akıllı ev sahipleri ne diyor?</h2>
+            <p>VoltFlow ile enerji tüketim alışkanlıklarını değiştiren kullanıcılarımızın geri bildirimleri.</p>
+          </div>
+          <div className="landing-testimonials__grid">
+            <div className="testimonial-card">
+              <p className="testimonial-card__quote">
+                &ldquo;Buzdolabımın gece saatlerinde sürekli anomaliye girdiğini VoltFlow sayesinden öğrendim. Eskiyen contayı değiştirip faturamda ciddi fark yarattım.&rdquo;
+              </p>
+              <div className="testimonial-card__author">
+                <ApplianceCharacter type="REFRIGERATOR" state="happy" />
+                <div className="testimonial-card__author-info">
+                  <span className="testimonial-card__name">Mert Y.</span>
+                  <span className="testimonial-card__role">İstanbul · Mühendis</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="testimonial-card">
+              <p className="testimonial-card__quote">
+                &ldquo;Bütçemin %80&apos;ine ulaştığımda gelen akıllı e-posta uyarısı sayesinde ceza tarifesine girmekten son anda kurtulduk. Gerçekten hayat kurtarıyor.&rdquo;
+              </p>
+              <div className="testimonial-card__author">
+                <ApplianceCharacter type="AIR_CONDITIONER" state="approved" />
+                <div className="testimonial-card__author-info">
+                  <span className="testimonial-card__name">Selin K.</span>
+                  <span className="testimonial-card__role">İzmir · Mimar</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="testimonial-card">
+              <p className="testimonial-card__quote">
+                &ldquo;Cihazların şirin karakterlerle anlık durumunu izlemek harika bir fikir. Çocuklar bile evdeki gereksiz lambaları kapatmaya başladı!&rdquo;
+              </p>
+              <div className="testimonial-card__author">
+                <ApplianceCharacter type="TELEVISION" state="active" />
+                <div className="testimonial-card__author-info">
+                  <span className="testimonial-card__name">Ahmet T.</span>
+                  <span className="testimonial-card__role">Ankara · Öğretmen</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section className="landing-final-cta" aria-labelledby="final-cta-title">
           <div className="landing-final-cta__characters" aria-hidden="true">

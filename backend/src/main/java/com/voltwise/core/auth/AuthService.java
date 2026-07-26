@@ -61,6 +61,30 @@ public class AuthService {
         return responseFor(user, "Giriş başarılı.");
     }
 
+    @Transactional
+    public void changePassword(String email, AuthDtos.ChangePasswordRequest request) {
+        if (email == null || email.isBlank()) {
+            throw new InvalidCredentialsException();
+        }
+        UserEntity user = userRepository.findByEmail(normalizeEmail(email))
+                .orElseThrow(InvalidCredentialsException::new);
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Mevcut şifreniz hatalı.");
+        }
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public AuthUserResponse getProfile(String email) {
+        if (email == null || email.isBlank()) {
+            throw new InvalidCredentialsException();
+        }
+        UserEntity user = userRepository.findByEmail(normalizeEmail(email))
+                .orElseThrow(InvalidCredentialsException::new);
+        return new AuthUserResponse(user.getId(), user.getEmail());
+    }
+
     private AuthResponse responseFor(UserEntity user, String message) {
         String token = jwtTokenProvider.generateToken(user.getEmail());
         return new AuthResponse(

@@ -30,8 +30,7 @@
 
 .dialog--wide {
   width: min(var(--dialog-wide-width), calc(100vw - 2rem));
-  max-height: 90svh;
-  overflow-y: auto;
+  max-height: min(90vh, 880px);
 }
 
 .dialog__header,
@@ -61,13 +60,11 @@
 }
 
 .dialog__header h2 {
-  overflow: hidden;
   margin: 0;
   color: var(--color-ink);
-  font-size: clamp(1.5rem, 3vw, 2.35rem);
+  font-size: clamp(1.3rem, 2.5vw, 2.1rem);
   font-weight: 920;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.15;
 }
 
 .dialog__header div > p:last-child:not(.eyebrow) {
@@ -84,7 +81,8 @@
 .dialog__body {
   min-height: 0;
   flex: 1 1 auto;
-  overflow-y: auto;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
 }
 
@@ -121,42 +119,41 @@
 .registration-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-6);
   padding: var(--space-6);
   background: var(--color-canvas);
-  overflow-y: auto;
-}
-
-.registration-form > .form-alert {
-  border-color: rgb(213 61 79 / 35%);
-  background: var(--color-critical-soft);
-  color: var(--color-critical);
 }
 
 .form-section {
+  position: relative;
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-6);
   margin: 0;
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
+  box-shadow: 4px 4px 0 var(--color-ink);
 }
 
-.form-section > legend,
-.fieldset-heading legend {
-  padding: 0 var(--space-2);
+.form-section > legend {
+  position: relative;
+  padding: 0.25rem 0.75rem;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-energy);
   color: var(--color-ink);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   font-weight: 900;
+  box-shadow: 2px 2px 0 var(--color-ink);
 }
 
 .form-grid {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .form-grid + .form-grid {
-  margin-top: var(--space-4);
+  margin-top: var(--space-5);
 }
 
 .form-grid--three {
@@ -164,22 +161,36 @@
 }
 
 .form-grid--two {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field span {
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  color: var(--color-ink);
 }
 
 .field input,
 .field select,
 .field textarea {
   width: 100%;
-  min-height: 46px;
-  padding: 0.68rem 0.8rem;
-  border: 2px solid var(--color-border);
+  min-height: 44px;
+  padding: 0.6rem 0.85rem;
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-sm);
   outline: 0;
   background: var(--color-surface);
   color: var(--color-ink);
   font-size: var(--font-size-sm);
   font-weight: 650;
+  box-shadow: 2px 2px 0 var(--color-ink);
   transition:
     border-color var(--motion-fast) var(--ease-standard),
     box-shadow var(--motion-fast) var(--ease-standard),
@@ -189,14 +200,14 @@
 .field input:hover,
 .field select:hover,
 .field textarea:hover {
-  border-color: var(--color-border-strong);
+  border-color: var(--color-brand);
 }
 
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
   border-color: var(--color-brand);
-  box-shadow: var(--focus-ring);
+  box-shadow: 4px 4px 0 var(--color-ink);
 }
 
 .field input[aria-invalid='true'],
@@ -208,15 +219,19 @@
 
 .field em {
   color: var(--color-ink-muted);
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   font-weight: 600;
 }
 
 .tariff-explainer {
-  padding: var(--space-4);
-  border: 1px solid rgb(108 71 255 / 24%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-4) var(--space-5);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-md);
   background: var(--color-brand-soft);
+  box-shadow: 3px 3px 0 var(--color-ink);
 }
 
 .tariff-explainer__heading {
@@ -225,26 +240,27 @@
   gap: var(--space-2);
   color: var(--color-brand-strong);
   font-size: var(--font-size-xs);
-  font-weight: 850;
+  font-weight: 900;
 }
 
 .tariff-explainer p {
-  margin: var(--space-2) 0;
-  color: var(--color-ink-soft);
-  font-size: 0.7rem;
+  margin: var(--space-1) 0;
+  color: var(--color-ink);
+  font-size: 0.75rem;
 }
 
 .tariff-explainer__tiers {
   padding-top: var(--space-2);
-  border-top: 1px solid rgb(108 71 255 / 18%);
-  color: var(--color-ink-muted);
-  font-size: 0.66rem;
+  margin-top: var(--space-1);
+  border-top: 1px dashed rgb(108 71 255 / 25%);
+  color: var(--color-ink-soft);
+  font-size: 0.7rem;
   line-height: 1.6;
 }
 
 .fieldset-heading {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   margin-bottom: var(--space-4);
@@ -494,6 +510,7 @@
 
 .detail-tab-panel {
   min-width: 0;
+  min-height: 380px;
   outline: 0;
   animation: fade-up var(--motion-medium) var(--ease-standard);
 }
@@ -1378,8 +1395,23 @@
 .events-panel > header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
+}
+
+.panel-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pagination-indicator {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--color-ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .recommendations-panel > header > span,
@@ -1588,4 +1620,37 @@
   background: var(--color-brand-soft);
   box-shadow: 0 0 0 2px rgb(108 71 255 / 15%);
 }
+
+/* ── Mobile Dialog & Form Responsive Polish ── */
+@media (max-width: 640px) {
+  .dialog-backdrop {
+    padding: var(--space-2);
+    align-items: flex-end;
+  }
+
+  .dialog {
+    width: 100% !important;
+    max-height: 94vh !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    box-shadow: 0 -4px 20px rgb(0 0 0 / 20%) !important;
+  }
+
+  .dialog__header {
+    min-height: 72px;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .dialog__header h2 {
+    font-size: 1.25rem !important;
+  }
+
+  .dialog__body {
+    padding: var(--space-4) !important;
+  }
+
+  .dialog__footer {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
 

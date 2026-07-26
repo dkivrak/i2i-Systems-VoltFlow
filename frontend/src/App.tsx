@@ -36,6 +36,8 @@ import {
 } from './components/PageStates';
 import { RegistrationModal } from './components/RegistrationModal';
 import { MailtrapInboxModal } from './components/MailtrapInboxModal';
+import { ProfileModal } from './components/ProfileModal';
+import { ChatWidget } from './components/ChatWidget';
 import { ToastProvider } from './components/ToastProvider';
 import {
   getPollingInterval,
@@ -76,6 +78,43 @@ function Dashboard({ onLogout }: DashboardProps) {
   const [selectedHomeId, setSelectedHomeId] = useState<number | null>(null);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [mailtrapOpen, setMailtrapOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [mailCount, setMailCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchMailCount = async () => {
+      try {
+        const token = localStorage.getItem('voltflow_jwt_token');
+        const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await fetch('/api/notifications/inbox', {
+          headers: { Accept: 'application/json', ...authHeaders },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          let currentUserEmail = localStorage.getItem('voltflow_user_email');
+          if (!currentUserEmail && token) {
+            try {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              if (payload && payload.sub) currentUserEmail = payload.sub;
+            } catch {
+              // silent
+            }
+          }
+          const activeEmail = (currentUserEmail || 'voltflow@gmail.com').toLowerCase();
+          const filtered = Array.isArray(data)
+            ? data.filter((m: { to_email?: string }) => !m.to_email || m.to_email.toLowerCase() === activeEmail)
+            : [];
+          setMailCount(filtered.length);
+        }
+      } catch {
+        // silent
+      }
+    };
+
+    fetchMailCount();
+    const interval = setInterval(fetchMailCount, 3000);
+    return () => clearInterval(interval);
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [statusAnnouncement, setStatusAnnouncement] = useState('');
@@ -187,6 +226,8 @@ function Dashboard({ onLogout }: DashboardProps) {
         onRegister={() => setRegistrationOpen(true)}
         onLogout={onLogout}
         onOpenMailtrap={() => setMailtrapOpen(true)}
+        onOpenProfile={() => setProfileOpen(true)}
+        mailCount={mailCount}
       />
 
       <main id="main-content" className="main-content" tabIndex={-1}>
@@ -361,6 +402,14 @@ function Dashboard({ onLogout }: DashboardProps) {
         <MailtrapInboxModal onClose={() => setMailtrapOpen(false)} />
       )}
 
+      {profileOpen && (
+        <ProfileModal
+          onClose={() => setProfileOpen(false)}
+          userEmail={localStorage.getItem('voltflow_user_email') || ''}
+        />
+      )}
+
+      <ChatWidget />
       <CreatedByCapsule />
     </div>
   );
